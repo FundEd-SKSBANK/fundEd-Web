@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { Trash2, PlusCircle, Loader2, Pencil } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import type { QrCode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
-import { getUsers, createUser, deleteUser } from '@/actions/users';
+import { getUsers, createUser, deleteUser, updateUser } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 
@@ -51,6 +51,14 @@ export default function SettingsPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
+
+  // Edit User State
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
 
   const handleFileSelect = async (file: File) => {
     if (!file) return;
@@ -157,6 +165,41 @@ export default function SettingsPage() {
     setIsSubmittingUser(false);
   };
 
+  const startEdit = (user: any) => {
+    setEditingUser(user);
+    setEditName(user.name || '');
+    setEditEmail(user.email || '');
+    setEditPassword(''); // Don't prefill password
+    setOpenEdit(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser || !editName || !editEmail) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Name and Email are required." });
+      return;
+    }
+
+    setIsSubmittingEdit(true);
+    const res = await updateUser({
+      id: editingUser.id,
+      name: editName,
+      email: editEmail,
+      password: editPassword // Optional
+    });
+
+    if (res.success) {
+      toast({ title: "Profile Updated", description: "Admin details have been updated." });
+      setOpenEdit(false);
+      setEditingUser(null);
+      fetchData();
+      // If updating self, might need to re-login or update session, but session is secure cookie. 
+      // Changes reflect on next session refresh usually.
+    } else {
+      toast({ variant: "destructive", title: "Update Failed", description: res.error });
+    }
+    setIsSubmittingEdit(false);
+  };
+
   const handleDeleteUser = async (id: string) => {
     if (confirm("Are you sure you want to remove this admin?")) {
       const res = await deleteUser(id);
@@ -256,6 +299,7 @@ export default function SettingsPage() {
           </CardContent>
         </GlassCard>
 
+
         {/* TEAM MANAGEMENT SECTION */}
         <GlassCard>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -298,6 +342,36 @@ export default function SettingsPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Administrator</DialogTitle>
+                  <DialogDescription>Update admin credentials.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Full Name</Label>
+                    <Input placeholder="John Doe" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Email Address</Label>
+                    <Input type="email" placeholder="john@example.com" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>New Password (Optional)</Label>
+                    <Input type="text" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancel</Button>
+                  <Button onClick={handleUpdateUser} disabled={isSubmittingEdit} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                    {isSubmittingEdit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border border-white/10">
@@ -318,7 +392,10 @@ export default function SettingsPage() {
                       {user.name}
                     </div>
                     <div className="col-span-2 text-stone-300 text-sm truncate">{user.email}</div>
-                    <div className="col-span-1 text-right">
+                    <div className="col-span-1 text-right flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(user)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-red-400" onClick={() => handleDeleteUser(user.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>

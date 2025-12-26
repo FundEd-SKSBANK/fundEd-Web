@@ -24,6 +24,13 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -51,7 +58,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '@/actions/events';
 import { getStudents } from '@/actions/students';
-import type { Event, Student } from '@/lib/types';
+import { getQrCodes } from '@/actions/settings';
+import type { Event, Student, QrCode } from '@/lib/types';
 import { format } from 'date-fns';
 import { GlassCard } from '@/components/ui/glass-card';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -67,8 +75,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function EventsPage() {
+
     const [events, setEvents] = useState<Event[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
+    const [qrCodes, setQrCodes] = useState<QrCode[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -81,6 +91,7 @@ export default function EventsPage() {
     const [deadline, setDeadline] = useState<Date | undefined>(new Date());
     const [category, setCategory] = useState<'Normal' | 'Print'>('Normal');
     const [paymentOptions, setPaymentOptions] = useState<string[]>(['Razorpay']);
+    const [selectedQrCode, setSelectedQrCode] = useState<string>(''); // Stores URL
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionDialogOpen, setIsSelectionDialogOpen] = useState(false);
@@ -97,9 +108,10 @@ export default function EventsPage() {
 
     const fetchData = async (isBackground = false) => {
         if (!isBackground) setIsLoading(true);
-        const [eventsRes, studentsRes] = await Promise.all([
+        const [eventsRes, studentsRes, qrRes] = await Promise.all([
             getEvents(),
-            getStudents()
+            getStudents(),
+            getQrCodes()
         ]);
 
         if (eventsRes.success && eventsRes.data) {
@@ -110,8 +122,13 @@ export default function EventsPage() {
             setStudents(studentsRes.students as unknown as Student[]);
         }
 
+        if (qrRes.success) {
+            setQrCodes(qrRes.data as QrCode[]);
+        }
+
         setIsLoading(false);
     };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,6 +138,7 @@ export default function EventsPage() {
             return;
         }
 
+
         // Final publish
         const eventData = {
             name,
@@ -129,6 +147,7 @@ export default function EventsPage() {
             deadline: deadline.toISOString(),
             category,
             paymentOptions,
+            qrCodeUrl: selectedQrCode, // Include selected QR
             selectedStudents,
         };
 
@@ -140,12 +159,14 @@ export default function EventsPage() {
             deadline: deadline.toISOString(),
             category,
             paymentOptions,
+            qrCodeUrl: selectedQrCode,
             participantIds: selectedStudents,
             // Preserve or init stats
             status: 'PUBLISHED',
             participantCount: selectedStudents.length,
             updatedAt: new Date().toISOString(),
         };
+
 
         // We use updateEvent to set status to PUBLISHED 
         let result;
@@ -200,6 +221,7 @@ export default function EventsPage() {
         }
     };
 
+
     const handleEdit = (event: Event) => {
         setEditingEvent(event);
         setName(event.name);
@@ -208,6 +230,7 @@ export default function EventsPage() {
         setDeadline(new Date(event.deadline));
         setCategory(event.category as 'Normal' | 'Print');
         setPaymentOptions(event.paymentOptions);
+        setSelectedQrCode(event.qrCodeUrl || '');
         setSelectedStudents(event.participantIds || []);
         setIsDialogOpen(true);
     };
@@ -220,9 +243,11 @@ export default function EventsPage() {
         setDeadline(new Date());
         setCategory('Normal');
         setPaymentOptions(['Razorpay']);
+        setSelectedQrCode('');
         setSelectedStudents(students.map(s => s.id));
         setSearchQuery('');
     };
+
 
     const copyPaymentLink = (eventId: string) => {
         const link = `${window.location.origin}/pay/${eventId}`;
@@ -471,6 +496,7 @@ export default function EventsPage() {
                                         </DialogContent>
                                     </Dialog>
 
+
                                     <div className="grid gap-2">
                                         <Label>Payment Options</Label>
                                         <div className="flex gap-4">
@@ -494,6 +520,31 @@ export default function EventsPage() {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {paymentOptions.includes('QR') && (
+                                        <div className="grid gap-2 animate-fade-in">
+                                            <Label>Select Payment QR</Label>
+                                            <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Choose a QR code" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {qrCodes.length === 0 ? (
+                                                        <div className="p-2 text-sm text-muted-foreground text-center">
+                                                            No QR codes found. Add one in Settings.
+                                                        </div>
+                                                    ) : (
+                                                        qrCodes.map((qr) => (
+                                                            <SelectItem key={qr.id} value={qr.url}>
+                                                                {qr.name}
+                                                            </SelectItem>
+                                                        ))
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+
                                 </div>
 
                                 <DialogFooter className="gap-2 sm:gap-0">

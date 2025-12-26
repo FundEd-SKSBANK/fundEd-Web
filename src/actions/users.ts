@@ -48,6 +48,7 @@ export async function createUser(data: { name: string; email: string; password: 
     }
 }
 
+
 export async function deleteUser(userId: string) {
     try {
         // Prevent deleting the last user ? 
@@ -62,3 +63,41 @@ export async function deleteUser(userId: string) {
          return { success: false, error: "Failed to delete user" };
     }
 }
+
+export async function updateUser(data: { id: string; name: string; email: string; password?: string }) {
+    try {
+        // Check if email exists for *other* users
+        const existing = await prisma.user.findFirst({
+            where: { 
+                email: data.email,
+                NOT: { id: data.id }
+            }
+        });
+
+        if (existing) {
+            return { success: false, error: "Email already taken by another user" };
+        }
+
+        const updateData: any = {
+            name: data.name,
+            email: data.email,
+        };
+
+        if (data.password && data.password.trim() !== '') {
+            updateData.password = await bcrypt.hash(data.password, 10);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: data.id },
+            data: updateData
+        });
+
+        revalidatePath('/dashboard/settings');
+        return { success: true, data: updatedUser };
+
+    } catch (error) {
+        console.error("Failed to update user:", error);
+        return { success: false, error: "Failed to update user" };
+    }
+}
+
