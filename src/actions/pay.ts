@@ -13,13 +13,24 @@ export async function getPaymentPageData(eventId: string) {
 
     if (!event) return { success: false, error: 'Event not found' };
 
-    const paidStudentIds = new Set(
-      payments
-        .filter(p => p.status === 'Paid' || p.status === 'Verification Pending')
-        .map(p => p.studentId)
-    );
+    // Calculate total paid per student
+    const studentPaidMap = new Map<string, number>();
+    
+    payments.forEach(p => {
+        if (p.status === 'Paid' || p.status === 'Verification Pending') {
+            const current = studentPaidMap.get(p.studentId) || 0;
+            studentPaidMap.set(p.studentId, current + p.amount);
+        }
+    });
 
-    const availableStudents = students.filter(student => !paidStudentIds.has(student.id));
+    // Filter out students who have paid the full cost (or more)
+    // And attach the paidAmount to the student object
+    const availableStudents = students
+        .map(s => ({
+            ...s,
+            paidAmount: studentPaidMap.get(s.id) || 0
+        }))
+        .filter(s => s.paidAmount < event.cost);
 
     return { 
       success: true, 

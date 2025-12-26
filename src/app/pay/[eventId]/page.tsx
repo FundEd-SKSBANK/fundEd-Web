@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -55,21 +56,25 @@ declare global {
   }
 }
 
+
 export default function PaymentPage() {
   const { eventId } = useParams();
   const eventIdStr = eventId as string;
 
   const [event, setEvent] = useState<Event | null>(null);
-  const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
+  const [availableStudents, setAvailableStudents] = useState<(Student & { paidAmount?: number })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [selectedMethod, setSelectedMethod] = useState('');
   const [open, setOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<(Student & { paidAmount?: number }) | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // New state for custom amount
+  const [amountToPay, setAmountToPay] = useState<string>('');
 
   const { toast } = useToast();
 
@@ -79,7 +84,7 @@ export default function PaymentPage() {
       const res = await getPaymentPageData(eventIdStr);
       if (res.success && res.data) {
         setEvent(res.data.event as unknown as Event);
-        setAvailableStudents(res.data.availableStudents as unknown as Student[]);
+        setAvailableStudents(res.data.availableStudents as unknown as (Student & { paidAmount?: number })[]);
       } else {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to load event data' });
       }
@@ -90,6 +95,16 @@ export default function PaymentPage() {
     }
   }, [eventIdStr]);
 
+  // Update amount when student is selected
+  useEffect(() => {
+    if (selectedStudent && event) {
+      const paid = selectedStudent.paidAmount || 0;
+      const balance = Math.max(0, event.cost - paid);
+      setAmountToPay(balance.toString());
+    } else {
+      setAmountToPay('');
+    }
+  }, [selectedStudent, event]);
 
   const filteredStudents = useMemo(() => {
     if (!availableStudents) return [];
@@ -153,26 +168,31 @@ export default function PaymentPage() {
     if (isSubmitting) {
       return <Loader2 className="h-5 w-5 animate-spin" />
     }
-    if (!selectedMethod) return `Pay ₹${event.cost.toLocaleString()}`;
+    const amountDisplay = amountToPay ? `₹${parseFloat(amountToPay).toLocaleString()}` : '';
+
+    if (!selectedMethod) return amountDisplay ? `Pay ${amountDisplay}` : 'Select Amount';
+
     switch (selectedMethod) {
       case 'razorpay':
-        return `Pay ₹${event.cost.toLocaleString()} with Razorpay`;
+        return `Pay ${amountDisplay} with Razorpay`;
       case 'qr':
         return 'Show QR Code & Pay';
       case 'cash':
         return 'Submit for Verification';
       default:
-        return `Pay ₹${event.cost.toLocaleString()}`;
+        return `Pay ${amountDisplay}`;
     }
   };
 
+
   const createPendingPayment = async (orderId: string) => {
     if (!selectedStudent) return null;
+    const amount = parseFloat(amountToPay);
 
     const res = await createPayment({
       studentId: selectedStudent.id,
       eventId: event.id,
-      amount: event.cost,
+      amount: amount,
       paymentMethod: 'Razorpay',
       transactionId: 'N/A',
       status: 'Pending',
@@ -184,7 +204,13 @@ export default function PaymentPage() {
 
 
   const handleRazorpayPayment = async () => {
-    if (!selectedStudent || !event) return;
+    if (!selectedStudent || !event || !amountToPay) return;
+    const amount = parseFloat(amountToPay);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than 0." });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -193,7 +219,7 @@ export default function PaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: event.cost,
+          amount: amount,
           eventId: event.id,
           studentId: selectedStudent.id,
         }),
@@ -221,7 +247,7 @@ export default function PaymentPage() {
             studentName: selectedStudent.name,
             studentEmail: selectedStudent.email,
             eventName: event.name,
-            amount: event.cost,
+            amount: amount,
             paymentMethod: 'Razorpay',
           });
           setShowSuccessDialog(true);
@@ -263,13 +289,19 @@ export default function PaymentPage() {
 
 
   const handleOtherPaymentSubmission = async (paymentMethod: 'QR Scan' | 'Cash', status: 'Verification Pending') => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || !amountToPay) return;
+    const amount = parseFloat(amountToPay);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than 0." });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const res = await createPayment({
       studentId: selectedStudent.id,
       eventId: event.id,
-      amount: event.cost,
+      amount: amount,
       paymentMethod: paymentMethod,
       transactionId: `${paymentMethod.replace(' ', '')}_${Date.now()}`,
       status: status,
@@ -280,7 +312,7 @@ export default function PaymentPage() {
         studentName: selectedStudent.name,
         studentEmail: selectedStudent.email,
         eventName: event.name,
-        amount: event.cost,
+        amount: amount,
         paymentMethod,
       });
 
@@ -291,6 +323,7 @@ export default function PaymentPage() {
 
     setIsSubmitting(false);
   }
+
 
   const handlePayClick = () => {
     if (isSubmitting) return;
@@ -374,15 +407,22 @@ export default function PaymentPage() {
               <CardDescription className="text-base text-stone-400 max-w-lg mx-auto leading-relaxed line-clamp-2">{event.description}</CardDescription>
             </CardHeader>
 
+
             <CardContent className="grid gap-5 px-0">
               <div className="flex flex-col items-center justify-center py-4 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <span className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-1">Total Amount Due</span>
+                <span className="text-stone-400 text-xs font-medium uppercase tracking-wider mb-1">
+                  {selectedStudent ? 'Balance Due' : 'Total Amount Due'}
+                </span>
                 <span className="font-bold text-3xl text-white tracking-tight flex items-center">
                   <span className="text-emerald-500 mr-1">₹</span>
-                  {event.cost.toLocaleString()}
+                  {selectedStudent
+                    ? (event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()
+                    : event.cost.toLocaleString()
+                  }
                 </span>
               </div>
+
 
               <div className="grid gap-4">
                 <div className="grid gap-2">
@@ -441,6 +481,7 @@ export default function PaymentPage() {
                   </Popover>
                 </div>
 
+
                 {selectedStudent && (
                   <div className="grid gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center justify-between text-sm">
@@ -451,12 +492,55 @@ export default function PaymentPage() {
                       <span className="text-stone-400">Roll Number</span>
                       <span className="text-emerald-100 font-medium">{selectedStudent.rollNo}</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-stone-400">Email</span>
-                      <span className="text-emerald-100 font-medium truncate max-w-[200px] text-right">{selectedStudent.email}</span>
-                    </div>
+                    {/* Partial Payment Details */}
+                    {(selectedStudent.paidAmount || 0) > 0 && (
+                      <>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-stone-400">Total Cost</span>
+                          <span className="text-stone-400 font-medium">₹{event.cost.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-stone-400">Already Paid</span>
+                          <span className="text-emerald-400 font-medium">- ₹{selectedStudent.paidAmount?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm pt-2 border-t border-white/10 mt-1">
+                          <span className="text-stone-300 font-medium">Balance Due</span>
+                          <span className="text-white font-bold">₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
+
+                {selectedStudent && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="amount" className="text-stone-300">Amount to Pay</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-stone-500">₹</span>
+                      <Input
+                        id="amount"
+                        type="number"
+                        value={amountToPay}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const val = parseFloat(e.target.value);
+                          const balance = event.cost - (selectedStudent.paidAmount || 0);
+                          if (val > balance) {
+                            setAmountToPay(balance.toString());
+                          } else {
+                            setAmountToPay(e.target.value);
+                          }
+                        }}
+                        max={event.cost - (selectedStudent.paidAmount || 0)}
+                        className="pl-7 bg-black/20 border-white/10 hover:bg-white/5 focus-visible:ring-emerald-500/20 text-stone-200"
+                        placeholder="Enter amount"
+                      />
+                    </div>
+                    <p className="text-xs text-stone-500 text-right">
+                      Max: ₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
 
                 <div className="grid gap-2">
                   <Label htmlFor="paymentMethod" className="text-stone-300">Payment Method</Label>

@@ -167,9 +167,9 @@ export default function CheckStatusPage() {
                                         const isPaid = summary.status === 'Fully Paid';
 
                                         return (
-                                            <div key={idx} className="relative p-5 rounded-2xl bg-black/20 border border-white/5 hover:border-emerald-500/30 transition-colors group/card">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex-1 mr-4">
+                                            <div key={idx} className="relative p-5 rounded-2xl bg-black/20 border border-white/5 hover:border-emerald-500/30 transition-colors group/card overflow-hidden">
+                                                <div className="flex justify-between items-start mb-4 gap-4">
+                                                    <div className="flex-1 min-w-0">
                                                         <h3 className="font-semibold text-stone-200 truncate group-hover/card:text-emerald-200 transition-colors" title={summary.eventName}>
                                                             {summary.eventName}
                                                         </h3>
@@ -178,16 +178,16 @@ export default function CheckStatusPage() {
                                                             {summary.status}
                                                         </Badge>
                                                     </div>
-                                                    <div className="text-right whitespace-nowrap">
+                                                    <div className="text-right whitespace-nowrap shrink-0">
                                                         <p className="text-[10px] text-stone-500 uppercase tracking-wider mb-0.5">Total</p>
                                                         <p className="font-bold text-lg text-white">₹{summary.eventCost.toLocaleString()}</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-3 pt-2 border-t border-white/5">
-                                                    <div className="flex justify-between text-sm font-medium">
-                                                        <span className="text-stone-400">Paid: <span className="text-stone-200">₹{summary.totalPaid.toLocaleString()}</span></span>
-                                                        <span className={summary.pendingAmount > 0 ? "text-emerald-400" : "text-emerald-400"}>
+                                                    <div className="flex justify-between items-center text-sm font-medium gap-2">
+                                                        <span className="text-stone-400 truncate">Paid: <span className="text-stone-200">₹{summary.totalPaid.toLocaleString()}</span></span>
+                                                        <span className={`whitespace-nowrap ${summary.pendingAmount > 0 ? "text-emerald-400" : "text-emerald-400"}`}>
                                                             {summary.pendingAmount > 0 ? `${summary.pendingAmount.toLocaleString()} Due` : "Settled"}
                                                         </span>
                                                     </div>
