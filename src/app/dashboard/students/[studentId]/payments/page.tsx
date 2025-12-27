@@ -203,12 +203,18 @@ export default function StudentPaymentsPage() {
             {transactions?.map(transaction => (
               <GlassCard key={transaction.id} className="w-full">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg font-code">{transaction.id}</CardTitle>
-                      <CardDescription>{transaction.eventName}</CardDescription>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg font-code truncate" title={transaction.id}>
+                        #{transaction.id.slice(-8)}
+                      </CardTitle>
+                      <CardDescription className="truncate" title={transaction.eventName}>
+                        {transaction.eventName}
+                      </CardDescription>
                     </div>
-                    <StatusBadge status={transaction.status} />
+                    <div className="shrink-0">
+                      <StatusBadge status={transaction.status} />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="grid gap-4">

@@ -412,7 +412,7 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                    <Button onClick={handleGenerateReport} disabled={isLoading} className="gap-2 w-full sm:w-auto">
+                    <Button onClick={handleGenerateReport} disabled={isLoading} className="gap-2 w-full sm:w-auto text-white">
                         <Filter className="h-4 w-4" />
                         {isLoading ? 'Generating...' : 'Generate Report'}
                     </Button>

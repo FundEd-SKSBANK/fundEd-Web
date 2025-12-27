@@ -66,8 +66,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-stone-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-100 overflow-x-hidden relative cursor-none">
 
-      {/* Custom Cursor */}
-      <CustomCursor />
+      {/* Custom Cursor - Disabled on mobile/tablet */}
+      <div className="hidden lg:block">
+        <CustomCursor />
+        <MouseFollower />
+      </div>
 
       {/* Noise Texture Overlay */}
       <div className="fixed inset-0 z-[50] opacity-[0.07] pointer-events-none mix-blend-overlay"
@@ -87,9 +90,6 @@ export default function Home() {
 
         {/* Additional accent orb */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-cyan-500/20 via-emerald-600/15 to-transparent blur-[100px] mix-blend-screen opacity-50 animate-pulse-slow" />
-
-        {/* Mouse Follower Light */}
-        <MouseFollower />
       </div>
 
       {/* Decorative Side Elements - Enhanced */}
@@ -107,28 +107,41 @@ export default function Home() {
 
       {/* Navigation - Enhanced */}
       <nav className="fixed top-0 w-full z-[60] bg-transparent py-8 backdrop-blur-sm">
-        <div className="w-full px-8 md:px-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-4 group">
+        <div className="w-full px-6 md:px-16 flex items-center justify-between gap-4">
+          <a href="/" className="flex items-center gap-4 group shrink-0">
             <div className="relative">
               <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
-              <span className="relative text-base font-bold tracking-[0.25em] text-white group-hover:text-emerald-200 transition-colors uppercase">
-                FundEd <span className="text-emerald-500/50 mx-3">●</span> Finance
+              <span className="relative text-sm md:text-base font-bold tracking-[0.25em] text-white group-hover:text-emerald-200 transition-colors uppercase">
+                FundEd <span className="text-emerald-500/50 mx-2 md:mx-3">●</span> Finance
               </span>
             </div>
           </a>
 
           <div className="flex items-center gap-4">
-            <Link href="/check-status" className="hidden md:block">
-              <Button variant="ghost" className="text-sm font-medium tracking-[0.1em] text-emerald-100 hover:text-white uppercase hover:bg-emerald-500/10">
-                Check Status
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button className="relative text-xs font-bold tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-8 py-6 rounded-full overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                <span className="relative z-10">Access Portal</span>
-              </Button>
-            </Link>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-4">
+              <Link href="/check-status">
+                <Button variant="ghost" className="text-sm font-medium tracking-[0.1em] text-emerald-100 hover:text-white uppercase hover:bg-emerald-500/10">
+                  Check Status
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button className="relative text-xs font-bold tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-8 py-6 rounded-full overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                  <span className="relative z-10">Access Portal</span>
+                </Button>
+              </Link>
+            </div>
+
+            {/* Mobile Navigation - Only Check Status (Primary Style) */}
+            <div className="flex md:hidden">
+              <Link href="/check-status">
+                <Button className="relative text-[10px] font-bold tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-6 py-4 rounded-full overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                  <span className="relative z-10">Check Status</span>
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>

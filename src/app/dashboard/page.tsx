@@ -60,7 +60,7 @@ function StatCard({ title, value, description, icon, trend, className }: StatCar
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold truncate">{value}</div>
+                <div className="text-xl md:text-2xl font-bold truncate">{value}</div>
                 <p className="text-xs text-muted-foreground mt-1 truncate">
                     {description}
                 </p>
@@ -102,11 +102,11 @@ export default function DashboardPage() {
     const stats = useMemo(() => {
         const totalCollected = transactions
             .filter(t => t.status === 'Paid')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
         const pendingAmount = transactions
             .filter(t => t.status === 'Pending' || t.status === 'Verification Pending')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
         const uniqueStudents = new Set(transactions.map(t => t.studentId)).size;
 
