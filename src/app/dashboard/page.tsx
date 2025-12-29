@@ -202,37 +202,37 @@ export default function DashboardPage() {
                     <div className="grid gap-4 md:hidden">
                         {recentTransactions?.map(transaction => (
                             <GlassCard key={transaction.id} className="w-full border-l-4 border-l-primary/20">
-                                <CardHeader>
-                                    <div className="flex justify-between items-start gap-2">
+                                <CardHeader className="pb-3">
+                                    <div className="flex justify-between items-start gap-3">
                                         <div className="min-w-0 flex-1">
-                                            <CardTitle className="text-sm font-code truncate" title={transaction.id}>
+                                            <CardTitle className="text-sm font-code break-all" title={transaction.id}>
                                                 #{transaction.id.slice(-8)}
                                             </CardTitle>
-                                            <CardDescription className="truncate">{transaction.studentName}</CardDescription>
+                                            <CardDescription className="mt-1 break-words">{transaction.studentName}</CardDescription>
                                         </div>
-                                        <div className="shrink-0">
+                                        <div className="shrink-0 ml-2">
                                             <StatusBadge status={transaction.status} />
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="grid gap-4">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Event</span>
-                                        <span className="font-medium">{transaction.eventName}</span>
+                                <CardContent className="grid gap-3 pt-0">
+                                    <div className="flex items-center justify-between text-sm gap-4">
+                                        <span className="text-muted-foreground shrink-0">Event</span>
+                                        <span className="font-medium text-right break-words">{transaction.eventName}</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Amount</span>
-                                        <span className="font-semibold text-green-600 dark:text-green-400">
+                                    <div className="flex items-center justify-between text-sm gap-4">
+                                        <span className="text-muted-foreground shrink-0">Amount</span>
+                                        <span className="font-semibold text-green-600 dark:text-green-400 shrink-0">
                                             ₹{transaction.amount.toLocaleString()}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Date</span>
-                                        <span>{formatDate(transaction.paymentDate)}</span>
+                                    <div className="flex items-center justify-between text-sm gap-4">
+                                        <span className="text-muted-foreground shrink-0">Date</span>
+                                        <span className="shrink-0">{formatDate(transaction.paymentDate)}</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Method</span>
-                                        <span>{transaction.paymentMethod}</span>
+                                    <div className="flex items-center justify-between text-sm gap-4">
+                                        <span className="text-muted-foreground shrink-0">Method</span>
+                                        <span className="text-right break-words">{transaction.paymentMethod}</span>
                                     </div>
                                 </CardContent>
                             </GlassCard>

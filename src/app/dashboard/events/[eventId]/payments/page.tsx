@@ -385,36 +385,40 @@ export default function EventPaymentsPage() {
           <div className="grid gap-4 md:hidden">
             {filteredTransactions?.map(transaction => (
               <Card key={transaction.id} className="w-full">
-                <CardHeader>
-                  <div className="flex justify-between items-start gap-2">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start gap-3">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-lg font-code truncate">
+                      <CardTitle className="text-base font-code break-all">
                         {transaction.id.startsWith('pending_') ? 'BALANCE DUE' : transaction.id}
                       </CardTitle>
-                      <CardDescription className="truncate">{transaction.studentName} ({transaction.studentRoll})</CardDescription>
+                      <CardDescription className="mt-1 break-words">
+                        {transaction.studentName} ({transaction.studentRoll})
+                      </CardDescription>
                     </div>
-                    <div className="shrink-0">
+                    <div className="shrink-0 ml-2">
                       <StatusBadge status={transaction.status} />
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Amount</span>
-                    <span className="font-semibold">₹{transaction.amount.toLocaleString()}</span>
+                <CardContent className="grid gap-3 pt-0">
+                  <div className="flex items-center justify-between text-sm gap-4">
+                    <span className="text-muted-foreground shrink-0">Amount</span>
+                    <span className="font-semibold shrink-0">₹{transaction.amount.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Date</span>
-                    <span>{formatDate(transaction.paymentDate)}</span>
+                  <div className="flex items-center justify-between text-sm gap-4">
+                    <span className="text-muted-foreground shrink-0">Date</span>
+                    <span className="shrink-0">{formatDate(transaction.paymentDate)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Method</span>
-                    <span>{transaction.paymentMethod}</span>
+                  <div className="flex items-center justify-between text-sm gap-4">
+                    <span className="text-muted-foreground shrink-0">Method</span>
+                    <span className="text-right break-words">{transaction.paymentMethod}</span>
                   </div>
                   {transaction.status === 'Verification Pending' && (
-                    <div className="flex items-center justify-between text-sm pt-4 border-t">
-                      <span className="text-muted-foreground">Actions</span>
-                      <PaymentActions transaction={transaction} />
+                    <div className="flex flex-col gap-3 pt-3 border-t">
+                      <span className="text-sm text-muted-foreground">Actions</span>
+                      <div className="flex items-center justify-center gap-3">
+                        <PaymentActions transaction={transaction} />
+                      </div>
                     </div>
                   )}
                 </CardContent>
