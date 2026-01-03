@@ -47,6 +47,7 @@ import {
 import { sendPrintDistributionEmail } from '@/app/actions';
 import { getPrintData, distributePrint } from '@/actions/prints';
 import { PageLoader } from '@/components/ui/page-loader';
+import { formatDate, getStudentsWhoPaid, filterStudentsBySearch } from './page.utils';
 
 export default function PrintsPage() {
   const [open, setOpen] = useState(false);
@@ -89,27 +90,12 @@ export default function PrintsPage() {
 
 
   const studentsWhoPaid = useMemo(() => {
-    if (!allStudents || !paidPayments || !distributions || !selectedEventId) return [];
-
-    const eventPaidStudentIds = paidPayments
-      .filter(p => p.eventId === selectedEventId)
-      .map(p => p.studentId);
-
-    const eventDistributedStudentIds = distributions
-      .filter(d => d.eventId === selectedEventId)
-      .map(d => d.studentId);
-
-    return allStudents.filter(s => eventPaidStudentIds.includes(s.id) && !eventDistributedStudentIds.includes(s.id));
+    return getStudentsWhoPaid(allStudents, paidPayments, distributions, selectedEventId);
   }, [allStudents, paidPayments, distributions, selectedEventId]);
 
 
   const filteredStudents = useMemo(() => {
-    if (!searchValue) return studentsWhoPaid;
-    return studentsWhoPaid.filter(
-      (student) =>
-        student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        student.rollNo.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    return filterStudentsBySearch(studentsWhoPaid, searchValue);
   }, [searchValue, studentsWhoPaid]);
 
   const selectedEvent = printEvents?.find(e => e.id === selectedEventId);
@@ -157,11 +143,6 @@ export default function PrintsPage() {
 
       setIsSubmitting(false);
     }
-  };
-
-  const formatDate = (date: string | Date) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
   };
 
 

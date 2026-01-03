@@ -220,7 +220,7 @@ export default function DashboardClientLayout({
                     </Sidebar>
 
                     <div className="flex flex-col flex-1">
-                        <header className="flex h-16 items-center gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-4 md:px-8 sticky top-0 z-30">
+                        <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-2 sm:px-4 md:px-8 sticky top-0 z-30">
                             <MobileNav />
                             <div className="w-full flex-1">
                                 {/* Optional: Add a search bar here */}
@@ -228,10 +228,10 @@ export default function DashboardClientLayout({
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-white/10">
-                                        <Bell className="h-5 w-5 text-stone-300" />
+                                    <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-white/10 h-8 w-8 sm:h-10 sm:w-10 shrink-0">
+                                        <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-stone-300" />
                                         {pendingTransactions && pendingTransactions.length > 0 && (
-                                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-emerald-500">
+                                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[10px] sm:text-xs bg-emerald-500">
                                                 {pendingTransactions.length}
                                             </Badge>
                                         )}
@@ -257,10 +257,10 @@ export default function DashboardClientLayout({
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-white/10">
-                                        <Avatar className="h-9 w-9 ring-2 ring-emerald-500/20">
+                                    <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-white/10 shrink-0">
+                                        <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-emerald-500/20">
                                             <AvatarImage src={adminUser?.image || "https://picsum.photos/seed/1/100/100"} alt={adminUser?.name || "Admin"} className="object-cover" />
-                                            <AvatarFallback className="bg-emerald-500/20 text-emerald-400">
+                                            <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm">
                                                 {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'A'}
                                             </AvatarFallback>
                                         </Avatar>
@@ -290,7 +290,7 @@ export default function DashboardClientLayout({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </header>
-                        <main className="flex flex-1 flex-col gap-4 p-2 sm:p-4 md:gap-8 md:p-8 relative z-10 overflow-x-hidden w-full">
+                        <main className="flex flex-1 flex-col gap-3 sm:gap-4 p-2 sm:p-4 md:gap-8 md:p-8 relative z-10 overflow-x-hidden w-full min-w-0">
                             {children}
                         </main>
 

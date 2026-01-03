@@ -73,6 +73,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getCollectionProgress, copyPaymentLink, filterStudents } from './page.utils';
 
 export default function EventsPage() {
 
@@ -96,11 +97,7 @@ export default function EventsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionDialogOpen, setIsSelectionDialogOpen] = useState(false);
 
-    const filteredStudents = students.filter(student =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.rollNo.includes(searchQuery) ||
-        student.class.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredStudents = filterStudents(students, searchQuery);
 
     useEffect(() => {
         fetchData();
@@ -249,23 +246,9 @@ export default function EventsPage() {
     };
 
 
-    const copyPaymentLink = (eventId: string) => {
-        const link = `${window.location.origin}/pay/${eventId}`;
-        navigator.clipboard.writeText(link);
+    const handleCopyPaymentLink = (eventId: string) => {
+        copyPaymentLink(eventId, window.location.origin);
         toast({ title: 'Link Copied', description: 'Payment link copied to clipboard' });
-    };
-
-    // Helper to check if event has payments to calculate progress
-    const getCollectionProgress = (event: Event) => {
-        if (students.length === 0) return 0;
-
-        const paidStudentsCount = event.payments
-            ? new Set(event.payments.filter(p => p.status === 'Paid').map(p => p.studentId)).size
-            : 0;
-
-        const totalParticipants = event.participantCount || students.length;
-        if (totalParticipants === 0) return 0;
-        return (paidStudentsCount / totalParticipants) * 100;
     };
 
     if (isLoading) {
@@ -612,7 +595,7 @@ export default function EventsPage() {
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 Edit
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => copyPaymentLink(event.id)}>
+                                            <DropdownMenuItem onClick={() => handleCopyPaymentLink(event.id)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 Copy Payment Link
                                             </DropdownMenuItem>
@@ -644,9 +627,9 @@ export default function EventsPage() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-muted-foreground">Collection Progress</span>
-                                        <span className="font-medium">{getCollectionProgress(event).toFixed(1)}%</span>
+                                        <span className="font-medium">{getCollectionProgress(event, students).toFixed(1)}%</span>
                                     </div>
-                                    <Progress value={getCollectionProgress(event)} className="h-2" />
+                                    <Progress value={getCollectionProgress(event, students)} className="h-2" />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 text-sm pt-2">

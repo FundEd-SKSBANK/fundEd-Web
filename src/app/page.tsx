@@ -136,9 +136,9 @@ export default function Home() {
             {/* Mobile Navigation - Only Check Status (Primary Style) */}
             <div className="flex md:hidden">
               <Link href="/check-status">
-                <Button className="relative text-[10px] font-bold tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-6 py-4 rounded-full overflow-hidden group">
+                <Button className="relative text-[9px] sm:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-4 sm:px-6 py-3 sm:py-4 rounded-full overflow-hidden group whitespace-nowrap">
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                  <span className="relative z-10">Check Status</span>
+                  <span className="relative z-10">Check</span>
                 </Button>
               </Link>
             </div>

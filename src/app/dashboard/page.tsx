@@ -25,21 +25,7 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { Wallet, TrendingUp, Clock, Users } from 'lucide-react';
 import Link from 'next/link';
 import { StatisticsChart } from '@/components/statistics-chart';
-
-const getStatusBadgeVariant = (status: Transaction['status']) => {
-    switch (status) {
-        case 'Paid':
-            return 'paid';
-        case 'Pending':
-            return 'pending';
-        case 'Failed':
-            return 'failed';
-        case 'Verification Pending':
-            return 'verification';
-        default:
-            return 'default';
-    }
-};
+import { formatDate, getStatusBadgeVariant } from './page.utils';
 
 interface StatCardProps {
     title: string;
@@ -53,25 +39,25 @@ interface StatCardProps {
 function StatCard({ title, value, description, icon, trend, className }: StatCardProps) {
     return (
         <GlassCard className={`relative overflow-hidden transition-all hover:shadow-lg w-full min-w-0 ${className}`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pr-10 md:pr-12">
-                <CardTitle className="text-sm font-medium truncate pr-2">{title}</CardTitle>
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pr-8 sm:pr-10 md:pr-12">
+                <CardTitle className="text-xs sm:text-sm font-medium truncate pr-2">{title}</CardTitle>
+                <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     {icon}
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-xl md:text-2xl font-bold truncate">{value}</div>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold truncate">{value}</div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 truncate">
                     {description}
                 </p>
                 {trend && (
-                    <div className="flex items-center mt-2 text-xs text-green-600 dark:text-green-400 truncate">
+                    <div className="flex items-center mt-2 text-[10px] sm:text-xs text-green-600 dark:text-green-400 truncate">
                         <TrendingUp className="h-3 w-3 mr-1 shrink-0" />
                         <span className="truncate">{trend}</span>
                     </div>
                 )}
             </CardContent>
-            <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-12 -mt-12 md:-mr-16 md:-mt-16 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-10 -mt-10 sm:-mr-12 sm:-mt-12 md:-mr-16 md:-mt-16 pointer-events-none" />
         </GlassCard>
     );
 }
@@ -118,11 +104,6 @@ export default function DashboardPage() {
         };
     }, [events, transactions]);
 
-    const formatDate = (date: string | Date) => {
-        const d = new Date(date);
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    };
-
     const StatusBadge = ({ status }: { status: Transaction['status'] }) => {
         const variant = getStatusBadgeVariant(status);
         return (
@@ -137,7 +118,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8 w-full max-w-full overflow-hidden">
             {/* Welcome Section */}
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
@@ -147,18 +128,18 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 min-w-0">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 w-full max-w-full">
                 <StatCard
                     title="Total Events"
                     value={stats.totalEvents.toString()}
                     description="Active fund collection events"
-                    icon={<Wallet className="h-4 w-4" />}
+                    icon={<Wallet className="h-3 w-3 sm:h-4 sm:w-4" />}
                 />
                 <StatCard
                     title="Total Collected"
                     value={`₹${stats.totalCollected.toLocaleString()}`}
                     description="Successfully collected funds"
-                    icon={<TrendingUp className="h-4 w-4" />}
+                    icon={<TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />}
                     trend="+12% from last month"
                     className="border-green-200 dark:border-green-900"
                 />
@@ -166,14 +147,14 @@ export default function DashboardPage() {
                     title="Pending Payments"
                     value={`₹${stats.pendingAmount.toLocaleString()}`}
                     description="Awaiting verification"
-                    icon={<Clock className="h-4 w-4" />}
+                    icon={<Clock className="h-3 w-3 sm:h-4 sm:w-4" />}
                     className="border-orange-200 dark:border-orange-900"
                 />
                 <StatCard
                     title="Active Students"
                     value={stats.uniqueStudents.toString()}
                     description="Students with transactions"
-                    icon={<Users className="h-4 w-4" />}
+                    icon={<Users className="h-3 w-3 sm:h-4 sm:w-4" />}
                 />
             </div>
 
