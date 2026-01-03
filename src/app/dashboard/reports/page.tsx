@@ -30,21 +30,7 @@ import { getEvents } from '@/actions/events';
 import { format } from 'date-fns';
 import { GlassCard } from '@/components/ui/glass-card';
 import { PageLoader } from '@/components/ui/page-loader';
-
-const getStatusBadgeVariant = (status: Transaction['status']) => {
-    switch (status) {
-        case 'Paid':
-            return 'paid';
-        case 'Pending':
-            return 'pending';
-        case 'Failed':
-            return 'failed';
-        case 'Verification Pending':
-            return 'verification';
-        default:
-            return 'default';
-    }
-};
+import { formatDate, getStatusBadgeVariant } from './page.utils';
 
 export default function ReportsPage() {
     const [reportType, setReportType] = useState<'transaction' | 'event' | 'summary' | 'student'>('transaction');
@@ -293,11 +279,6 @@ export default function ReportsPage() {
         }
     };
 
-    const formatDate = (date: string | Date) => {
-        const d = new Date(date);
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    };
-
     const StatusBadge = ({ status }: { status: string }) => {
         const variant = getStatusBadgeVariant(status as any);
         return (
@@ -435,22 +416,22 @@ export default function ReportsPage() {
             {/* Summary Cards */}
             {
                 reportSummary && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-slide-up">
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 animate-slide-up">
                         <GlassCard className="hover-lift">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
+                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{reportSummary.totalTransactions || 0}</div>
+                                <div className="text-xl sm:text-2xl font-bold">{reportSummary.totalTransactions || 0}</div>
                             </CardContent>
                         </GlassCard>
 
                         <GlassCard className="hover-lift border-green-200/20 dark:border-green-900/50 bg-green-500/5">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Total Collected</CardTitle>
+                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Collected</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                                     ₹{(reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()}
                                 </div>
                             </CardContent>
@@ -458,10 +439,10 @@ export default function ReportsPage() {
 
                         <GlassCard className="hover-lift border-orange-200/20 dark:border-orange-900/50 bg-orange-500/5">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
+                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                                <div className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
                                     ₹{(reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()}
                                 </div>
                             </CardContent>
@@ -469,10 +450,10 @@ export default function ReportsPage() {
 
                         <GlassCard className="hover-lift">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Paid Count</CardTitle>
+                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Paid Count</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{reportSummary.paidCount || 0}</div>
+                                <div className="text-xl sm:text-2xl font-bold">{reportSummary.paidCount || 0}</div>
                             </CardContent>
                         </GlassCard>
                     </div>
@@ -489,13 +470,13 @@ export default function ReportsPage() {
                                 Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
+                        <CardContent className="p-0 sm:p-6">
+                            <div className="overflow-x-auto -mx-2 sm:mx-0">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                             {Object.keys(transactions[0]).map((key) => (
-                                                <TableHead key={key} className="text-center whitespace-nowrap">{key}</TableHead>
+                                                <TableHead key={key} className="text-center whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">{key}</TableHead>
                                             ))}
                                         </TableRow>
                                     </TableHeader>
@@ -503,7 +484,7 @@ export default function ReportsPage() {
                                         {transactions.slice(0, 10).map((transaction, idx) => (
                                             <TableRow key={idx} className="hover:bg-muted/50">
                                                 {Object.values(transaction).map((value: any, i) => (
-                                                    <TableCell key={i} className="text-center">
+                                                    <TableCell key={i} className="text-center text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap">
                                                         {i === Object.keys(transaction).indexOf('Status') ? (
                                                             <div className="flex justify-center">
                                                                 <StatusBadge status={value} />

@@ -32,6 +32,7 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 
 import jsQR from 'jsqr';
+import { validateFileSize, validateImageType, fileToDataURL } from './page.utils';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -64,19 +65,18 @@ export default function SettingsPage() {
   const handleFileSelect = async (file: File) => {
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (!validateFileSize(file, 2)) {
       toast({ variant: "destructive", title: "File Too Large", description: "Please upload an image smaller than 2MB." });
       return;
     }
 
-    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+    if (!validateImageType(file)) {
       toast({ variant: "destructive", title: "Invalid Format", description: "Only PNG, JPG, and WebP formats are allowed." });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
+    try {
+      const imageUrl = await fileToDataURL(file);
       const img = document.createElement('img');
       img.src = imageUrl;
       img.onload = () => {
@@ -99,8 +99,9 @@ export default function SettingsPage() {
           toast({ variant: "destructive", title: "Invalid QR Code", description: "Could not detect a valid QR code in this image." });
         }
       };
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to process image file." });
+    }
   };
 
   const fetchData = async () => {
@@ -166,17 +167,18 @@ export default function SettingsPage() {
     setIsSubmittingUser(false);
   };
 
-  const handleProfileImageSelect = (file: File) => {
+  const handleProfileImageSelect = async (file: File) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
+    if (!validateFileSize(file, 2)) {
       toast({ variant: "destructive", title: "File Too Large", description: "Limit is 2MB" });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setEditImage(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const dataURL = await fileToDataURL(file);
+      setEditImage(dataURL);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to process image file." });
+    }
   };
 
   const startEdit = (user: any) => {
