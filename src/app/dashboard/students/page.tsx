@@ -49,6 +49,7 @@ import { CSVDropzone } from '@/components/csv-dropzone';
 import Papa from 'papaparse';
 
 import { PageLoader } from '@/components/ui/page-loader';
+import { getInitials, filterStudents, copyPublicPortalLink } from './page.utils';
 
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
@@ -150,25 +151,10 @@ export default function StudentsPage() {
         });
     };
 
-    const filteredStudents = students.filter(
-        (student) =>
-            student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
-    };
+    const filteredStudents = filterStudents(students, searchQuery);
 
     const handleCopyPublicLink = () => {
-        const link = `${window.location.origin}/check-status`;
-        navigator.clipboard.writeText(link);
+        copyPublicPortalLink(window.location.origin);
         toast({
             title: 'Public Portal Link Copied',
             description: 'Share this link with students to check their status.',
