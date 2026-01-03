@@ -2,8 +2,7 @@
 
 FundEd is a modern, full-stack web application designed to streamline event payment tracking and student management for educational institutions. It features a premium, glassmorphism-inspired UI with comprehensive mobile responsiveness and a robust admin dashboard for managing transactions, students, and events.
 
-![FundEd Banner](/public/icon-512x512.png) 
-*(Replace with actual screenshot)*
+![FundEd Banner](/public/funded-icon.png)    
 
 ## ✨ Key Features
 
