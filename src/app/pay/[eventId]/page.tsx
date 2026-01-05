@@ -596,8 +596,12 @@ export default function PaymentPage() {
               Scan to Pay
             </AlertDialogTitle>
             <AlertDialogDescription className="text-stone-400">
-              Use any UPI app to scan the QR code below to pay <span className="text-white font-bold">₹{event.cost.toLocaleString()}</span> for {event.name}.
+              Use any UPI app to scan the QR code below to pay <span className="text-white font-bold">₹{amountToPay ? parseFloat(amountToPay).toLocaleString() : event.cost.toLocaleString()}</span> from the form.
               After paying, click the submit button below for verification.
+              <br />
+              <span className="block mt-2 text-xs text-yellow-500/80">
+                Disclaimer: Use another device to scan the QR to pay above ₹2000.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex justify-center p-6 bg-white rounded-xl mx-auto my-2">
