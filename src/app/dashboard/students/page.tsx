@@ -38,6 +38,7 @@ import {
     User,
     GraduationCap,
     Share2,
+    Pencil,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStudents, deleteStudent, uploadStudentsCsv } from '@/actions/students';
@@ -45,6 +46,7 @@ import { getEvents } from '@/actions/events';
 import type { Student, Event } from '@/lib/types';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AddStudentDialog } from '@/components/add-student-dialog';
+import { EditStudentDialog } from '@/components/edit-student-dialog';
 import { CSVDropzone } from '@/components/csv-dropzone';
 import Papa from 'papaparse';
 
@@ -58,6 +60,8 @@ export default function StudentsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -80,6 +84,11 @@ export default function StudentsPage() {
         }
 
         setIsLoading(false);
+    };
+
+    const handleEdit = (student: Student) => {
+        setStudentToEdit(student);
+        setEditDialogOpen(true);
     };
 
     const handleDelete = async (id: string) => {
@@ -206,6 +215,13 @@ export default function StudentsPage() {
                 </div>
             </div>
 
+            <EditStudentDialog
+                student={studentToEdit}
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                onSuccess={fetchData}
+            />
+
             {/* Search Bar */}
             <GlassCard className="p-4">
                 <div className="relative">
@@ -272,6 +288,10 @@ export default function StudentsPage() {
                                                     <Eye className="mr-2 h-4 w-4" />
                                                     View Payments
                                                 </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleEdit(student)}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Edit Details
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 onClick={() => handleDelete(student.id)}
