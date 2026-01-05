@@ -92,13 +92,13 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
                         </div>
 
                         {/* Vertical Bar Chart */}
-                        <div className="flex items-end justify-between gap-2 h-48 px-2">
+                        <div className="flex items-stretch justify-between gap-2 h-48 px-2">
                             {data.map((item, index) => {
-                                const value = metric === 'collections' ? item.collections : item.transactions;
+                                const value = metric === 'collections' ? Number(item.collections) : Number(item.transactions);
                                 const heightPercent = (value / maxValue) * 100;
 
                                 return (
-                                    <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div key={index} className="flex-1 flex flex-col items-center justify-end gap-2 group h-full">
                                         {/* Value on hover */}
                                         <div className="h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <span className="text-xs font-medium text-emerald-600">
