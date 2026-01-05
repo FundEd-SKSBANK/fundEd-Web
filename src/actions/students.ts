@@ -11,6 +11,15 @@ interface AddStudentInput {
   phone?: string;
 }
 
+interface UpdateStudentInput {
+  id: string;
+  name: string;
+  rollNumber: string;
+  class: string;
+  email?: string;
+  phone?: string;
+}
+
 export async function addStudent(input: AddStudentInput) {
   try {
     // Check if student with same roll number already exists
@@ -47,6 +56,52 @@ export async function addStudent(input: AddStudentInput) {
   } catch (error) {
     console.error('Error adding student:', error);
     return { success: false, error: 'Failed to add student' };
+  }
+}
+
+export async function updateStudent(input: UpdateStudentInput) {
+  try {
+    // Check if another student has the same roll number (excluding current student)
+    const existingStudent = await prisma.student.findFirst({
+      where: { 
+        rollNo: input.rollNumber,
+        NOT: {
+          id: input.id
+        }
+      }
+    });
+    
+    if (existingStudent) {
+      return { success: false, error: 'Another student with this roll number already exists' };
+    }
+
+    // Update student
+    const student = await prisma.student.update({
+      where: { id: input.id },
+      data: {
+        name: input.name,
+        rollNo: input.rollNumber,
+        email: input.email || '',
+        class: input.class,
+        // Add phone if schema supports it, otherwise omit or update if schema changes in future
+      },
+    });
+
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/students');
+    revalidatePath('/dashboard/events');
+
+    return { 
+      success: true, 
+      student: {
+        id: student.id,
+        name: student.name,
+        rollNumber: student.rollNo,
+      }
+    };
+  } catch (error) {
+    console.error('Error updating student:', error);
+    return { success: false, error: 'Failed to update student' };
   }
 }
 
