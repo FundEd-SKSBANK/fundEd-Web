@@ -107,7 +107,7 @@ export async function updateUser(data: { id: string; name: string; email: string
         const updateData: any = {
             name: data.name,
             email: data.email,
-            image: data.image
+            image: data.image === '' ? null : data.image
         };
 
         if (data.password && data.password.trim() !== '') {

@@ -367,22 +367,22 @@ export default function SettingsPage() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="flex justify-center mb-4">
-                    <div className="relative w-24 h-24 group cursor-pointer">
-                      <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full">
+                    <div className="relative w-24 h-24 group">
+                      <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full relative overflow-hidden rounded-full">
                         {editImage ? (
                           <Image
                             src={editImage}
                             alt="Profile"
                             fill
-                            className="rounded-full object-cover border-2 border-emerald-500/50"
+                            className="object-cover border-2 border-emerald-500/50"
                           />
                         ) : (
-                          <div className="w-full h-full rounded-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                          <div className="w-full h-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
                             <PlusCircle className="w-8 h-8 opacity-50" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-xs text-white">Change</span>
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-xs text-white font-medium">Change</span>
                         </div>
                       </Label>
                       <Input
@@ -395,6 +395,21 @@ export default function SettingsPage() {
                           if (file) handleProfileImageSelect(file);
                         }}
                       />
+                      {editImage && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full shadow-lg border-2 border-black z-10"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditImage('');
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
