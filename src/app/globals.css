@@ -10,19 +10,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
-    --accent: 280 80% 60%;
+    --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 217 91% 60%;
+    --ring: 160 84% 39%;
     --chart-1: 217 91% 60%;
     --chart-2: 280 80% 60%;
     --chart-3: 173 58% 39%;
@@ -46,19 +46,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
-    --accent: 280 80% 60%;
+    --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 217 91% 60%;
+    --ring: 160 84% 39%;
     --chart-1: 217 91% 60%;
     --chart-2: 280 80% 60%;
     --chart-3: 173 58% 39%;
@@ -130,7 +130,7 @@
 
   /* Gradient Backgrounds - Professional Colors */
   .gradient-primary {
-    background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   }
 
   .gradient-secondary {

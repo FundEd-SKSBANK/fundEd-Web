@@ -293,20 +293,21 @@ export default function SettingsPage() {
                 </div>
               )}
               {qrCodes?.map(qr => (
-                <GlassCard key={qr.id} variant="bordered" className="bg-black/20">
-                  <CardContent className="p-4 flex flex-col items-center gap-4">
-                    <Image
-                      src={qr.url}
-                      alt={qr.name}
-                      width={150}
-                      height={150}
-                      className="rounded-lg border aspect-square object-contain bg-white"
-                    />
-                    <p className="font-medium">{qr.name}</p>
+                <GlassCard key={qr.id} variant="bordered" className="bg-black/20 overflow-hidden flex flex-col h-full">
+                  <CardContent className="p-6 pt-10 flex flex-col items-center gap-4 flex-1">
+                    <div className="relative w-40 h-40 bg-white rounded-xl p-2 flex items-center justify-center shadow-inner overflow-hidden">
+                      <Image
+                        src={qr.url}
+                        alt={qr.name}
+                        fill
+                        className="object-contain p-2"
+                      />
+                    </div>
+                    <p className="font-medium text-center text-sm mt-2">{qr.name}</p>
                   </CardContent>
-                  <CardFooter className="p-2 border-t border-white/10">
-                    <Button variant="ghost" size="sm" className="w-full text-destructive hover:bg-destructive/10" onClick={() => handleDeleteQr(qr.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                  <CardFooter className="p-0 border-t border-white/10">
+                    <Button variant="ghost" size="lg" className="w-full h-12 rounded-t-none text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center justify-center gap-2" onClick={() => handleDeleteQr(qr.id)}>
+                      <Trash2 className="h-4 w-4" /> Delete QR Code
                     </Button>
                   </CardFooter>
                 </GlassCard>
@@ -367,22 +368,22 @@ export default function SettingsPage() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="flex justify-center mb-4">
-                    <div className="relative w-24 h-24 group cursor-pointer">
-                      <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full">
+                    <div className="relative w-24 h-24 group">
+                      <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full relative overflow-hidden rounded-full">
                         {editImage ? (
                           <Image
                             src={editImage}
                             alt="Profile"
                             fill
-                            className="rounded-full object-cover border-2 border-emerald-500/50"
+                            className="object-cover border-2 border-emerald-500/50"
                           />
                         ) : (
-                          <div className="w-full h-full rounded-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                          <div className="w-full h-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
                             <PlusCircle className="w-8 h-8 opacity-50" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-xs text-white">Change</span>
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-xs text-white font-medium">Change</span>
                         </div>
                       </Label>
                       <Input
@@ -395,6 +396,21 @@ export default function SettingsPage() {
                           if (file) handleProfileImageSelect(file);
                         }}
                       />
+                      {editImage && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full shadow-lg border-2 border-black z-10"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditImage('');
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
