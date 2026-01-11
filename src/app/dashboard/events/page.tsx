@@ -276,7 +276,7 @@ export default function EventsPage() {
                         setIsDialogOpen(open);
                     }}>
                         <DialogTrigger asChild>
-                            <Button onClick={resetForm} className="gap-2 gradient-primary w-full md:w-auto">
+                            <Button onClick={resetForm} className="gap-2 gradient-success w-full md:w-auto border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300">
                                 <Plus className="h-4 w-4" />
                                 Create Event
                             </Button>
@@ -645,7 +645,7 @@ export default function EventsPage() {
 
                                 <div className="pt-2">
                                     <Link href={`/dashboard/events/${event.id}/payments`} className="w-full block">
-                                        <Button variant="outline" className="w-full gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                        <Button className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/10 transition-all duration-300">
                                             <Eye className="h-4 w-4" />
                                             View Payments
                                         </Button>

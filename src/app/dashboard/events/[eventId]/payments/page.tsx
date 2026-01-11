@@ -10,6 +10,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -27,13 +37,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Check, X, DollarSign } from 'lucide-react';
+import { ArrowLeft, Check, X, DollarSign, Trash2 } from 'lucide-react';
 import type { Transaction, Event, Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { sendPaymentApprovedEmail } from '@/app/actions';
 import { PageLoader } from '@/components/ui/page-loader';
 import { useEffect, useState } from 'react';
-import { getEventPayments, updatePaymentStatus } from '@/actions/payments';
+import { getEventPayments, updatePaymentStatus, deletePayment } from '@/actions/payments';
 import { getStudents } from '@/actions/students';
 import { RecordCashPaymentDialog } from '@/components/record-cash-payment-dialog';
 
@@ -63,6 +73,20 @@ export default function EventPaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, pendingCount: 0, paidCount: 0 });
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    const res = await deletePayment(deleteId);
+    if (res.success) {
+      toast({ title: 'Payment Deleted', description: 'The payment record has been removed.' });
+      fetchPayments();
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete payment.' });
+    }
+    setDeleteId(null);
+  };
 
   const filteredTransactions = transactions.filter(t => {
     if (filterStatus === 'all') return true;
@@ -180,26 +204,60 @@ export default function EventPaymentsPage() {
     );
   };
 
-  const PaymentActions = ({ transaction }: { transaction: Transaction }) => {
-    if (transaction.status !== 'Verification Pending') return null;
+  const handleDeletePayment = (id: string) => {
+    setDeleteId(id);
+  };
 
+  const PaymentActions = ({ transaction }: { transaction: Transaction }) => {
+    // If it's a virtual pending transaction, no actions available
+    if (transaction.id.startsWith('pending_')) return null;
+
+    if (transaction.status === 'Verification Pending') {
+      return (
+        <div className="flex items-center gap-2 justify-center">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+            onClick={() => handlePaymentAction(transaction, 'Paid')}>
+            <Check className="h-4 w-4" />
+            <span className="sr-only">Confirm</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+            onClick={() => handlePaymentAction(transaction, 'Failed')}>
+            <X className="h-4 w-4" />
+            <span className="sr-only">Reject</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeletePayment(transaction.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+
+    // For already validated payments (Paid/Failed), allow deletion
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center">
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
-          onClick={() => handlePaymentAction(transaction, 'Paid')}>
-          <Check className="h-4 w-4" />
-          <span className="sr-only">Confirm</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-          onClick={() => handlePaymentAction(transaction, 'Failed')}>
-          <X className="h-4 w-4" />
-          <span className="sr-only">Reject</span>
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={() => handleDeletePayment(transaction.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete</span>
         </Button>
       </div>
     );
@@ -286,7 +344,7 @@ export default function EventPaymentsPage() {
           <Card className="glass-card w-full max-w-full overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium truncate pr-2">Efficiency</CardTitle>
-              <ArrowLeft className="h-4 w-4 text-blue-500 rotate-45 shrink-0" />
+              <ArrowLeft className="h-4 w-4 text-emerald-500 rotate-45 shrink-0" />
             </CardHeader>
             <CardContent>
               {(() => {
@@ -477,6 +535,23 @@ export default function EventPaymentsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the payment record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

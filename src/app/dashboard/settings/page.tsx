@@ -293,20 +293,21 @@ export default function SettingsPage() {
                 </div>
               )}
               {qrCodes?.map(qr => (
-                <GlassCard key={qr.id} variant="bordered" className="bg-black/20">
-                  <CardContent className="p-4 flex flex-col items-center gap-4">
-                    <Image
-                      src={qr.url}
-                      alt={qr.name}
-                      width={150}
-                      height={150}
-                      className="rounded-lg border aspect-square object-contain bg-white"
-                    />
-                    <p className="font-medium">{qr.name}</p>
+                <GlassCard key={qr.id} variant="bordered" className="bg-black/20 overflow-hidden flex flex-col h-full">
+                  <CardContent className="p-6 pt-10 flex flex-col items-center gap-4 flex-1">
+                    <div className="relative w-40 h-40 bg-white rounded-xl p-2 flex items-center justify-center shadow-inner overflow-hidden">
+                      <Image
+                        src={qr.url}
+                        alt={qr.name}
+                        fill
+                        className="object-contain p-2"
+                      />
+                    </div>
+                    <p className="font-medium text-center text-sm mt-2">{qr.name}</p>
                   </CardContent>
-                  <CardFooter className="p-2 border-t border-white/10">
-                    <Button variant="ghost" size="sm" className="w-full text-destructive hover:bg-destructive/10" onClick={() => handleDeleteQr(qr.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                  <CardFooter className="p-0 border-t border-white/10">
+                    <Button variant="ghost" size="lg" className="w-full h-12 rounded-t-none text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center justify-center gap-2" onClick={() => handleDeleteQr(qr.id)}>
+                      <Trash2 className="h-4 w-4" /> Delete QR Code
                     </Button>
                   </CardFooter>
                 </GlassCard>

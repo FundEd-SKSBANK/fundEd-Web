@@ -95,8 +95,15 @@ export function RecordCashPaymentDialog({
             .filter(p => p.eventId === selectedEvent.id && p.status === 'Paid')
             .map(p => p.studentId);
 
+        let eligibleStudents = students;
+
+        // Filter by participants if applicable
+        if (selectedEvent.participantIds && selectedEvent.participantIds.length > 0) {
+            eligibleStudents = eligibleStudents.filter(s => selectedEvent.participantIds?.includes(s.id));
+        }
+
         // Return only students who haven't paid
-        return students.filter(s => !paidStudentIds.includes(s.id));
+        return eligibleStudents.filter(s => !paidStudentIds.includes(s.id));
     };
 
     const unpaidStudents = getUnpaidStudents();
