@@ -6,7 +6,10 @@ import { revalidatePath } from 'next/cache';
 export async function getPaymentPageData(eventId: string) {
   try {
     const [event, students, payments] = await Promise.all([
-      prisma.event.findUnique({ where: { id: eventId } }),
+      prisma.event.findUnique({ 
+        where: { id: eventId },
+        include: { participants: { select: { id: true } } }
+      }),
       prisma.student.findMany({ orderBy: { rollNo: 'asc' } }),
       prisma.payment.findMany({ where: { eventId } })
     ]);
@@ -23,9 +26,17 @@ export async function getPaymentPageData(eventId: string) {
         }
     });
 
+    // Determine eligible students (participants only, or all if none specified)
+    const participantIds = new Set(event.participants.map(p => p.id));
+    let eligibleStudents = students;
+
+    if (participantIds.size > 0) {
+        eligibleStudents = students.filter(s => participantIds.has(s.id));
+    }
+
     // Filter out students who have paid the full cost (or more)
     // And attach the paidAmount to the student object
-    const availableStudents = students
+    const availableStudents = eligibleStudents
         .map(s => ({
             ...s,
             paidAmount: studentPaidMap.get(s.id) || 0

@@ -131,3 +131,17 @@ export async function updatePaymentStatus(id: string, status: string) {
     return { success: false, error: 'Failed to update payment status' };
   }
 }
+
+export async function deletePayment(id: string) {
+  try {
+    const payment = await prisma.payment.delete({
+      where: { id },
+    });
+    
+    revalidatePath(`/dashboard/events/${payment.eventId}/payments`);
+    return { success: true, data: payment };
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    return { success: false, error: 'Failed to delete payment' };
+  }
+}
