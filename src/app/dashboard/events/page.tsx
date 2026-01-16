@@ -23,6 +23,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import {
     Select,
     SelectContent,
@@ -192,30 +193,29 @@ export default function EventsPage() {
             if (editingEvent?.id) fetchData(true); // Revert to server state
         }
     };
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
 
-    const handleDelete = (id: string) => {
-        setDeleteId(id);
+    const handleDelete = (event: Event) => {
+        setDeletingEvent(event);
     };
 
     const confirmDelete = async () => {
-        if (!deleteId) return;
+        if (!deletingEvent) return;
 
         // Optimistic update
         const previousEvents = [...events];
-        setEvents(events.filter(e => e.id !== deleteId));
-        setDeleteId(null); // Close dialog immediately
+        setEvents(events.filter(e => e.id !== deletingEvent.id));
 
-        const result = await deleteEvent(deleteId);
+        const result = await deleteEvent(deletingEvent.id);
 
         if (result.success) {
             toast({ title: 'Event Deleted', description: 'Event has been deleted successfully' });
-            // No need to fetchData(), local state is already updated
         } else {
             // Revert on failure
             setEvents(previousEvents);
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
+        setDeletingEvent(null);
     };
 
 
@@ -600,7 +600,7 @@ export default function EventsPage() {
                                                 Copy Payment Link
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => handleDelete(event.id)}
+                                                onClick={() => handleDelete(event)}
                                                 className="text-destructive"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -658,23 +658,18 @@ export default function EventsPage() {
                 </div >
             )}
 
-            <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the event
-                            and all associated payments and records.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete Event
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DeleteConfirmationDialog
+                open={!!deletingEvent}
+                onOpenChange={(open) => !open && setDeletingEvent(null)}
+                title={`Delete ${deletingEvent?.name}?`}
+                description={
+                    <span>
+                        This action cannot be undone. This will permanently delete the event <strong>{deletingEvent?.name}</strong> and all associated payments and records.
+                    </span>
+                }
+                confirmationString={deletingEvent?.name || ''}
+                onConfirm={confirmDelete}
+            />
         </div >
     );
 }
