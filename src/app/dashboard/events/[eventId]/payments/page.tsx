@@ -9,16 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import {
   Table,
   TableBody,
@@ -73,19 +64,19 @@ export default function EventPaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, pendingCount: 0, paidCount: 0 });
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
+    if (!deletingTransaction) return;
 
-    const res = await deletePayment(deleteId);
+    const res = await deletePayment(deletingTransaction.id);
     if (res.success) {
       toast({ title: 'Payment Deleted', description: 'The payment record has been removed.' });
       fetchPayments();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete payment.' });
     }
-    setDeleteId(null);
+    setDeletingTransaction(null);
   };
 
   const filteredTransactions = transactions.filter(t => {
@@ -204,8 +195,8 @@ export default function EventPaymentsPage() {
     );
   };
 
-  const handleDeletePayment = (id: string) => {
-    setDeleteId(id);
+  const handleDeletePayment = (transaction: Transaction) => {
+    setDeletingTransaction(transaction);
   };
 
   const PaymentActions = ({ transaction }: { transaction: Transaction }) => {
@@ -238,7 +229,7 @@ export default function EventPaymentsPage() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              handleDeletePayment(transaction.id);
+              handleDeletePayment(transaction);
             }}
           >
             <Trash2 className="h-4 w-4" />
@@ -254,7 +245,7 @@ export default function EventPaymentsPage() {
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          onClick={() => handleDeletePayment(transaction.id)}
+          onClick={() => handleDeletePayment(transaction)}
         >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Delete</span>
@@ -536,22 +527,18 @@ export default function EventPaymentsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the payment record.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmationDialog
+        open={!!deletingTransaction}
+        onOpenChange={(open) => !open && setDeletingTransaction(null)}
+        title={`Delete Payment?`}
+        description={
+          <span>
+            This action cannot be undone. This will permanently delete the payment record <strong>{deletingTransaction?.id}</strong>.
+          </span>
+        }
+        confirmationString={deletingTransaction?.id || ''}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
