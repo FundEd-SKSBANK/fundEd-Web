@@ -54,6 +54,7 @@ export async function getStudentPayments(studentId: string) {
       
       return {
         ...summary,
+        status,
         pendingAmount: Math.max(0, pending)
       };
     });

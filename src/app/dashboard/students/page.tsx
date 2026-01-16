@@ -27,6 +27,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import {
     Upload,
     Search,
@@ -91,16 +92,23 @@ export default function StudentsPage() {
         setEditDialogOpen(true);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this student?')) return;
+    const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
 
-        const result = await deleteStudent(id);
+    const handleDelete = (student: Student) => {
+        setDeletingStudent(student);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingStudent) return;
+
+        const result = await deleteStudent(deletingStudent.id);
         if (result.success) {
             toast({ title: 'Student Deleted', description: 'Student has been deleted successfully' });
             fetchData();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
+        setDeletingStudent(null);
     };
 
     const handleFileUpload = async (file: File) => {
@@ -294,7 +302,7 @@ export default function StudentsPage() {
                                                 Edit Details
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => handleDelete(student.id)}
+                                                onClick={() => handleDelete(student)}
                                                 className="text-destructive"
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -336,6 +344,19 @@ export default function StudentsPage() {
                     </p>
                 </div>
             )}
+
+            <DeleteConfirmationDialog
+                open={!!deletingStudent}
+                onOpenChange={(open) => !open && setDeletingStudent(null)}
+                title={`Delete ${deletingStudent?.name}?`}
+                description={
+                    <span>
+                        This action cannot be undone. This will permanently delete the student <strong>{deletingStudent?.name}</strong> and all their payment history.
+                    </span>
+                }
+                confirmationString={deletingStudent?.name || ''}
+                onConfirm={confirmDelete}
+            />
         </div>
     );
 }
