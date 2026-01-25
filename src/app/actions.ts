@@ -1,8 +1,8 @@
 'use server';
 
 import { sendPrintDistributionEmail as sendPrintDistributionEmailFlow } from '@/ai/flows/send-email';
-import { sendPaymentConfirmationEmail as sendPaymentConfirmationEmailFlow, sendPaymentApprovedEmail as sendPaymentApprovedEmailFlow } from '@/ai/flows/payment-emails';
-import type { SendEmailInput, SendEmailOutput, PaymentConfirmationEmailInput, PaymentApprovedEmailInput } from '@/lib/types';
+import { sendPaymentReceiptEmail as sendPaymentReceiptEmailFlow, sendPaymentApprovedEmail as sendPaymentApprovedEmailFlow } from '@/ai/flows/payment-emails';
+import type { SendEmailInput, SendEmailOutput, PaymentReceiptEmailInput, PaymentApprovedEmailInput } from '@/lib/types';
 
 
 export async function sendPrintDistributionEmail(input: SendEmailInput): Promise<SendEmailOutput> {
@@ -10,8 +10,8 @@ export async function sendPrintDistributionEmail(input: SendEmailInput): Promise
 }
 
 
-export async function sendPaymentConfirmationEmail(input: PaymentConfirmationEmailInput): Promise<SendEmailOutput> {
-    return await sendPaymentConfirmationEmailFlow(input);
+export async function sendPaymentReceiptEmail(input: PaymentReceiptEmailInput): Promise<SendEmailOutput> {
+    return await sendPaymentReceiptEmailFlow(input);
 }
 
 export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput): Promise<SendEmailOutput> {

@@ -45,7 +45,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Event, Student } from '@/lib/types';
-import { sendPaymentConfirmationEmail } from '@/app/actions';
 import { getPaymentPageData, createPayment } from '@/actions/pay';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
@@ -243,13 +242,6 @@ export default function PaymentPage() {
         description: `Payment for ${event.name}`,
         order_id: order.id,
         handler: function (response: any) {
-          sendPaymentConfirmationEmail({
-            studentName: selectedStudent.name,
-            studentEmail: selectedStudent.email,
-            eventName: event.name,
-            amount: amount,
-            paymentMethod: 'Razorpay',
-          });
           setShowSuccessDialog(true);
         },
         prefill: {
@@ -308,14 +300,6 @@ export default function PaymentPage() {
     });
 
     if (res.success) {
-      sendPaymentConfirmationEmail({
-        studentName: selectedStudent.name,
-        studentEmail: selectedStudent.email,
-        eventName: event.name,
-        amount: amount,
-        paymentMethod,
-      });
-
       setShowSuccessDialog(true);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit payment' });

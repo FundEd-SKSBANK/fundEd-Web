@@ -4,15 +4,15 @@ import type { Event, Student } from '@/lib/types';
  * Calculate the collection progress percentage for an event
  */
 export const getCollectionProgress = (event: Event, students: Student[]): number => {
-  if (students.length === 0) return 0;
-
-  const paidStudentsCount = event.payments
-    ? new Set(event.payments.filter(p => p.status === 'Paid').map(p => p.studentId)).size
-    : 0;
-
-  const totalParticipants = event.participantCount || students.length;
+  const totalParticipants = event.participantCount ?? 0;
   if (totalParticipants === 0) return 0;
-  return (paidStudentsCount / totalParticipants) * 100;
+  
+  if (event.cost === 0) return 100; // Free event is always 100% collected efficiently
+
+  const totalExpected = totalParticipants * event.cost;
+  const collected = event.totalCollected ?? 0;
+
+  return Math.min(100, (collected / totalExpected) * 100);
 };
 
 /**

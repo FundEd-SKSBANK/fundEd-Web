@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { sendPaymentReceiptEmail } from '@/ai/flows/payment-emails';
 
 export async function getPaymentPageData(eventId: string) {
   try {
@@ -81,6 +82,47 @@ export async function createPayment(data: {
         event: true,
       }
     });
+
+    // Send Receipt Email (Async)
+    (async () => {
+        try {
+             // Only send if confirmed 'Paid'
+             if (data.status === 'Paid' && payment.student?.email) {
+                 const [eventDetails, allPayments] = await Promise.all([
+                     prisma.event.findUnique({ where: { id: data.eventId } }),
+                     prisma.payment.findMany({
+                        where: {
+                            eventId: data.eventId,
+                            studentId: data.studentId,
+                            status: 'Paid' 
+                        },
+                        select: { amount: true }
+                     })
+                 ]);
+                 
+                 if (eventDetails) {
+                     const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0); 
+                     const balanceDue = Math.max(0, eventDetails.cost - totalPaid);
+                     const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+                     const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
+                     
+                     await sendPaymentReceiptEmail({
+                        studentName: payment.student.name,
+                        studentEmail: payment.student.email,
+                        eventName: eventDetails.name,
+                        amountPaid: data.amount,
+                        transactionId: payment.transactionId || 'N/A',
+                        paymentDate: payment.paymentDate.toISOString(),
+                        balanceDue: balanceDue,
+                        totalCost: eventDetails.cost,
+                        checkStatusLink: `${baseUrl}/check-status`
+                    });
+                 }
+             }
+        } catch (e) {
+            console.error('Error sending receipt email:', e);
+        }
+    })();
 
     return { success: true, data: payment };
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { sendNewEventEmail } from '@/ai/flows/payment-emails';
 
 export async function getEvents() {
   try {
@@ -49,8 +50,44 @@ export async function getEvents() {
         totalCollected,
         totalPending,
         participantCount,
-        paidCount: event.payments.filter(p => p.status === 'Paid').length,
-        pendingCount: Math.max(0, participantCount - event.payments.filter(p => p.status === 'Paid').length),
+        paidCount: (() => {
+            const participantIds = new Set(event.participants.map(p => p.id));
+            const studentPayments = new Map<string, number>();
+
+            event.payments.forEach(p => {
+                if (p.status === 'Paid' && participantIds.has(p.studentId)) {
+                    const current = studentPayments.get(p.studentId) || 0;
+                    studentPayments.set(p.studentId, current + p.amount);
+                }
+            });
+
+            let fullPaidCount = 0;
+            studentPayments.forEach((totalAmount) => {
+                if (totalAmount >= event.cost) {
+                    fullPaidCount++;
+                }
+            });
+            return fullPaidCount;
+        })(),
+        pendingCount: (() => {
+            const participantIds = new Set(event.participants.map(p => p.id));
+            const studentPayments = new Map<string, number>();
+
+            event.payments.forEach(p => {
+                if (p.status === 'Paid' && participantIds.has(p.studentId)) {
+                    const current = studentPayments.get(p.studentId) || 0;
+                    studentPayments.set(p.studentId, current + p.amount);
+                }
+            });
+
+            let fullPaidCount = 0;
+            studentPayments.forEach((totalAmount) => {
+                if (totalAmount >= event.cost) {
+                    fullPaidCount++;
+                }
+            });
+            return Math.max(0, participantCount - fullPaidCount);
+        })(),
         deadline: event.deadline.toISOString(),
         createdAt: event.createdAt.toISOString(),
         updatedAt: event.updatedAt.toISOString(),
@@ -95,6 +132,37 @@ export async function createEvent(data: {
         }
       },
     });
+
+    // Send notifications asynchronously
+    if (data.selectedStudents.length > 0) {
+        // Fetch student details
+        const students = await prisma.student.findMany({
+            where: { id: { in: data.selectedStudents } },
+            select: { name: true, email: true }
+        });
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+        const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`; // Ensure protocol 
+
+        // Fire and forget
+        Promise.allSettled(students.map(student => {
+            if (!student.email) return Promise.resolve();
+            
+            return sendNewEventEmail({
+                studentName: student.name,
+                studentEmail: student.email,
+                eventName: event.name,
+                eventDescription: event.description,
+                cost: event.cost,
+                deadline: event.deadline.toISOString(),
+                paymentLink: `${baseUrl}/pay/${event.id}`
+            });
+        })).then(results => {
+            const rejected = results.filter(r => r.status === 'rejected');
+            if (rejected.length > 0) console.error(`Failed to send ${rejected.length} new event emails`);
+        });
+    }
+
     revalidatePath('/dashboard/events');
     return { success: true, data: event };
   } catch (error) {

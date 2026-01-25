@@ -3,6 +3,7 @@
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { getSession } from '@/lib/auth';
+import { sendPaymentReceiptEmail } from '@/ai/flows/payment-emails';
 
 export async function recordCashPayment(data: {
   studentId: string;
@@ -33,7 +34,14 @@ export async function recordCashPayment(data: {
       return { success: false, error: 'Event not found' };
     }
 
-    // Check if payment already exists
+    // Check if payment already exists (Full payment check? Or duplicate?)
+    // Note: A student can pay in installments. This check prevents duplicate "Paid" status if intended to be unique?
+    // The previous logic was: findFirst where status = 'Paid'. 
+    // If strict on single payment, this blocks installments. 
+    // Assuming we want to allow installments, we might remove this or refine it.
+    // However, keeping legacy behavior for now: Block if strictly duplicate? 
+    // Let's assume we want to RECORD it.
+    // Wait, previous code BLOCKED if existing 'Paid' found. I will preserve that behavior.
     const existingPayment = await prisma.payment.findFirst({
       where: {
         studentId: data.studentId,
@@ -45,7 +53,7 @@ export async function recordCashPayment(data: {
     if (existingPayment) {
       return { success: false, error: 'Payment already recorded for this student and event' };
     }
-
+    
     // Create manual payment entry
     const payment = await prisma.payment.create({
       data: {
@@ -66,6 +74,42 @@ export async function recordCashPayment(data: {
         event: true,
       }
     });
+
+    // Send Payment Receipt Email
+    (async () => {
+        try {
+            // Calculate total paid including this one
+            const allPayments = await prisma.payment.findMany({
+                where: {
+                    eventId: data.eventId,
+                    studentId: data.studentId,
+                    status: 'Paid'
+                },
+                select: { amount: true }
+            });
+
+            const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+            const balanceDue = Math.max(0, event.cost - totalPaid);
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+            const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
+
+            if (student.email) {
+                await sendPaymentReceiptEmail({
+                    studentName: student.name,
+                    studentEmail: student.email,
+                    eventName: event.name,
+                    amountPaid: data.amount,
+                    transactionId: payment.transactionId || 'N/A',
+                    paymentDate: payment.paymentDate.toISOString(),
+                    balanceDue: balanceDue,
+                    totalCost: event.cost,
+                    checkStatusLink: `${baseUrl}/check-status`
+                });
+            }
+        } catch (emailError) {
+            console.error('Failed to send payment receipt:', emailError);
+        }
+    })();
 
     revalidatePath('/dashboard/events');
     revalidatePath('/dashboard/students');
