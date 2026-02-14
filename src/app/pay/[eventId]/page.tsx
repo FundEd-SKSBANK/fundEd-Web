@@ -507,11 +507,27 @@ export default function PaymentPage() {
                         value={amountToPay}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const val = parseFloat(e.target.value);
+                          if (e.target.value === '') {
+                            setAmountToPay('');
+                            return;
+                          }
+
+                          if (val < 0) {
+                            // Prevent negative numbers
+                            return;
+                          }
+
                           const balance = event.cost - (selectedStudent.paidAmount || 0);
                           if (val > balance) {
                             setAmountToPay(balance.toString());
                           } else {
                             setAmountToPay(e.target.value);
+                          }
+                        }}
+                        min={1}
+                        onKeyDown={(e) => {
+                          if (e.key === '-' || e.key === 'e') {
+                            e.preventDefault();
                           }
                         }}
                         max={event.cost - (selectedStudent.paidAmount || 0)}

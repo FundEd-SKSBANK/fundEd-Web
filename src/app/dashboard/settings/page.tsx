@@ -27,7 +27,7 @@ import type { QrCode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
-import { getUsers, createUser, deleteUser, updateUser } from '@/actions/users';
+import { getUsers, createUser, deleteUser, updateUser, getCurrentAdmin } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 
@@ -104,12 +104,15 @@ export default function SettingsPage() {
     }
   };
 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   const fetchData = async () => {
     setIsLoading(true);
-    const [qrRes, usersRes] = await Promise.all([getQrCodes(), getUsers()]);
+    const [qrRes, usersRes, currentUserRes] = await Promise.all([getQrCodes(), getUsers(), getCurrentAdmin()]);
 
     if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
     if (usersRes.success) setUsers(usersRes.data as any[]);
+    if (currentUserRes.success) setCurrentUser(currentUserRes.data);
 
     setIsLoading(false);
   };
@@ -317,159 +320,161 @@ export default function SettingsPage() {
         </GlassCard>
 
 
-        {/* TEAM MANAGEMENT SECTION */}
-        <GlassCard>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>Admin Team</CardTitle>
-              <CardDescription>Manage users who have administrative access to this dashboard.</CardDescription>
-            </div>
-            <Dialog open={openUser} onOpenChange={setOpenUser}>
-              <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Admin
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Administrator</DialogTitle>
-                  <DialogDescription>Create a new account for an admin user.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label>Full Name</Label>
-                    <Input placeholder="John Doe" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Email Address</Label>
-                    <Input type="email" placeholder="john@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Password</Label>
-                    <Input type="text" placeholder="Secure password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenUser(false)}>Cancel</Button>
-                  <Button onClick={handleAddUser} disabled={isSubmittingUser} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                    {isSubmittingUser ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Create Account
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Edit Administrator</DialogTitle>
-                  <DialogDescription>Update admin credentials.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="flex justify-center mb-4">
-                    <div className="relative w-24 h-24 group">
-                      <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full relative overflow-hidden rounded-full">
-                        {editImage ? (
-                          <Image
-                            src={editImage}
-                            alt="Profile"
-                            fill
-                            className="object-cover border-2 border-emerald-500/50"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
-                            <PlusCircle className="w-8 h-8 opacity-50" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-xs text-white font-medium">Change</span>
-                        </div>
-                      </Label>
-                      <Input
-                        id="edit-image"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleProfileImageSelect(file);
-                        }}
-                      />
-                      {editImage && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full shadow-lg border-2 border-black z-10"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setEditImage('');
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Full Name</Label>
-                    <Input placeholder="John Doe" value={editName} onChange={(e) => setEditName(e.target.value)} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Email Address</Label>
-                    <Input type="email" placeholder="john@example.com" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>New Password (Optional)</Label>
-                    <Input type="text" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancel</Button>
-                  <Button onClick={handleUpdateUser} disabled={isSubmittingEdit} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-                    {isSubmittingEdit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save Changes
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border border-white/10">
-              <div className="grid grid-cols-4 gap-4 p-4 border-b border-white/10 bg-white/5 font-medium text-sm text-stone-400">
-                <div className="col-span-1">Name</div>
-                <div className="col-span-2">Email</div>
-                <div className="col-span-1 text-right">Actions</div>
+        {/* TEAM MANAGEMENT SECTION - ONLY FOR SUPERUSERS */}
+        {currentUser?.role === 'superuser' && (
+          <GlassCard>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Admin Team</CardTitle>
+                <CardDescription>Manage users who have administrative access to this dashboard.</CardDescription>
               </div>
-              {users.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">No users found.</div>
-              ) : (
-                users.map((user) => (
-                  <div key={user.id} className="grid grid-cols-4 gap-4 p-4 border-b border-white/10 items-center last:border-0 hover:bg-white/5 transition-colors">
-                    <div className="col-span-1 font-medium text-white flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs text-emerald-500 font-bold uppercase">
-                        {user.name?.charAt(0) || 'U'}
-                      </div>
-                      {user.name}
+              <Dialog open={openUser} onOpenChange={setOpenUser}>
+                <DialogTrigger asChild>
+                  <Button className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Admin
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Administrator</DialogTitle>
+                    <DialogDescription>Create a new account for an admin user.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Full Name</Label>
+                      <Input placeholder="John Doe" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
                     </div>
-                    <div className="col-span-2 text-stone-300 text-sm truncate">{user.email}</div>
-                    <div className="col-span-1 text-right flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(user)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-red-400" onClick={() => handleDeleteUser(user.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="grid gap-2">
+                      <Label>Email Address</Label>
+                      <Input type="email" placeholder="john@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Password</Label>
+                      <Input type="text" placeholder="Secure password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </GlassCard>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpenUser(false)}>Cancel</Button>
+                    <Button onClick={handleAddUser} disabled={isSubmittingUser} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                      {isSubmittingUser ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Create Account
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Administrator</DialogTitle>
+                    <DialogDescription>Update admin credentials.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="flex justify-center mb-4">
+                      <div className="relative w-24 h-24 group">
+                        <Label htmlFor="edit-image" className="cursor-pointer block w-full h-full relative overflow-hidden rounded-full">
+                          {editImage ? (
+                            <Image
+                              src={editImage}
+                              alt="Profile"
+                              fill
+                              className="object-cover border-2 border-emerald-500/50"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-emerald-500/10 border-2 border-dashed border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                              <PlusCircle className="w-8 h-8 opacity-50" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-xs text-white font-medium">Change</span>
+                          </div>
+                        </Label>
+                        <Input
+                          id="edit-image"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleProfileImageSelect(file);
+                          }}
+                        />
+                        {editImage && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full shadow-lg border-2 border-black z-10"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditImage('');
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Full Name</Label>
+                      <Input placeholder="John Doe" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Email Address</Label>
+                      <Input type="email" placeholder="john@example.com" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>New Password (Optional)</Label>
+                      <Input type="text" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancel</Button>
+                    <Button onClick={handleUpdateUser} disabled={isSubmittingEdit} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                      {isSubmittingEdit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Save Changes
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border border-white/10">
+                <div className="grid grid-cols-4 gap-4 p-4 border-b border-white/10 bg-white/5 font-medium text-sm text-stone-400">
+                  <div className="col-span-1">Name</div>
+                  <div className="col-span-2">Email</div>
+                  <div className="col-span-1 text-right">Actions</div>
+                </div>
+                {users.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">No users found.</div>
+                ) : (
+                  users.map((user) => (
+                    <div key={user.id} className="grid grid-cols-4 gap-4 p-4 border-b border-white/10 items-center last:border-0 hover:bg-white/5 transition-colors">
+                      <div className="col-span-1 font-medium text-white flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs text-emerald-500 font-bold uppercase">
+                          {user.name?.charAt(0) || 'U'}
+                        </div>
+                        {user.name}
+                      </div>
+                      <div className="col-span-2 text-stone-300 text-sm truncate">{user.email}</div>
+                      <div className="col-span-1 text-right flex items-center justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(user)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-red-400" onClick={() => handleDeleteUser(user.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </GlassCard>
+        )}
       </div>
     </div>
   );

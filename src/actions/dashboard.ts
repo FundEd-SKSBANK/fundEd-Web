@@ -1,13 +1,29 @@
 'use server'
 
 import prisma from '@/lib/db';
+import { getSession } from '@/lib/auth';
 
 export async function getDashboardData() {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const eventWhere: any = {};
+    const paymentWhere: any = {};
+
+    if (session.user.role !== 'superuser') {
+        eventWhere.createdById = session.user.id;
+        paymentWhere.event = { createdById: session.user.id };
+    }
+
     const [events, transactions, recentTransactions] = await Promise.all([
-      prisma.event.findMany(),
-      prisma.payment.findMany({ include: { student: true, event: true } }),
+      prisma.event.findMany({ where: eventWhere }),
+      prisma.payment.findMany({ 
+          where: paymentWhere,
+          include: { student: true, event: true } 
+      }),
       prisma.payment.findMany({
+        where: paymentWhere,
         take: 5,
         orderBy: { paymentDate: 'desc' },
         include: { student: true, event: true }

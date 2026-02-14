@@ -20,6 +20,10 @@ export async function recordCashPayment(data: {
       return { success: false, error: 'Unauthorized' };
     }
 
+    if (data.amount <= 0) {
+        return { success: false, error: "Amount must be greater than 0" };
+    }
+
     // Validate student and event exist
     const [student, event] = await Promise.all([
       prisma.student.findUnique({ where: { id: data.studentId } }),

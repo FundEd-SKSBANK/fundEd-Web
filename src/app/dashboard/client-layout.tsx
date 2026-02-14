@@ -46,6 +46,8 @@ import { getPendingTransactions } from '@/actions/notifications';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
 
+import { Shield } from 'lucide-react';
+
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/events', icon: Wallet, label: 'Events' },
@@ -54,18 +56,25 @@ const navItems = [
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
 ];
 
-function MainNav() {
+function MainNav({ user }: { user?: any }) {
     const pathname = usePathname();
+    const isSuperUser = user?.role === 'superuser';
+
+    const items = isSuperUser
+        ? [{ href: '/dashboard/super', icon: Shield, label: 'Super Dashboard' }]
+        : [...navItems];
+
     return (
         <SidebarMenu>
-            {navItems.map((item) => (
+            {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                     <Link href={item.href}>
                         <SidebarMenuButton
-                            isActive={pathname.startsWith(item.href) && (item.href === '/dashboard' ? pathname === item.href : true)}
+                            isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
                             tooltip={item.label}
+                            className={item.href === '/dashboard/super' ? "text-amber-400 hover:text-amber-300" : ""}
                         >
-                            <item.icon />
+                            <item.icon className={item.href === '/dashboard/super' ? "text-amber-400" : ""} />
                             <span>{item.label}</span>
                         </SidebarMenuButton>
                     </Link>
@@ -75,7 +84,7 @@ function MainNav() {
     );
 }
 
-function MobileNav() {
+function MobileNav({ user }: { user?: any }) {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
 
@@ -102,7 +111,7 @@ function MobileNav() {
                     </Link>
                 </SheetHeader>
                 <nav className="flex-1 overflow-y-auto p-4">
-                    <MainNav />
+                    <MainNav user={user} />
                 </nav>
             </SheetContent>
         </Sheet>
@@ -203,7 +212,7 @@ export default function DashboardClientLayout({
                             </Link>
                         </SidebarHeader>
                         <SidebarContent className="px-3 py-4 gap-2">
-                            <MainNav />
+                            <MainNav user={adminUser} />
                         </SidebarContent>
                         <SidebarFooter className="p-4 md:p-6 border-t border-white/5">
                             <SidebarMenu>
@@ -221,7 +230,7 @@ export default function DashboardClientLayout({
 
                     <div className="flex flex-col flex-1 min-w-0">
                         <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-2 sm:px-4 md:px-8 sticky top-0 z-30">
-                            <MobileNav />
+                            <MobileNav user={adminUser} />
                             <div className="flex-1">
                                 {/* Optional: Add a search bar here */}
                             </div>

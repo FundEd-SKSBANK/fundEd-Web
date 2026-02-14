@@ -16,9 +16,13 @@ model User {
   password  String
   name      String?
   image     String?   // Base64 or URL
-  role      String   @default("admin")
+  role      String   @default("admin") // 'admin' | 'superuser'
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  createdStudents Student[] @relation("CreatedStudents")
+  createdEvents   Event[]   @relation("CreatedEvents")
+  recordedExpenses Expense[]
 
   @@index([email])
 }
@@ -32,6 +36,9 @@ model Student {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  createdById String? 
+  createdBy   User?   @relation("CreatedStudents", fields: [createdById], references: [id])
+
   payments           Payment[]
   printDistributions PrintDistribution[]
   participatingEvents Event[]
@@ -54,6 +61,9 @@ model Event {
   status         String   @default("PUBLISHED") // 'DRAFT' | 'PUBLISHED'
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("CreatedEvents", fields: [createdById], references: [id])
 
   payments           Payment[]
   printDistributions PrintDistribution[]
@@ -109,6 +119,22 @@ model PrintDistribution {
 
   @@index([studentId])
   @@index([eventId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float
+  date        DateTime @default(now())
+  category    String   @default("General")
+  
+  recordedBy  String?
+  recorder    User?    @relation(fields: [recordedBy], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
 }
 
 model QrCode {

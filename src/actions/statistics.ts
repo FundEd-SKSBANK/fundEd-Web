@@ -1,13 +1,29 @@
 'use server'
 
 import prisma from '@/lib/db';
+import { getSession } from '@/lib/auth';
 import { startOfDay, startOfWeek, startOfMonth, subDays, subWeeks, subMonths, format } from 'date-fns';
 
-export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 'week') {
+export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 'week', adminId?: string) {
   try {
     const now = new Date();
     let startDate: Date;
     let dataPoints: { date: string; collections: number; transactions: number }[] = [];
+
+    const whereClause: any = {
+      status: 'Paid',
+    };
+    
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    if (session.user.role !== 'superuser') {
+        // Enforce isolation: only payments for events created by this admin
+        whereClause.event = { createdById: session.user.id };
+    } else if (adminId) {
+        // Superuser viewing specific admin's stats (optional, if passed)
+        whereClause.event = { createdById: adminId };
+    }
 
     if (period === 'day') {
       // Last 7 days
@@ -24,7 +40,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
               gte: dayStart,
               lt: dayEnd,
             },
-            status: 'Paid',
+            ...whereClause
           },
         });
 
@@ -49,7 +65,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
               gte: weekStart,
               lt: weekEnd,
             },
-            status: 'Paid',
+            ...whereClause
           },
         });
 
@@ -74,7 +90,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
               gte: monthStart,
               lt: monthEnd,
             },
-            status: 'Paid',
+            ...whereClause
           },
         });
 

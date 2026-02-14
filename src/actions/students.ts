@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getSession } from '@/lib/auth';
 
 interface AddStudentInput {
   name: string;
@@ -22,13 +23,22 @@ interface UpdateStudentInput {
 
 export async function addStudent(input: AddStudentInput) {
   try {
-    // Check if student with same roll number already exists
+    const session = await getSession();
+    if (!session || !session.user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const whereClause: any = { rollNo: input.rollNumber };
+    if (session.user.role !== 'superuser') {
+        whereClause.createdById = session.user.id;
+    }
+
     const existingStudent = await prisma.student.findFirst({
-      where: { rollNo: input.rollNumber }
+      where: whereClause
     });
     
     if (existingStudent) {
-      return { success: false, error: 'A student with this roll number already exists' };
+      return { success: false, error: 'A student with this roll number already exists in your workspace' };
     }
 
     // Create new student
@@ -38,7 +48,8 @@ export async function addStudent(input: AddStudentInput) {
         rollNo: input.rollNumber,
         email: input.email || '',
         class: input.class,
-      },
+        createdById: session.user.id,
+      } as any,
     });
 
     revalidatePath('/dashboard');
@@ -61,14 +72,28 @@ export async function addStudent(input: AddStudentInput) {
 
 export async function updateStudent(input: UpdateStudentInput) {
   try {
-    // Check if another student has the same roll number (excluding current student)
-    const existingStudent = await prisma.student.findFirst({
-      where: { 
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    // Verify ownership
+    const targetStudent = await prisma.student.findUnique({ where: { id: input.id } });
+    if (!targetStudent) return { success: false, error: "Student not found" };
+
+    if (session.user.role !== 'superuser' && (targetStudent as any).createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized to update this student" };
+    }
+
+    // Check for duplicates
+    const whereClause: any = { 
         rollNo: input.rollNumber,
-        NOT: {
-          id: input.id
-        }
-      }
+        NOT: { id: input.id }
+    };
+    if (session.user.role !== 'superuser') {
+        whereClause.createdById = session.user.id;
+    }
+
+    const existingStudent = await prisma.student.findFirst({
+      where: whereClause
     });
     
     if (existingStudent) {
@@ -83,7 +108,6 @@ export async function updateStudent(input: UpdateStudentInput) {
         rollNo: input.rollNumber,
         email: input.email || '',
         class: input.class,
-        // Add phone if schema supports it, otherwise omit or update if schema changes in future
       },
     });
 
@@ -107,7 +131,16 @@ export async function updateStudent(input: UpdateStudentInput) {
 
 export async function getStudents() {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const whereClause: any = {};
+    if (session.user.role !== 'superuser') {
+        whereClause.createdById = session.user.id;
+    }
+
     const students = await prisma.student.findMany({
+      where: whereClause,
       orderBy: {
         rollNo: 'asc',
       },
@@ -118,7 +151,7 @@ export async function getStudents() {
       students: students.map(s => ({
         id: s.id,
         name: s.name,
-        rollNo: s.rollNo,  // Changed from rollNumber to rollNo
+        rollNo: s.rollNo,
         email: s.email,
         class: s.class,
         createdAt: s.createdAt.toISOString(),
@@ -132,6 +165,16 @@ export async function getStudents() {
 
 export async function deleteStudent(id: string) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const targetStudent = await prisma.student.findUnique({ where: { id } });
+    if (!targetStudent) return { success: false, error: "Student not found" };
+
+    if (session.user.role !== 'superuser' && (targetStudent as any).createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized to delete this student" };
+    }
+
     await prisma.student.delete({
       where: { id },
     });
@@ -148,14 +191,21 @@ export async function deleteStudent(id: string) {
 
 export async function uploadStudentsCsv(studentsData: any[]) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
     let successCount = 0;
     let failCount = 0;
 
     for (const student of studentsData) {
       try {
-        // Check for duplicate roll number
+        const whereClause: any = { rollNo: student.rollNo };
+        if (session.user.role !== 'superuser') {
+            whereClause.createdById = session.user.id;
+        }
+
         const existing = await prisma.student.findFirst({
-          where: { rollNo: student.rollNo }
+          where: whereClause
         });
 
         if (!existing) {
@@ -165,7 +215,8 @@ export async function uploadStudentsCsv(studentsData: any[]) {
               rollNo: student.rollNo,
               email: student.email || '',
               class: student.class || '',
-            }
+              createdById: session.user.id,
+            } as any
           });
           successCount++;
         } else {

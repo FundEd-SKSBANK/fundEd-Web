@@ -67,6 +67,10 @@ export async function createPayment(data: {
   razorpay_order_id?: string;
 }) {
   try {
+    if (data.amount <= 0) {
+        return { success: false, error: "Amount must be greater than 0" };
+    }
+
     const payment = await prisma.payment.create({
       data: {
         studentId: data.studentId,

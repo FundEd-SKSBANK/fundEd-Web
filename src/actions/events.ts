@@ -3,11 +3,21 @@
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { sendNewEventEmail } from '@/ai/flows/payment-emails';
+import { getSession } from '@/lib/auth';
 
 export async function getEvents() {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const whereClause: any = {};
+    if (session.user.role !== 'superuser') {
+        whereClause.createdById = session.user.id;
+    }
+
     const [events, globalTotalStudents] = await Promise.all([
       prisma.event.findMany({
+        where: whereClause,
         orderBy: {
           createdAt: 'desc',
         },
@@ -16,7 +26,7 @@ export async function getEvents() {
             select: {
               amount: true,
               status: true,
-              studentId: true, // Needed for distinct count if strict
+              studentId: true,
             }
           },
           _count: {
@@ -27,20 +37,26 @@ export async function getEvents() {
           }
         }
       }),
-      prisma.student.count(),
+      prisma.student.count(), // This might need filtering too if we want stats relative to workspace? 
+      // For now, let's keep globalTotalStudents as global or filter? 
+      // Usually used for "Select All" logic. 
+      // If isolation is strict, this should be count({ where: { createdById: session.user.id } })
     ]);
     
+    // Correct student count for workspace
+    const workspaceTotalStudents = session.user.role === 'superuser' 
+        ? globalTotalStudents 
+        : await prisma.student.count({ where: { createdById: session.user.id } });
+
     // Calculate totals
     const eventsWithStats = events.map(event => {
       const totalCollected = event.payments
         .filter(p => p.status === 'Paid')
         .reduce((acc, p) => acc + p.amount, 0);
 
-      // Use event-specific participant count if available (via relation), else fallback
-      // Since we migrated, this should be accurate.
       const participantCount = event._count.participants > 0 
           ? event._count.participants 
-          : 0; // If 0, it means 0 selected. Migration ensures legacy events have all.
+          : 0;
       
       const expectedCollection = event.cost * participantCount;
       const totalPending = Math.max(0, expectedCollection - totalCollected);
@@ -92,7 +108,7 @@ export async function getEvents() {
         createdAt: event.createdAt.toISOString(),
         updatedAt: event.updatedAt.toISOString(),
         paymentOptions: JSON.parse(event.paymentOptions),
-        participantIds: event.participants.map(p => p.id), // Send IDs for edit form
+        participantIds: event.participants.map(p => p.id), 
       };
     });
 
@@ -114,9 +130,13 @@ export async function createEvent(data: {
   selectedStudents: string[];
 }) {
   try {
-      if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
-          return { success: false, error: 'Deadline must be today or in the future' };
-      }
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
+        return { success: false, error: 'Deadline must be today or in the future' };
+    }
+
     const event = await prisma.event.create({
       data: {
         name: data.name,
@@ -127,27 +147,25 @@ export async function createEvent(data: {
         qrCodeUrl: data.qrCodeUrl,
         category: data.category,
         status: 'PUBLISHED',
-        participants: {
+        createdById: session.user.id,
+        participants: { 
              connect: data.selectedStudents.map(id => ({ id }))
         }
-      },
+      } as any,
     });
 
-    // Send notifications asynchronously
+    // Send notifications
     if (data.selectedStudents.length > 0) {
-        // Fetch student details
         const students = await prisma.student.findMany({
             where: { id: { in: data.selectedStudents } },
             select: { name: true, email: true }
         });
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
-        const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`; // Ensure protocol 
+        const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
 
-        // Fire and forget
         Promise.allSettled(students.map(student => {
             if (!student.email) return Promise.resolve();
-            
             return sendNewEventEmail({
                 studentName: student.name,
                 studentEmail: student.email,
@@ -183,6 +201,9 @@ export async function saveDraft(data: {
   selectedStudents?: string[];
 }) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
     const eventData: any = {
       status: 'DRAFT',
     };
@@ -202,6 +223,13 @@ export async function saveDraft(data: {
     
     let event;
     if (data.id) {
+      // Verify ownership
+      const existing = await prisma.event.findUnique({ where: { id: data.id }});
+      if (!existing) return { success: false, error: "Event not found" };
+      if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+          return { success: false, error: "Unauthorized" };
+      }
+
       if (data.selectedStudents) {
         eventData.participants = {
           set: data.selectedStudents.map(id => ({ id }))
@@ -212,13 +240,14 @@ export async function saveDraft(data: {
         data: eventData,
       });
     } else {
+      eventData.createdById = session.user.id;
       if (data.selectedStudents) {
         eventData.participants = {
           connect: data.selectedStudents.map(id => ({ id }))
         };
       }
       event = await prisma.event.create({
-        data: eventData,
+        data: eventData as any,
       });
     }
 
@@ -241,9 +270,20 @@ export async function updateEvent(id: string, data: {
   selectedStudents: string[];
 }) {
   try {
-      if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
-          return { success: false, error: 'Deadline must be today or in the future' };
-      }
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    // Verify ownership
+    const existing = await prisma.event.findUnique({ where: { id }});
+    if (!existing) return { success: false, error: "Event not found" };
+    if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
+        return { success: false, error: 'Deadline must be today or in the future' };
+    }
+
     const event = await prisma.event.update({
       where: { id },
       data: {
@@ -254,7 +294,7 @@ export async function updateEvent(id: string, data: {
         paymentOptions: JSON.stringify(data.paymentOptions),
         qrCodeUrl: data.qrCodeUrl,
         category: data.category,
-        status: 'PUBLISHED', // Explicitly publish when fully updated
+        status: 'PUBLISHED', 
         participants: {
              set: data.selectedStudents.map(id => ({ id }))
         }
@@ -270,8 +310,15 @@ export async function updateEvent(id: string, data: {
 
 export async function deleteEvent(id: string) {
   try {
-    // We use a transaction to ensure all related records are deleted
-    // This is a safety measure in case cascade delete is not working or there are other constraints
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const existing = await prisma.event.findUnique({ where: { id }});
+    if (!existing) return { success: false, error: "Event not found" };
+    if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized" };
+    }
+
     await prisma.$transaction(async (tx) => {
       // 1. Delete payments
       await tx.payment.deleteMany({
@@ -283,7 +330,7 @@ export async function deleteEvent(id: string) {
         where: { eventId: id }
       });
 
-      // 3. Delete the event (implicit M-N will be handled by Prisma)
+      // 3. Delete the event
       await tx.event.delete({
         where: { id },
       });

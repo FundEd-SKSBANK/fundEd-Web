@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import prisma from '@/lib/db';
-import { encrypt } from '@/lib/auth';
+import { encrypt, getSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 
@@ -39,7 +39,7 @@ export async function login(prevState: any, formData: FormData) {
         
         // Login immediately
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const session = await encrypt({ user: { id: newUser.id, email: newUser.email, name: newUser.name }, expires });
+        const session = await encrypt({ user: { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role }, expires });
         (await cookies()).set('session', session, { expires, httpOnly: true });
         redirect('/dashboard');
     }
@@ -48,7 +48,7 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name }, expires });
+  const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role }, expires });
 
   (await cookies()).set('session', session, { expires, httpOnly: true });
   
@@ -58,4 +58,17 @@ export async function login(prevState: any, formData: FormData) {
 export async function logout() {
   (await cookies()).delete('session');
   redirect('/login');
+}
+
+export async function getUserRole() {
+  const session = await getSession();
+  if (!session || !session.user) return null;
+  
+  // Fetch fresh role from DB
+  const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+  });
+  
+  return user?.role;
 }
