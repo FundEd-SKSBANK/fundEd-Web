@@ -57,8 +57,8 @@ declare global {
 
 
 export default function PaymentPage() {
-  const { eventId } = useParams();
-  const eventIdStr = eventId as string;
+  const params = useParams();
+  const slug = params.slug as string;
 
   const [event, setEvent] = useState<Event | null>(null);
   const [availableStudents, setAvailableStudents] = useState<(Student & { paidAmount?: number })[]>([]);
@@ -80,7 +80,7 @@ export default function PaymentPage() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const res = await getPaymentPageData(eventIdStr);
+      const res = await getPaymentPageData(slug);
       if (res.success && res.data) {
         setEvent(res.data.event as unknown as Event);
         setAvailableStudents(res.data.availableStudents as unknown as (Student & { paidAmount?: number })[]);
@@ -89,10 +89,10 @@ export default function PaymentPage() {
       }
       setIsLoading(false);
     };
-    if (eventIdStr) {
+    if (slug) {
       fetchData();
     }
-  }, [eventIdStr]);
+  }, [slug]);
 
   // Update amount when student is selected
   useEffect(() => {

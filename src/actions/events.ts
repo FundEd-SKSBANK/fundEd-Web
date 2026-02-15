@@ -137,9 +137,21 @@ export async function createEvent(data: {
         return { success: false, error: 'Deadline must be today or in the future' };
     }
 
+    // Generate slug
+    let slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    // Ensure uniqueness (simple append if exists - though collisions on create are rare for distinct events, we can append random chars or check)
+    // For now, let's just append a short random string if it's very common, or just trust the name + ID suffix strategy if we wanted to be robust. 
+    // But user wants "eventname". Let's try name first, and if error, we might fail or handle it. 
+    // Ideally, we check for existence.
+    const existingSlug = await prisma.event.findUnique({ where: { slug } });
+    if (existingSlug) {
+        slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`;
+    }
+
     const event = await prisma.event.create({
       data: {
         name: data.name,
+        slug,
         description: data.description,
         cost: data.cost,
         deadline: new Date(data.deadline),
@@ -173,7 +185,8 @@ export async function createEvent(data: {
                 eventDescription: event.description,
                 cost: event.cost,
                 deadline: event.deadline.toISOString(),
-                paymentLink: `${baseUrl}/pay/${event.id}`
+                // Updated link format
+                paymentLink: `${baseUrl}/${event.slug}/pay`
             });
         })).then(results => {
             const rejected = results.filter(r => r.status === 'rejected');
@@ -187,6 +200,33 @@ export async function createEvent(data: {
     console.error('Error creating event:', error);
     return { success: false, error: 'Failed to create event' };
   }
+}
+
+export async function getEventBySlug(slug: string) {
+    try {
+        const event = await prisma.event.findUnique({
+            where: { slug },
+            include: {
+                participants: { select: { id: true } }
+            }
+        });
+        
+        if (!event) return { success: false, error: "Event not found" };
+
+        return { 
+            success: true, 
+            data: {
+                ...event,
+                paymentOptions: JSON.parse(event.paymentOptions),
+                deadline: event.deadline.toISOString(),
+                createdAt: event.createdAt.toISOString(),
+                updatedAt: event.updatedAt.toISOString(),
+            }
+        };
+    } catch (error) {
+        console.error("Error fetching event by slug:", error);
+        return { success: false, error: "Failed to fetch event" };
+    }
 }
 
 export async function saveDraft(data: {
@@ -284,10 +324,23 @@ export async function updateEvent(id: string, data: {
         return { success: false, error: 'Deadline must be today or in the future' };
     }
 
+    // Generate slug if name changed or if it creates a conflict? 
+    // For simplicity in this iteration, let's update slug if name is updated, 
+    // but we need to check uniqueness.
+    let slug = undefined;
+    if (data.name !== existing.name) {
+        slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        const conflict = await prisma.event.findUnique({ where: { slug } });
+        if (conflict && conflict.id !== id) {
+             slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`;
+        }
+    }
+
     const event = await prisma.event.update({
       where: { id },
       data: {
         name: data.name,
+        ...(slug && { slug }), // Only update if new slug generated
         description: data.description,
         cost: data.cost,
         deadline: new Date(data.deadline),

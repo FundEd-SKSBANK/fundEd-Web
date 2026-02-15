@@ -18,8 +18,9 @@ export const getCollectionProgress = (event: Event, students: Student[]): number
 /**
  * Copy payment link to clipboard
  */
-export const copyPaymentLink = (eventId: string, origin: string): string => {
-  const link = `${origin}/pay/${eventId}`;
+export const copyPaymentLink = (event: Event, origin: string): string => {
+  const identifier = event.slug || event.id;
+  const link = `${origin}/${identifier}/pay`;
   navigator.clipboard.writeText(link);
   return link;
 };

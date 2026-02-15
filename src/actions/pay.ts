@@ -4,23 +4,35 @@ import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { sendPaymentReceiptEmail } from '@/ai/flows/payment-emails';
 
-export async function getPaymentPageData(eventId: string) {
+export async function getPaymentPageData(slugOrId: string) {
   try {
     const [event, students, payments] = await Promise.all([
-      prisma.event.findUnique({ 
-        where: { id: eventId },
+      prisma.event.findFirst({ 
+        where: { 
+            OR: [
+                { id: slugOrId },
+                { slug: slugOrId }
+            ]
+        },
         include: { participants: { select: { id: true } } }
       }),
       prisma.student.findMany({ orderBy: { rollNo: 'asc' } }),
-      prisma.payment.findMany({ where: { eventId } })
+      // We need to fetch payments for the event ID once we have the event, 
+      // but here we are running in parallel.
+      // This is a problem if we don't know the ID yet.
+      // We must fetch event FIRST.
+      null
     ]);
 
     if (!event) return { success: false, error: 'Event not found' };
+    
+    // Now fetch payments for this event
+    const realPayments = await prisma.payment.findMany({ where: { eventId: event.id } });
 
     // Calculate total paid per student
     const studentPaidMap = new Map<string, number>();
     
-    payments.forEach(p => {
+    realPayments.forEach(p => {
         if (p.status === 'Paid' || p.status === 'Verification Pending') {
             const current = studentPaidMap.get(p.studentId) || 0;
             studentPaidMap.set(p.studentId, current + p.amount);
@@ -28,7 +40,7 @@ export async function getPaymentPageData(eventId: string) {
     });
 
     // Determine eligible students (participants only, or all if none specified)
-    const participantIds = new Set(event.participants.map(p => p.id));
+    const participantIds = new Set((event as any).participants.map((p: any) => p.id));
     let eligibleStudents = students;
 
     if (participantIds.size > 0) {

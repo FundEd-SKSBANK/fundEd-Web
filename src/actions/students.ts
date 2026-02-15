@@ -47,6 +47,7 @@ export async function addStudent(input: AddStudentInput) {
         name: input.name,
         rollNo: input.rollNumber,
         email: input.email || '',
+        phone: input.phone || '',
         class: input.class,
         createdById: session.user.id,
       } as any,
@@ -66,7 +67,7 @@ export async function addStudent(input: AddStudentInput) {
     };
   } catch (error) {
     console.error('Error adding student:', error);
-    return { success: false, error: 'Failed to add student' };
+    return { success: false, error: `Failed to add student: ${(error as any).message}` };
   }
 }
 
@@ -107,6 +108,7 @@ export async function updateStudent(input: UpdateStudentInput) {
         name: input.name,
         rollNo: input.rollNumber,
         email: input.email || '',
+        phone: input.phone || '',
         class: input.class,
       },
     });

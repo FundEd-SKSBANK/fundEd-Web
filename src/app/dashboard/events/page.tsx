@@ -182,8 +182,8 @@ export default function EventsPage() {
 
         if (result.success) {
             toast({
-                title: 'Event Published',
-                description: `${name} has been published successfully`,
+                title: editingEvent ? 'Event Updated' : 'Event Published',
+                description: `${name} has been ${editingEvent ? 'updated' : 'published'} successfully`,
             });
             resetForm();
             fetchData(true); // Background refresh
@@ -246,8 +246,8 @@ export default function EventsPage() {
     };
 
 
-    const handleCopyPaymentLink = (eventId: string) => {
-        copyPaymentLink(eventId, window.location.origin);
+    const handleCopyPaymentLink = (event: Event) => {
+        copyPaymentLink(event, window.location.origin);
         toast({ title: 'Link Copied', description: 'Payment link copied to clipboard' });
     };
 
@@ -591,11 +591,17 @@ export default function EventsPage() {
                                                     View Payments
                                                 </Link>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/dashboard/events/${event.id}/expenses`}>
+                                                    <Wallet className="mr-2 h-4 w-4" />
+                                                    Manage Expenses
+                                                </Link>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => handleEdit(event)}>
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 Edit
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleCopyPaymentLink(event.id)}>
+                                            <DropdownMenuItem onClick={() => handleCopyPaymentLink(event)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" />
                                                 Copy Payment Link
                                             </DropdownMenuItem>

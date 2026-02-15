@@ -41,6 +41,7 @@ export type Event = {
   paidCount?: number;
   pendingCount?: number;
   status?: string; // Added status field
+  slug?: string | null;
 };
 
 export type Student = {
@@ -48,6 +49,7 @@ export type Student = {
   rollNo: string;
   name: string;
   email: string;
+  phone?: string | null;
   class: string;
 };
 

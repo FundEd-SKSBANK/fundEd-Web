@@ -32,6 +32,7 @@ model Student {
   rollNo    String
   name      String
   email     String
+  phone     String?
   class     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,7 +44,7 @@ model Student {
   printDistributions PrintDistribution[]
   participatingEvents Event[]
 
-  @@unique([rollNo, class])
+  @@unique([rollNo, class, createdById])
   @@index([rollNo])
   @@index([class])
   @@index([name])
@@ -52,6 +53,7 @@ model Student {
 model Event {
   id             String   @id @default(cuid())
   name           String   @default("New Event")
+  slug           String?  @unique
   description    String   @default("")
   deadline       DateTime @default(now())
   cost           Float    @default(0)
@@ -67,6 +69,7 @@ model Event {
 
   payments           Payment[]
   printDistributions PrintDistribution[]
+  expenses           Expense[]
 
   participants       Student[]
   
@@ -128,6 +131,9 @@ model Expense {
   date        DateTime @default(now())
   category    String   @default("General")
   
+  eventId     String?
+  event       Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   recordedBy  String?
   recorder    User?    @relation(fields: [recordedBy], references: [id])
 
@@ -135,6 +141,7 @@ model Expense {
   updatedAt   DateTime @updatedAt
 
   @@index([date])
+  @@index([eventId])
 }
 
 model QrCode {

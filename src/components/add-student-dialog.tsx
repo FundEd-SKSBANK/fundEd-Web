@@ -191,13 +191,27 @@ export function AddStudentDialog({ trigger, onSuccess }: AddStudentDialogProps) 
                         {/* Phone */}
                         <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number (Optional)</Label>
-                            <Input
-                                id="phone"
-                                type="tel"
-                                placeholder="+91 98765 43210"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            />
+                            <div className="flex">
+                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm">
+                                    +91
+                                </span>
+                                <Input
+                                    id="phone"
+                                    type="tel"
+                                    placeholder="9876543210"
+                                    value={formData.phone}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        if (value.length <= 10) {
+                                            setFormData({ ...formData, phone: value });
+                                        }
+                                    }}
+                                    className="rounded-l-none"
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Enter 10-digit mobile number
+                            </p>
                         </div>
                     </div>
 
