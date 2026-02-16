@@ -1,18 +1,12 @@
 'use server';
-/**
- * @fileOverview Genkit flows for sending payment-related emails.
- */
 
 import { sendEmail } from '@/lib/email';
 import { 
-    PaymentApprovedEmailInputSchema, 
-    SendNewEventEmailInputSchema,
-    PaymentReceiptEmailInputSchema,
-    SendEmailOutputSchema,
     type PaymentApprovedEmailInput, 
     type SendNewEventEmailInput,
     type PaymentReceiptEmailInput,
-    type SendEmailOutput
+    type SendEmailOutput,
+    type SendEmailInput
 } from '@/lib/types';
 
 
@@ -191,7 +185,7 @@ export async function sendPaymentReceiptEmail(input: PaymentReceiptEmailInput): 
 
 
 // Flow for sending payment approved email
-async function sendPaymentApprovedEmailFlow(input: PaymentApprovedEmailInput): Promise<SendEmailOutput> {
+export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput): Promise<SendEmailOutput> {
     const content = `
         <h2>Payment Approved!</h2>
         <p>Hi <strong>${input.studentName}</strong>,</p>
@@ -226,8 +220,34 @@ async function sendPaymentApprovedEmailFlow(input: PaymentApprovedEmailInput): P
         : { success: false, message: result.message || 'Failed to send email.' };
 }
 
+// Flow for sending print distribution email (from send-email.ts)
+export async function sendPrintDistributionEmail(input: SendEmailInput): Promise<SendEmailOutput> {
 
-// Wrapper action for the payment approved flow
-export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput): Promise<SendEmailOutput> {
-  return await sendPaymentApprovedEmailFlow(input);
+    const emailBody = `
+      Hi ${input.studentName},<br><br>
+      This is to notify you that the print material for the event "${input.eventName}" has been distributed.<br><br>
+      Please collect it from your class representative if you haven't already.<br><br>
+      Sincerely,<br>
+      The FundEd Team
+    `;
+
+    const subject = `Your print for "${input.eventName}" has been distributed!`;
+    
+    const result = await sendEmail({
+        to: input.studentEmail,
+        subject: subject,
+        html: emailBody,
+    });
+
+    if (result.success) {
+        return {
+            success: true,
+            message: `Email successfully sent to ${input.studentEmail}.`,
+        };
+    } else {
+        return {
+            success: false,
+            message: result.message || 'Failed to send email via the email service.',
+        };
+    }
 }

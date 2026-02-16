@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { sendNewEventEmail } from '@/ai/flows/payment-emails';
+import { sendNewEventEmail } from '@/lib/email-templates';
 import { getSession } from '@/lib/auth';
 
 export async function getEvents() {

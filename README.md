@@ -1,6 +1,8 @@
 # FundEd - Student Payment & Event Management System
 
-FundEd is a modern, full-stack web application designed to streamline event payment tracking and student management for educational institutions. It features a premium, glassmorphism-inspired UI with comprehensive mobile responsiveness and a robust admin dashboard for managing transactions, students, and events.
+FundEd is a modern, full-stack web application designed to streamline event payment tracking and student management for educational institutions. It features a premium, **Glassmorphism-inspired UI** with comprehensive mobile responsiveness and a robust admin dashboard for managing transactions, students, and events.
+
+**FundEd** is a core module of **SKS DM (Classroom OS)**, bringing transparency and efficiency to student fund management.
 
 ![FundEd Banner](/public/funded-icon.png)    
 
@@ -23,7 +25,10 @@ FundEd is a modern, full-stack web application designed to streamline event paym
     -   Generate transaction, event-wise, and student-wise reports
     -   Export to CSV and PDF formats
     -   Visual statistics and collection progress tracking
--   **Print Distribution**: Track and manage print distribution for events.
+-   **Print Distribution**: 
+    -   Dedicated interface for tracking physical material distribution.
+    -   QR code scanning support for quick distribution.
+    -   Real-time stock and distribution status monitoring.
 -   **Settings**: Manage QR codes and admin users.
 
 ### 🎨 UI/UX Design
@@ -83,7 +88,6 @@ Follow these steps to set up the project locally.
     # Razorpay (Optional - for payment integration)
     RAZORPAY_KEY_ID="your-razorpay-key-id"
     RAZORPAY_KEY_SECRET="your-razorpay-key-secret"
-    ```
 
 4.  **Setup Database**
     Push the Prisma schema to your database:
@@ -121,12 +125,10 @@ fundEd-Web/
 ├── scripts/                # Utility scripts
 ├── src/
 │   ├── actions/            # Server Actions (Data mutations)
-│   │   ├── auth.ts
-│   │   ├── events.ts
-│   │   ├── payments.ts
-│   │   ├── reports.ts
-│   │   ├── students.ts
-│   │   └── ...
+│   ├── ai/                 # AI Flows & GenKit Config
+│   │   ├── flows/          # AI/Logic Flows
+│   │   ├── dev.ts          # GenKit Dev Server
+│   │   └── genkit.ts       # GenKit Initialization
 │   ├── app/                # Next.js App Router pages
 │   │   ├── check-status/   # Public Student Portal
 │   │   ├── dashboard/      # Admin Protected Area

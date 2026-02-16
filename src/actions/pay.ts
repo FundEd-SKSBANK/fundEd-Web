@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { sendPaymentReceiptEmail } from '@/ai/flows/payment-emails';
+import { sendPaymentReceiptEmail } from '@/lib/email-templates';
 
 export async function getPaymentPageData(slugOrId: string) {
   try {
