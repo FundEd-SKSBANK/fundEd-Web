@@ -50,14 +50,35 @@ export async function getEvents() {
 
     // Calculate totals
     const eventsWithStats = events.map(event => {
+
+      // Ensure participant count is consistent with the IDs we use for filtering
+      const participantCount = event.participants.length;
+
+      const participantIds = new Set(event.participants.map(p => p.id));
+      const studentPayments = new Map<string, number>();
+
+      event.payments.forEach(p => {
+          if (p.status === 'Paid' && participantIds.has(p.studentId)) {
+              const current = studentPayments.get(p.studentId) || 0;
+              studentPayments.set(p.studentId, current + p.amount);
+          }
+      });
+
+      let fullPaidCount = 0;
+      studentPayments.forEach((totalAmount) => {
+          // Use a small epsilon for float comparison to handle potential precision issues
+          if (totalAmount >= event.cost - 0.01) {
+              fullPaidCount++;
+          }
+      });
+
+      // Cap paid count at participant count to ensure UI consistency
+      const finalPaidCount = Math.min(fullPaidCount, participantCount);
+
       const totalCollected = event.payments
         .filter(p => p.status === 'Paid')
         .reduce((acc, p) => acc + p.amount, 0);
 
-      const participantCount = event._count.participants > 0 
-          ? event._count.participants 
-          : 0;
-      
       const expectedCollection = event.cost * participantCount;
       const totalPending = Math.max(0, expectedCollection - totalCollected);
         
@@ -66,50 +87,15 @@ export async function getEvents() {
         totalCollected,
         totalPending,
         participantCount,
-        paidCount: (() => {
-            const participantIds = new Set(event.participants.map(p => p.id));
-            const studentPayments = new Map<string, number>();
-
-            event.payments.forEach(p => {
-                if (p.status === 'Paid' && participantIds.has(p.studentId)) {
-                    const current = studentPayments.get(p.studentId) || 0;
-                    studentPayments.set(p.studentId, current + p.amount);
-                }
-            });
-
-            let fullPaidCount = 0;
-            studentPayments.forEach((totalAmount) => {
-                if (totalAmount >= event.cost) {
-                    fullPaidCount++;
-                }
-            });
-            return fullPaidCount;
-        })(),
-        pendingCount: (() => {
-            const participantIds = new Set(event.participants.map(p => p.id));
-            const studentPayments = new Map<string, number>();
-
-            event.payments.forEach(p => {
-                if (p.status === 'Paid' && participantIds.has(p.studentId)) {
-                    const current = studentPayments.get(p.studentId) || 0;
-                    studentPayments.set(p.studentId, current + p.amount);
-                }
-            });
-
-            let fullPaidCount = 0;
-            studentPayments.forEach((totalAmount) => {
-                if (totalAmount >= event.cost) {
-                    fullPaidCount++;
-                }
-            });
-            return Math.max(0, participantCount - fullPaidCount);
-        })(),
+        paidCount: finalPaidCount,
+        pendingCount: Math.max(0, participantCount - finalPaidCount),
         deadline: event.deadline.toISOString(),
         createdAt: event.createdAt.toISOString(),
         updatedAt: event.updatedAt.toISOString(),
         paymentOptions: JSON.parse(event.paymentOptions),
         participantIds: event.participants.map(p => p.id), 
       };
+
     });
 
     return { success: true, data: eventsWithStats };

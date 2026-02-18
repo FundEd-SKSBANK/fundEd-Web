@@ -320,7 +320,7 @@ export function ExpenseTable({ expenses, eventId, onUpdate }: ExpenseTableProps)
                             <TableHead className="text-stone-400">Date</TableHead>
                             <TableHead className="text-stone-400">Title</TableHead>
                             <TableHead className="text-stone-400">Category</TableHead>
-                            <TableHead className="text-stone-400">Recorded By</TableHead>
+
                             <TableHead className="text-right text-stone-400">Amount</TableHead>
                             <TableHead className="text-right text-stone-400">Actions</TableHead>
                         </TableRow>
@@ -328,7 +328,7 @@ export function ExpenseTable({ expenses, eventId, onUpdate }: ExpenseTableProps)
                     <TableBody>
                         {expenses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center text-stone-500">
+                                <TableCell colSpan={5} className="h-24 text-center text-stone-500">
                                     No expenses recorded yet.
                                 </TableCell>
                             </TableRow>
@@ -346,9 +346,7 @@ export function ExpenseTable({ expenses, eventId, onUpdate }: ExpenseTableProps)
                                             {expense.category}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-stone-500 text-sm">
-                                        {expense.recorder?.name || 'Unknown'}
-                                    </TableCell>
+
                                     <TableCell className="text-right font-medium text-red-400">
                                         -₹{expense.amount.toLocaleString()}
                                     </TableCell>
