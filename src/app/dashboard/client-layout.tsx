@@ -14,6 +14,9 @@ import {
     Wallet,
     ArrowRight,
     GraduationCap,
+    Receipt,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 import {
     SidebarProvider,
@@ -24,7 +27,11 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
     SidebarFooter,
+    SidebarMenuSub,
+    SidebarMenuSubItem,
+    SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -43,6 +50,7 @@ import type { Transaction } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { logout } from '@/actions/auth';
 import { getPendingTransactions } from '@/actions/notifications';
+import { getEvents } from '@/actions/events';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
 
@@ -56,9 +64,10 @@ const navItems = [
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
 ];
 
-function MainNav({ user }: { user?: any }) {
+function MainNav({ user, events }: { user?: any; events?: { id: string; name: string }[] }) {
     const pathname = usePathname();
     const isSuperUser = user?.role === 'superuser';
+    const [expensesOpen, setExpensesOpen] = useState(false);
 
     const items = isSuperUser
         ? [{ href: '/dashboard/super', icon: Shield, label: 'Super Dashboard' }]
@@ -80,11 +89,48 @@ function MainNav({ user }: { user?: any }) {
                     </Link>
                 </SidebarMenuItem>
             ))}
+
+            {/* Expenses Quick Access */}
+            {!isSuperUser && events && events.length > 0 && (
+                <Collapsible open={expensesOpen} onOpenChange={setExpensesOpen}>
+                    <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                            <SidebarMenuButton
+                                tooltip="Expenses"
+                                isActive={pathname.includes('/expenses')}
+                                className="w-full"
+                            >
+                                <Receipt />
+                                <span>Expenses</span>
+                                {expensesOpen
+                                    ? <ChevronDown className="ml-auto h-4 w-4 shrink-0" />
+                                    : <ChevronRight className="ml-auto h-4 w-4 shrink-0" />}
+                            </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {events.slice(0, 6).map(event => (
+                                <SidebarMenuSubItem key={event.id}>
+                                    <SidebarMenuSubButton
+                                        asChild
+                                        isActive={pathname === `/dashboard/events/${event.id}/expenses`}
+                                    >
+                                        <Link href={`/dashboard/events/${event.id}/expenses`} className="truncate">
+                                            <span className="truncate">{event.name}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </Collapsible>
+            )}
         </SidebarMenu>
     );
 }
 
-function MobileNav({ user }: { user?: any }) {
+function MobileNav({ user, events }: { user?: any; events?: { id: string; name: string }[] }) {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
 
@@ -111,7 +157,7 @@ function MobileNav({ user }: { user?: any }) {
                     </Link>
                 </SheetHeader>
                 <nav className="flex-1 overflow-y-auto p-4">
-                    <MainNav user={user} />
+                    <MainNav user={user} events={events} />
                 </nav>
             </SheetContent>
         </Sheet>
@@ -147,13 +193,17 @@ export default function DashboardClientLayout({
 
     // Use prop directly, fallback to default only if null
     const adminUser = user;
+    const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>([]);
 
     useEffect(() => {
         const initData = async () => {
-            // Fetch notifications only
             const notifRes = await getPendingTransactions();
             if (notifRes.success && notifRes.data) {
                 setPendingTransactions(notifRes.data as unknown as Transaction[]);
+            }
+            const eventsRes = await getEvents();
+            if (eventsRes.success && eventsRes.data) {
+                setRecentEvents((eventsRes.data as any[]).slice(0, 6).map((e: any) => ({ id: e.id, name: e.name })));
             }
         };
 
@@ -212,7 +262,7 @@ export default function DashboardClientLayout({
                             </Link>
                         </SidebarHeader>
                         <SidebarContent className="px-3 py-4 gap-2">
-                            <MainNav user={adminUser} />
+                            <MainNav user={adminUser} events={recentEvents} />
                         </SidebarContent>
                         <SidebarFooter className="p-4 md:p-6 border-t border-white/5">
                             <SidebarMenu>
@@ -230,7 +280,7 @@ export default function DashboardClientLayout({
 
                     <div className="flex flex-col flex-1 min-w-0">
                         <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-2 sm:px-4 md:px-8 sticky top-0 z-30">
-                            <MobileNav user={adminUser} />
+                            <MobileNav user={adminUser} events={recentEvents} />
                             <div className="flex-1">
                                 {/* Optional: Add a search bar here */}
                             </div>

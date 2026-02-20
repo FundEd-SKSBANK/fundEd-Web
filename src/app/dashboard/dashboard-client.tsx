@@ -18,8 +18,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Transaction, Event } from '@/lib/types';
 import { useMemo } from 'react';
-import { Wallet, TrendingUp, Clock, Users } from 'lucide-react';
+import { Wallet, TrendingUp, Clock, Users, Receipt, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { StatisticsChart } from '@/components/statistics-chart';
 import { formatDate, getStatusBadgeVariant } from './page.utils';
 
@@ -137,6 +138,45 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
 
             {/* Statistics Chart */}
             <StatisticsChart />
+
+            {/* Active Events - Quick Access */}
+            {events && events.length > 0 && (
+                <GlassCard className="shadow-md">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Receipt className="h-5 w-5 text-emerald-400" />
+                                    Quick Access — Expenses
+                                </CardTitle>
+                                <CardDescription className="mt-1">
+                                    Jump directly to any event's expense tracker
+                                </CardDescription>
+                            </div>
+                            <Link href="/dashboard/events">
+                                <span className="text-sm text-primary hover:underline cursor-pointer">All Events →</span>
+                            </Link>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {events.slice(0, 6).map(event => (
+                                <Link
+                                    key={event.id}
+                                    href={`/dashboard/events/${event.id}/expenses`}
+                                    className="group flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-sm text-stone-200 truncate">{event.name}</p>
+                                        <p className="text-xs text-stone-500 mt-0.5">View &amp; add expenses</p>
+                                    </div>
+                                    <ArrowRight className="h-4 w-4 text-stone-500 group-hover:text-emerald-400 shrink-0 transition-colors" />
+                                </Link>
+                            ))}
+                        </div>
+                    </CardContent>
+                </GlassCard>
+            )}
 
             {/* Recent Transactions */}
             <GlassCard className="shadow-md">

@@ -372,7 +372,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                             <Plus className="mr-2 h-4 w-4" /> Add Expense
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[440px] bg-black/95 border-white/10 backdrop-blur-xl">
+                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Add New Expense</DialogTitle>
                         </DialogHeader>
@@ -428,7 +428,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                 </Dialog>
 
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                    <DialogContent className="sm:max-w-[440px] bg-black/95 border-white/10 backdrop-blur-xl">
+                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Edit Expense</DialogTitle>
                         </DialogHeader>
@@ -485,90 +485,158 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
             </div>
 
             <div className="rounded-md border border-white/10 bg-white/5">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-white/10 hover:bg-white/5">
-                            <TableHead className="text-stone-400">Date</TableHead>
-                            <TableHead className="text-stone-400">Title</TableHead>
-                            <TableHead className="text-stone-400">Category</TableHead>
-                            <TableHead className="text-stone-400">Note</TableHead>
-                            <TableHead className="text-right text-stone-400">Amount</TableHead>
-                            <TableHead className="text-center text-stone-400">Bill / Receipt</TableHead>
-                            <TableHead className="text-right text-stone-400">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {expenses.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center text-stone-500">
-                                    No expenses recorded yet.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            expenses.map((expense) => (
-                                <TableRow key={expense.id} className="border-white/10 hover:bg-white/5">
-                                    <TableCell className="text-stone-400">
-                                        {format(new Date(expense.date), 'MMM dd, yyyy')}
-                                    </TableCell>
-                                    <TableCell className="font-medium text-stone-200">
-                                        {expense.title}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
-                                            {expense.category}
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-white/5">
+                    {expenses.length === 0 ? (
+                        <div className="h-24 flex items-center justify-center text-stone-500 text-sm">
+                            No expenses recorded yet.
+                        </div>
+                    ) : (
+                        expenses.map((expense) => (
+                            <div key={expense.id} className="p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-stone-200 truncate">{expense.title}</p>
+                                        <p className="text-xs text-stone-500 mt-0.5">{format(new Date(expense.date), 'MMM dd, yyyy')}</p>
+                                    </div>
+                                    <span className="font-semibold text-red-400 shrink-0 text-sm">-₹{expense.amount.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
+                                        {expense.category}
+                                    </span>
+                                    {expense.note && (
+                                        <span className="text-xs text-stone-500 truncate max-w-[180px]" title={expense.note}>
+                                            📝 {expense.note}
                                         </span>
-                                    </TableCell>
-                                    <TableCell className="text-stone-400 max-w-[160px]">
-                                        {expense.note ? (
-                                            <span className="block truncate text-sm" title={expense.note}>{expense.note}</span>
-                                        ) : (
-                                            <span className="text-stone-600 text-xs">—</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium text-red-400">
-                                        -₹{expense.amount.toLocaleString()}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        {expense.billUrl ? (
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex gap-1">
+                                        {expense.billUrl && (
                                             <BillViewerDialog expense={expense} eventName={eventName} />
-                                        ) : (
-                                            <span className="text-stone-600 text-xs">—</span>
                                         )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Are you sure you want to delete this expense? This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to delete this expense? This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-white/10 hover:bg-white/5">
+                                <TableHead className="text-stone-400">Date</TableHead>
+                                <TableHead className="text-stone-400">Title</TableHead>
+                                <TableHead className="text-stone-400">Category</TableHead>
+                                <TableHead className="text-stone-400">Note</TableHead>
+                                <TableHead className="text-right text-stone-400">Amount</TableHead>
+                                <TableHead className="text-center text-stone-400">Bill / Receipt</TableHead>
+                                <TableHead className="text-right text-stone-400">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {expenses.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="h-24 text-center text-stone-500">
+                                        No expenses recorded yet.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                expenses.map((expense) => (
+                                    <TableRow key={expense.id} className="border-white/10 hover:bg-white/5">
+                                        <TableCell className="text-stone-400">
+                                            {format(new Date(expense.date), 'MMM dd, yyyy')}
+                                        </TableCell>
+                                        <TableCell className="font-medium text-stone-200">
+                                            {expense.title}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
+                                                {expense.category}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-stone-400 max-w-[160px]">
+                                            {expense.note ? (
+                                                <span className="block truncate text-sm" title={expense.note}>{expense.note}</span>
+                                            ) : (
+                                                <span className="text-stone-600 text-xs">—</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium text-red-400">
+                                            -₹{expense.amount.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {expense.billUrl ? (
+                                                <BillViewerDialog expense={expense} eventName={eventName} />
+                                            ) : (
+                                                <span className="text-stone-600 text-xs">—</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Are you sure you want to delete this expense? This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">
+                                                                Delete
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
         </div>
     );
 }
+
