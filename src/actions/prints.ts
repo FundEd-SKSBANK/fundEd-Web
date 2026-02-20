@@ -66,6 +66,20 @@ export async function getPrintData() {
   }
 }
 
+export async function deleteDistribution(id: string) {
+  try {
+    await prisma.printDistribution.delete({
+      where: { id },
+    });
+
+    revalidatePath('/dashboard/prints');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting distribution:', error);
+    return { success: false, error: 'Failed to delete distribution' };
+  }
+}
+
 export async function distributePrint(data: {
   studentId: string;
   eventId: string;

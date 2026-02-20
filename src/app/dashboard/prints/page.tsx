@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { GlassCard } from '@/components/ui/glass-card';
 import {
   Card,
@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown, PackageCheck, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, PackageCheck, Loader2, Trash2 } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -45,9 +45,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { sendPrintDistributionEmail } from '@/app/actions';
-import { getPrintData, distributePrint } from '@/actions/prints';
+import { getPrintData, distributePrint, deleteDistribution } from '@/actions/prints';
 import { PageLoader } from '@/components/ui/page-loader';
 import { formatDate, getStudentsWhoPaid, filterStudentsBySearch } from './page.utils';
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 
 export default function PrintsPage() {
   const [open, setOpen] = useState(false);
@@ -56,6 +57,7 @@ export default function PrintsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [printEvents, setPrintEvents] = useState<Event[]>([]);
   const [distributions, setDistributions] = useState<PrintDistribution[]>([]);
@@ -63,29 +65,50 @@ export default function PrintsPage() {
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Track whether the initial mount has been completed
+  const isInitialMount = useRef(true);
+
   // Derived filtered distributions for the history view
   const filteredDistributions = useMemo(() => {
     if (!selectedEventId || !distributions) return [];
     return distributions.filter(d => d.eventId === selectedEventId);
   }, [distributions, selectedEventId]);
 
+  // ── Initial data load (runs once on mount with a full-screen loader) ──
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       setIsLoading(true);
       const res = await getPrintData();
       if (res.success && res.data) {
         setPrintEvents(res.data.events as unknown as Event[]);
-        if (selectedEventId) {
-          setDistributions(res.data.distributions as unknown as PrintDistribution[]);
-          setPaidPayments(res.data.payments as unknown as Payment[]);
-          setAllStudents(res.data.students as unknown as Student[]);
-        }
+        setDistributions(res.data.distributions as unknown as PrintDistribution[]);
+        setPaidPayments(res.data.payments as unknown as Payment[]);
+        setAllStudents(res.data.students as unknown as Student[]);
       } else {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch data' });
       }
       setIsLoading(false);
+      isInitialMount.current = false;
     };
-    fetchData();
+    fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Silent re-fetch when event changes (no full-page loader) ──
+  useEffect(() => {
+    // Skip the very first render — initial fetch above handles it
+    if (isInitialMount.current) return;
+    if (!selectedEventId) return;
+
+    const fetchEventData = async () => {
+      const res = await getPrintData();
+      if (res.success && res.data) {
+        setDistributions(res.data.distributions as unknown as PrintDistribution[]);
+        setPaidPayments(res.data.payments as unknown as Payment[]);
+        setAllStudents(res.data.students as unknown as Student[]);
+      }
+    };
+    fetchEventData();
   }, [selectedEventId]);
 
 
@@ -129,10 +152,12 @@ export default function PrintsPage() {
           });
         }
 
-        // Refresh data
+        // Refresh distributions locally
         const newData = await getPrintData();
         if (newData.success && newData.data) {
           setDistributions(newData.data.distributions as unknown as PrintDistribution[]);
+          setPaidPayments(newData.data.payments as unknown as Payment[]);
+          setAllStudents(newData.data.students as unknown as Student[]);
         }
 
         setSelectedStudent(null);
@@ -145,6 +170,18 @@ export default function PrintsPage() {
     }
   };
 
+  const handleDelete = async (distId: string) => {
+    setDeletingId(distId);
+    const res = await deleteDistribution(distId);
+    if (res.success) {
+      // Remove from local state immediately — no full reload needed
+      setDistributions(prev => prev.filter(d => d.id !== distId));
+      toast({ title: 'Distribution Deleted', description: 'The distribution record has been removed.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete distribution' });
+    }
+    setDeletingId(null);
+  };
 
   if (isLoading) {
     return <PageLoader message="Loading print distribution data..." />;
@@ -253,9 +290,34 @@ export default function PrintsPage() {
                     <p className="font-medium">{dist.studentName}</p>
                     <p className="text-sm text-muted-foreground">{dist.studentRoll}</p>
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <p>{formatDate(dist.distributedAt)}</p>
-                    <p>{new Date(dist.distributedAt).toLocaleTimeString()}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right text-sm text-muted-foreground">
+                      <p>{formatDate(dist.distributedAt)}</p>
+                      <p>{new Date(dist.distributedAt).toLocaleTimeString()}</p>
+                    </div>
+                    <DeleteConfirmationDialog
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {deletingId === dist.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      }
+                      title="Delete Distribution Record?"
+                      description={
+                        <span>
+                          This will remove the distribution record for <strong>{dist.studentName}</strong>. They will
+                          appear again in the distribution list and can be re-distributed. This action cannot be undone.
+                        </span>
+                      }
+                      confirmationString={dist.studentName ?? ''}
+                      onConfirm={() => handleDelete(dist.id)}
+                      isDeleting={deletingId === dist.id}
+                    />
                   </div>
                 </CardContent>
               </GlassCard>
@@ -270,6 +332,7 @@ export default function PrintsPage() {
                   <TableHead>Roll Number</TableHead>
                   <TableHead>Date Distributed</TableHead>
                   <TableHead>Time Distributed</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -279,6 +342,31 @@ export default function PrintsPage() {
                     <TableCell>{dist.studentRoll}</TableCell>
                     <TableCell>{formatDate(dist.distributedAt)}</TableCell>
                     <TableCell>{new Date(dist.distributedAt).toLocaleTimeString()}</TableCell>
+                    <TableCell className="text-right">
+                      <DeleteConfirmationDialog
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            {deletingId === dist.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        }
+                        title="Delete Distribution Record?"
+                        description={
+                          <span>
+                            This will remove the distribution record for <strong>{dist.studentName}</strong>. They will
+                            appear again in the distribution list and can be re-distributed. This action cannot be undone.
+                          </span>
+                        }
+                        confirmationString={dist.studentName ?? ''}
+                        onConfirm={() => handleDelete(dist.id)}
+                        isDeleting={deletingId === dist.id}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
