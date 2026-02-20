@@ -33,6 +33,8 @@ export async function createExpense(data: {
     category: string;
     date: Date;
     eventId: string;
+    billUrl?: string;
+    note?: string;
 }) {
     try {
         const session = await getSession();
@@ -45,7 +47,9 @@ export async function createExpense(data: {
                 category: data.category,
                 date: data.date,
                 eventId: data.eventId,
-                recordedBy: session.user.id
+                recordedBy: session.user.id,
+                billUrl: data.billUrl || null,
+                note: data.note || null,
             }
         });
 
@@ -81,6 +85,8 @@ export async function updateExpense(id: string, eventId: string, data: {
     amount: number;
     category: string;
     date: Date;
+    billUrl?: string | null;
+    note?: string | null;
 }) {
     try {
         const session = await getSession();
@@ -93,6 +99,8 @@ export async function updateExpense(id: string, eventId: string, data: {
                 amount: data.amount,
                 category: data.category,
                 date: data.date,
+                billUrl: data.billUrl !== undefined ? data.billUrl : undefined,
+                note: data.note !== undefined ? data.note : undefined,
             }
         });
 

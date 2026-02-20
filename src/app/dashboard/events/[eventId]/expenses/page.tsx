@@ -221,6 +221,7 @@ export default function EventExpensesPage() {
                 <ExpenseTable
                     expenses={expenses}
                     eventId={eventId}
+                    eventName={stats.eventName}
                     onUpdate={() => fetchData()}
                 />
             </div>

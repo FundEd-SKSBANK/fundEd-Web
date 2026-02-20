@@ -130,6 +130,8 @@ model Expense {
   amount      Float
   date        DateTime @default(now())
   category    String   @default("General")
+  billUrl     String?  // Base64 encoded bill image (optional)
+  note        String?  // Optional admin note/description
   
   eventId     String?
   event       Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)

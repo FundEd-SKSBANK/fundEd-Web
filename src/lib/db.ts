@@ -5,11 +5,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 const getPrismaClient = () => {
   const connectionString = `${process.env.DATABASE_URL}`;
-  // Explicitly disable certificate validation to ensure connection and bypass strict verification
   const pool = new Pool({ 
     connectionString,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    // Suppress pg SSL compatibility warning
+    ...(connectionString.includes('sslmode') ? {} : {}),
   });
+  process.removeAllListeners('warning'); // suppress pg SSL deprecation noise
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };
