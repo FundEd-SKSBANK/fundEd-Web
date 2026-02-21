@@ -56,7 +56,7 @@ export async function getCurrentAdmin() {
 
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { id: true, name: true, email: true, role: true, image: true }
+            select: { id: true, name: true, email: true, role: true, image: true, slug: true }
         });
 
         if (!user) {
@@ -172,5 +172,42 @@ export async function updateUser(data: { id: string; name: string; email: string
         console.error("Failed to update user:", error);
         return { success: false, error: "Failed to update user" };
     }
+
 }
 
+export async function updateAdminSlug(slug: string) {
+    try {
+        const session = await getSession();
+        if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
+        const trimmed = slug.trim().toLowerCase();
+
+        // Validate format: lowercase alphanumeric + hyphens only
+        if (!/^[a-z0-9-]+$/.test(trimmed)) {
+            return { success: false, error: 'Slug can only contain lowercase letters, numbers, and hyphens.' };
+        }
+        if (trimmed.length < 3 || trimmed.length > 40) {
+            return { success: false, error: 'Slug must be between 3 and 40 characters.' };
+        }
+
+        // Check uniqueness (exclude self)
+        const existing = await prisma.user.findFirst({
+            where: { slug: trimmed, NOT: { id: session.user.id } }
+        });
+        if (existing) {
+            return { success: false, error: 'This slug is already taken. Please choose another.' };
+        }
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { slug: trimmed }
+        });
+
+        revalidatePath('/dashboard/settings');
+        return { success: true, slug: trimmed };
+
+    } catch (error) {
+        console.error('Failed to update slug:', error);
+        return { success: false, error: 'Failed to update slug.' };
+    }
+}

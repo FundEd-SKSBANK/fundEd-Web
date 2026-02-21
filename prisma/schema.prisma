@@ -16,6 +16,7 @@ model User {
   password  String
   name      String?
   image     String?   // Base64 or URL
+  slug      String?  @unique // unique public slug for check-status URL
   role      String   @default("admin") // 'admin' | 'superuser'
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -120,11 +120,6 @@ export default function Home() {
           <div className="flex items-center gap-4">
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
-              <Link href="/check-status">
-                <Button variant="ghost" className="text-sm font-medium tracking-[0.1em] text-emerald-100 hover:text-white uppercase hover:bg-emerald-500/10">
-                  Check Status
-                </Button>
-              </Link>
               <Link href="/login">
                 <Button className="relative text-xs font-bold tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-8 py-6 rounded-full overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -133,12 +128,12 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Mobile Navigation - Only Check Status (Primary Style) */}
+            {/* Mobile Navigation */}
             <div className="flex md:hidden">
-              <Link href="/check-status">
+              <Link href="/login">
                 <Button className="relative text-[9px] sm:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.25em] bg-emerald-500/10 backdrop-blur-md border-2 border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/50 uppercase transition-all px-4 sm:px-6 py-3 sm:py-4 rounded-full overflow-hidden group whitespace-nowrap">
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                  <span className="relative z-10">Check</span>
+                  <span className="relative z-10">Login</span>
                 </Button>
               </Link>
             </div>
@@ -333,7 +328,6 @@ export default function Home() {
             <div className="flex gap-10">
               <Link href="/privacy" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Privacy</Link>
               <Link href="/terms" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Terms</Link>
-              <Link href="/check-status" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Check Status</Link>
               <Link href="/support" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Support</Link>
             </div>
           </div>

@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, PlusCircle, Loader2, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react';
+import { Trash2, PlusCircle, Loader2, ShieldAlert, CheckCircle2, XCircle, Link2, Copy, Check } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import type { QrCode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
+import { getCurrentAdmin, updateAdminSlug } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 import { fileToDataURL, validateFileSize, validateImageType } from './page.utils';
@@ -75,6 +76,13 @@ export default function SettingsPage() {
   const [newQrName, setNewQrName] = useState('');
   const [newQrUrl, setNewQrUrl] = useState('');
 
+  // Slug / Student Portal State
+  const [slug, setSlug] = useState('');
+  const [currentSlug, setCurrentSlug] = useState<string | null>(null);
+  const [isSavingSlug, setIsSavingSlug] = useState(false);
+  const [slugError, setSlugError] = useState('');
+  const [slugCopied, setSlugCopied] = useState(false);
+
   // null = no image yet | true = valid payment QR | false = invalid QR
   const [isValidQr, setIsValidQr] = useState<boolean | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -93,8 +101,13 @@ export default function SettingsPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    const qrRes = await getQrCodes();
+    const [qrRes, adminRes] = await Promise.all([getQrCodes(), getCurrentAdmin()]);
     if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
+    if (adminRes.success && adminRes.data) {
+      const s = (adminRes.data as any).slug || '';
+      setCurrentSlug(s || null);
+      setSlug(s || '');
+    }
     setIsLoading(false);
   };
 
@@ -162,11 +175,36 @@ export default function SettingsPage() {
     setDeletingQrId(null);
   };
 
+  const handleSaveSlug = async () => {
+    setSlugError('');
+    setIsSavingSlug(true);
+    const res = await updateAdminSlug(slug);
+    if (res.success) {
+      setCurrentSlug(res.slug || slug.trim().toLowerCase());
+      toast({ title: 'Student Portal Link Saved', description: 'Your unique check-status URL is now active.' });
+    } else {
+      setSlugError(res.error || 'Failed to save.');
+    }
+    setIsSavingSlug(false);
+  };
+
+  const handleCopySlugLink = () => {
+    const url = `${window.location.origin}/check-status/${currentSlug}`;
+    navigator.clipboard.writeText(url);
+    setSlugCopied(true);
+    setTimeout(() => setSlugCopied(false), 2000);
+    toast({ title: 'Link Copied', description: 'Share this link with your students.' });
+  };
+
   const resetDialog = () => {
     setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setIsValidating(false); setSubmitted(false);
   };
 
   if (isLoading) return <PageLoader message="Loading settings..." />;
+
+  const slugPreview = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const portalUrl = slugPreview ? `${typeof window !== 'undefined' ? window.location.origin : ''}/check-status/${slugPreview}` : '';
+  const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug;
 
   // Save is enabled only when: image uploaded + validated + valid UPI QR
   const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
@@ -181,6 +219,74 @@ export default function SettingsPage() {
       </GlassCard>
 
       <div className="grid gap-6">
+        {/* Student Portal Card */}
+        <GlassCard>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-emerald-400" />
+              Student Portal Link
+            </CardTitle>
+            <CardDescription>
+              Set a unique URL slug so students can check their payment status. Share this link with them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="slug-input">Your Unique Slug</Label>
+              <div className="flex gap-2">
+                <div className="flex-1 flex items-center gap-0 bg-white/5 border border-white/10 rounded-md overflow-hidden">
+                  <span className="text-xs text-stone-500 pl-3 pr-1 whitespace-nowrap hidden sm:block">check-status/</span>
+                  <Input
+                    id="slug-input"
+                    placeholder="e.g., sks-bank-2025"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
+                      setSlugError('');
+                    }}
+                    className="border-0 bg-transparent focus-visible:ring-0 flex-1"
+                  />
+                </div>
+                <Button
+                  onClick={handleSaveSlug}
+                  disabled={!canSaveSlug}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                >
+                  {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                </Button>
+              </div>
+              {slugError && (
+                <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <XCircle className="h-3.5 w-3.5 shrink-0" /> {slugError}
+                </p>
+              )}
+            </div>
+
+            {/* Preview & Copy */}
+            {(slugPreview || currentSlug) && (
+              <div className="flex items-center gap-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg px-4 py-3">
+                <p className="text-sm text-stone-400 flex-1 font-mono truncate">
+                  <span className="text-stone-600">…/check-status/</span>
+                  <span className="text-emerald-300">{slugPreview || currentSlug}</span>
+                </p>
+                {currentSlug && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopySlugLink}
+                    className="shrink-0 text-stone-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                  >
+                    {slugCopied
+                      ? <><Check className="h-4 w-4 mr-1.5 text-emerald-400" /> Copied</>
+                      : <><Copy className="h-4 w-4 mr-1.5" /> Copy Link</>
+                    }
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </GlassCard>
+
         <GlassCard>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

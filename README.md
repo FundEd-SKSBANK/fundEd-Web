@@ -9,8 +9,8 @@ FundEd is a modern, full-stack web application designed to streamline event paym
 ## ✨ Key Features
 
 ### 🎓 Student Portal
--   **Public Status Check**: Students can verify their payment status instantly using their Name or Roll Number at `/check-status`.
--   **Payment Ledger**: Detailed view of paid, due, and verified transactions.
+-   **Workspace-Scoped Status Check**: Each admin gets a unique public URL (`/check-status/[slug]`). Students visit their institution's specific link and search by Name or Roll Number — results are isolated to that admin's workspace only.
+-   **Payment Ledger**: Detailed view of paid, due, and verified transactions per event.
 -   **Mobile Responsive**: Fully optimized for mobile devices (353px+ width).
 
 ### 🛡️ Admin Dashboard
@@ -29,7 +29,10 @@ FundEd is a modern, full-stack web application designed to streamline event paym
     -   Dedicated interface for tracking physical material distribution.
     -   QR code scanning support for quick distribution.
     -   Real-time stock and distribution status monitoring.
--   **Settings**: Manage QR codes and admin users.
+-   **Settings**: 
+    -   Manage UPI payment QR codes with auto-validation.
+    -   **Student Portal Link**: Set a unique slug for your workspace's public check-status URL and copy/share it with students.
+    -   **Multi-Admin**: Superusers can create and manage multiple admin accounts.
 
 ### 🎨 UI/UX Design
 -   **Glassmorphism**: A unified, translucent frosted-glass aesthetic across the entire app.
@@ -159,12 +162,28 @@ fundEd-Web/
 
 ## 🎯 Recent Updates
 
+### Admin Workspace Isolation & Student Portal (v1.4.0)
+- ✅ Each admin workspace now gets a **unique public check-status URL** (`/check-status/[slug]`)
+- ✅ Student search results are **fully scoped** to the admin's workspace — no cross-tenant data leakage
+- ✅ New **Student Portal Link** card in Settings: set your slug, preview URL, and copy link button
+- ✅ `slug` field added to `User` model with uniqueness constraint
+- ✅ Removed global check-status link from landing page nav and footer
+- ✅ Old `/check-status` now shows an informational page directing students to their institution's link
+
+### Print Distribution Deletion (v1.3.0)
+- ✅ Admins can now delete incorrect print distributions
+- ✅ Delete confirmation dialog prevents accidental removals
+- ✅ Fixed page refresh glitch on event selection in print page
+
+### Expense Quick Access (v1.2.0)
+- ✅ Collapsible Expenses section in the sidebar with direct event links
+- ✅ Dashboard card showing active events with direct links to expense pages
+
 ### Mobile Responsive Improvements (v1.1.0)
 - ✅ Fixed homepage navigation button overflow on 353px screens
 - ✅ Optimized dashboard header for mobile (compact icons, reduced padding)
 - ✅ Fixed stats cards overflow with proper width constraints
 - ✅ Made reports transaction table horizontally scrollable on mobile
-- ✅ Added responsive text sizes throughout the application
 - ✅ All pages now properly fit on screens as small as 353px width
 
 ### Code Organization (v1.0.5)
@@ -183,12 +202,13 @@ The application uses custom session-based authentication:
 ## 📊 Database Schema
 
 The application uses the following main models:
-- **User**: Admin users with authentication
-- **Student**: Student records with roll number and class
-- **Event**: Fund collection events with deadlines and costs
-- **Payment**: Transaction records with multiple payment methods
-- **PrintDistribution**: Track print distribution to students
-- **QrCode**: Manage QR codes for payments
+- **User**: Admin users with authentication and unique public `slug` for student portal URL
+- **Student**: Student records with roll number, class, and `createdById` for workspace isolation
+- **Event**: Fund collection events with deadlines, costs, and payment options
+- **Payment**: Transaction records with multiple payment methods and verification workflow
+- **Expense**: Event-linked expense tracking with bill upload and category support
+- **PrintDistribution**: Track physical print distribution to students per event
+- **QrCode**: Manage UPI payment QR codes for events
 
 ## 🤝 Contributing
 

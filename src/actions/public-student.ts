@@ -2,84 +2,95 @@
 
 import prisma from '@/lib/db';
 
-export async function getStudentPublicStatus(query: string) {
+export async function getStudentPublicStatus(query: string, slug: string) {
   try {
+    // 1. Resolve admin by their unique slug
+    const admin = await prisma.user.findUnique({
+      where: { slug },
+      select: { id: true, name: true }
+    });
+
+    if (!admin) {
+      return { success: false, error: 'Institution not found.' };
+    }
+
+    // 2. Search students scoped ONLY to this admin's workspace
     const students = await prisma.student.findMany({
       where: {
+        createdById: admin.id,
         OR: [
           { rollNo: { contains: query, mode: 'insensitive' } },
           { name: { contains: query, mode: 'insensitive' } }
         ]
       },
       include: { participatingEvents: true },
-      take: 20 // Limit results for performance
+      take: 20
     });
 
     if (!students || students.length === 0) {
       return { success: false, error: 'No students found matching your search.' };
     }
 
-    // Process each student
+    // 3. Build payment summary for each student
     const results = await Promise.all(students.map(async (student) => {
-        // Fetch payments for this student
-        const transactions = await prisma.payment.findMany({
-            where: { studentId: student.id },
-            include: { event: true },
-            orderBy: { paymentDate: 'desc' }
-        });
+      const transactions = await prisma.payment.findMany({
+        where: { studentId: student.id },
+        include: { event: true },
+        orderBy: { paymentDate: 'desc' }
+      });
 
-        // Calculate Summary
-        const eventMap = new Map();
+      const eventMap = new Map();
 
-        student.participatingEvents.forEach(event => {
-            eventMap.set(event.id, {
-                eventName: event.name,
-                eventCost: event.cost,
-                totalPaid: 0,
-                status: 'Unpaid'
-            });
+      student.participatingEvents.forEach(event => {
+        eventMap.set(event.id, {
+          eventName: event.name,
+          eventCost: event.cost,
+          totalPaid: 0,
+          status: 'Unpaid'
         });
+      });
 
-        transactions.forEach(t => {
-            if (t.status === 'Paid') {
-                const current = eventMap.get(t.eventId) || {
-                    eventName: t.event.name,
-                    eventCost: t.event.cost,
-                    totalPaid: 0,
-                    status: 'Unpaid'
-                };
-                current.totalPaid += t.amount;
-                eventMap.set(t.eventId, current);
-            }
-        });
+      transactions.forEach(t => {
+        if (t.status === 'Paid') {
+          const current = eventMap.get(t.eventId) || {
+            eventName: t.event.name,
+            eventCost: t.event.cost,
+            totalPaid: 0,
+            status: 'Unpaid'
+          };
+          current.totalPaid += t.amount;
+          eventMap.set(t.eventId, current);
+        }
+      });
 
-        const paymentSummary = Array.from(eventMap.values()).map(summary => {
-            const pending = summary.eventCost - summary.totalPaid;
-            let status = 'Unpaid';
-            if (summary.totalPaid >= summary.eventCost && summary.eventCost > 0) status = 'Fully Paid';
-            else if (summary.totalPaid > 0) status = 'Partially Paid';
-            
-            return {
-                ...summary,
-                status,
-                pendingAmount: Math.max(0, pending)
-            };
-        });
+      const paymentSummary = Array.from(eventMap.values()).map(summary => {
+        const pending = summary.eventCost - summary.totalPaid;
+        let status = 'Unpaid';
+        if (summary.totalPaid >= summary.eventCost && summary.eventCost > 0) status = 'Fully Paid';
+        else if (summary.totalPaid > 0) status = 'Partially Paid';
 
         return {
-            student: {
-                id: student.id,
-                name: student.name,
-                rollNo: student.rollNo,
-                class: student.class,
-            },
-            paymentSummary
+          ...summary,
+          status,
+          pendingAmount: Math.max(0, pending)
         };
+      });
+
+      return {
+        student: {
+          id: student.id,
+          name: student.name,
+          rollNo: student.rollNo,
+          class: student.class,
+        },
+        paymentSummary
+      };
     }));
 
-    return { 
-      success: true, 
-      data: results
+    return {
+      success: true,
+      data: results,
+      adminName: admin.name
     };
 
   } catch (error) {
