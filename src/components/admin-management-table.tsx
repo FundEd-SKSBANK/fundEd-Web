@@ -37,6 +37,19 @@ import { useToast } from '@/hooks/use-toast';
 import { getAdmins, createUser, deleteUser, updateUser } from '@/actions/users';
 import { Pencil } from 'lucide-react';
 
+function getInitials(email?: string | null, name?: string | null): string {
+    if (name) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
+    }
+    if (!email) return 'AD';
+    const local = email.split('@')[0];
+    const segments = local.split(/[.\-_]/);
+    if (segments.length >= 2) return (segments[0][0] + segments[1][0]).toUpperCase();
+    return local.slice(0, 2).toUpperCase();
+}
+
 interface AdminUser {
     id: string;
     name: string | null;
@@ -314,9 +327,13 @@ export function AdminManagementTable() {
                                 <TableRow key={admin.id} className="border-white/10 hover:bg-white/5">
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={admin.image || ''} />
-                                                <AvatarFallback>{admin.name?.[0] || 'A'}</AvatarFallback>
+                                            <Avatar className="h-8 w-8 ring-1 ring-emerald-500/20">
+                                                {admin.image ? (
+                                                    <AvatarImage src={admin.image} />
+                                                ) : null}
+                                                <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                                                    {getInitials(admin.email, admin.name)}
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
                                                 <span className="text-stone-200">{admin.name}</span>

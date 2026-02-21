@@ -56,6 +56,24 @@ import { MouseFollower } from '@/components/mouse-follower';
 
 import { Shield } from 'lucide-react';
 
+/** Generate up to 2-letter initials from an email address.
+ *  e.g. superadmin@funded.com → SA
+ *       john.doe@x.com        → JD
+ *       alice@x.com           → AL
+ */
+function getInitials(email?: string | null, name?: string | null): string {
+    if (name) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
+    }
+    if (!email) return 'AD';
+    const local = email.split('@')[0]; // e.g. "superadmin" or "john.doe"
+    const segments = local.split(/[.\-_]/);
+    if (segments.length >= 2) return (segments[0][0] + segments[1][0]).toUpperCase();
+    return local.slice(0, 2).toUpperCase();
+}
+
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/events', icon: Wallet, label: 'Events' },
@@ -318,9 +336,11 @@ export default function DashboardClientLayout({
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-white/10 shrink-0">
                                         <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-emerald-500/20">
-                                            <AvatarImage src={adminUser?.image || "https://picsum.photos/seed/1/100/100"} alt={adminUser?.name || "Admin"} className="object-cover" />
-                                            <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm">
-                                                {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'A'}
+                                            {adminUser?.image ? (
+                                                <AvatarImage src={adminUser.image} alt={adminUser?.name || 'Admin'} className="object-cover" />
+                                            ) : null}
+                                            <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm font-semibold">
+                                                {getInitials(adminUser?.email, adminUser?.name)}
                                             </AvatarFallback>
                                         </Avatar>
                                     </Button>
