@@ -1,18 +1,21 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, X, CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+
+type ValidationStatus = 'valid' | 'invalid' | 'pending' | null;
 
 interface ImageDropzoneProps {
     onFileSelect: (file: File) => void;
     className?: string;
     previewUrl?: string;
     onClear?: () => void;
+    validationStatus?: ValidationStatus;
 }
 
-export function ImageDropzone({ onFileSelect, className, previewUrl, onClear }: ImageDropzoneProps) {
+export function ImageDropzone({ onFileSelect, className, previewUrl, onClear, validationStatus }: ImageDropzoneProps) {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -80,9 +83,21 @@ export function ImageDropzone({ onFileSelect, className, previewUrl, onClear }: 
                                     fill
                                     className="object-contain"
                                 />
-                                <div className="absolute top-2 right-2">
-                                    <CheckCircle2 className="h-6 w-6 text-emerald-500 bg-black rounded-full" />
-                                </div>
+                                {validationStatus === 'valid' && (
+                                    <div className="absolute top-2 right-2">
+                                        <CheckCircle2 className="h-6 w-6 text-emerald-500 bg-black rounded-full" />
+                                    </div>
+                                )}
+                                {validationStatus === 'invalid' && (
+                                    <div className="absolute top-2 right-2">
+                                        <XCircle className="h-6 w-6 text-red-500 bg-black rounded-full" />
+                                    </div>
+                                )}
+                                {validationStatus === 'pending' && (
+                                    <div className="absolute top-2 right-2 bg-black rounded-full p-0.5">
+                                        <Loader2 className="h-5 w-5 text-stone-400 animate-spin" />
+                                    </div>
+                                )}
                             </div>
                             <button
                                 onClick={(e) => {

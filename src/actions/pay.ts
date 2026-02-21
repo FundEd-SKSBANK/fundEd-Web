@@ -6,26 +6,27 @@ import { sendPaymentReceiptEmail } from '@/lib/email-templates';
 
 export async function getPaymentPageData(slugOrId: string) {
   try {
-    const [event, students, payments] = await Promise.all([
-      prisma.event.findFirst({ 
-        where: { 
-            OR: [
-                { id: slugOrId },
-                { slug: slugOrId }
-            ]
-        },
-        include: { participants: { select: { id: true } } }
-      }),
-      prisma.student.findMany({ orderBy: { rollNo: 'asc' } }),
-      // We need to fetch payments for the event ID once we have the event, 
-      // but here we are running in parallel.
-      // This is a problem if we don't know the ID yet.
-      // We must fetch event FIRST.
-      null
-    ]);
+    // Fetch event first so we can scope students to the event's admin
+    const event = await prisma.event.findFirst({ 
+      where: { 
+          OR: [
+              { id: slugOrId },
+              { slug: slugOrId }
+          ]
+      },
+      include: { participants: { select: { id: true } } }
+    });
 
     if (!event) return { success: false, error: 'Event not found' };
-    
+
+    // Only fetch students belonging to the same admin who created this event
+    const [students] = await Promise.all([
+      prisma.student.findMany({
+        where: { createdById: event.createdById },
+        orderBy: { rollNo: 'asc' }
+      }),
+    ]);
+
     // Now fetch payments for this event
     const realPayments = await prisma.payment.findMany({ where: { eventId: event.id } });
 
