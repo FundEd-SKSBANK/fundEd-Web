@@ -244,9 +244,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div
+              <Link
                 key={index}
-                className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 p-10 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/10"
+                href="/login"
+                className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 p-10 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/10 block cursor-pointer"
               >
                 {/* Enhanced Liquid Blob */}
                 <div className={`absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br ${feature.gradient} rounded-full blur-[80px] opacity-30 group-hover:opacity-60 group-hover:scale-150 transition-all duration-1000 ease-in-out`}></div>
@@ -278,7 +279,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -330,10 +331,10 @@ export default function Home() {
               </p>
             </div>
             <div className="flex gap-10">
-              <Link href="#" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Privacy</Link>
-              <Link href="#" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Terms</Link>
+              <Link href="/privacy" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Privacy</Link>
+              <Link href="/terms" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Terms</Link>
               <Link href="/check-status" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Check Status</Link>
-              <Link href="#" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Support</Link>
+              <Link href="/support" className="text-stone-500 hover:text-emerald-400 transition-colors text-xs tracking-widest uppercase">Support</Link>
             </div>
           </div>
         </div>
