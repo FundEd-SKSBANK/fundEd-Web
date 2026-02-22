@@ -26,7 +26,7 @@ import type { QrCode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
-import { getCurrentAdmin, updateAdminSlug } from '@/actions/users';
+import { getCurrentAdmin, updateAdminSlug, checkSlugAvailability } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 import { fileToDataURL, validateFileSize, validateImageType } from './page.utils';
@@ -82,6 +82,7 @@ export default function SettingsPage() {
   const [isSavingSlug, setIsSavingSlug] = useState(false);
   const [slugError, setSlugError] = useState('');
   const [slugCopied, setSlugCopied] = useState(false);
+  const [slugAvailability, setSlugAvailability] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
 
   // null = no image yet | true = valid payment QR | false = invalid QR
   const [isValidQr, setIsValidQr] = useState<boolean | null>(null);
@@ -114,6 +115,23 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Debounced real-time slug availability check
+  useEffect(() => {
+    const val = slug.trim().toLowerCase();
+    if (!val || val.length < 3) { setSlugAvailability('idle'); return; }
+    if (!/^[a-z0-9-]+$/.test(val)) { setSlugAvailability('invalid'); return; }
+    if (val === currentSlug) { setSlugAvailability('available'); return; } // unchanged slug
+
+    setSlugAvailability('checking');
+    const timer = setTimeout(async () => {
+      const res = await checkSlugAvailability(val);
+      if (res.available === true) setSlugAvailability('available');
+      else if (res.available === false) setSlugAvailability('taken');
+      else setSlugAvailability('idle');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [slug, currentSlug]);
 
   const handleFileSelect = async (file: File) => {
     if (!file) return;
@@ -204,7 +222,7 @@ export default function SettingsPage() {
 
   const slugPreview = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
   const portalUrl = slugPreview ? `${typeof window !== 'undefined' ? window.location.origin : ''}/check-status/${slugPreview}` : '';
-  const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug;
+  const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug && slugAvailability !== 'taken' && slugAvailability !== 'checking' && slugAvailability !== 'invalid';
 
   // Save is enabled only when: image uploaded + validated + valid UPI QR
   const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
@@ -234,7 +252,10 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="slug-input">Your Unique Slug</Label>
               <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-0 bg-white/5 border border-white/10 rounded-md overflow-hidden">
+                <div className={`flex-1 flex items-center gap-0 bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
+                    slugAvailability === 'taken' || slugAvailability === 'invalid' ? 'border-red-500/40' :
+                      'border-white/10'
+                  }`}>
                   <span className="text-xs text-stone-500 pl-3 pr-1 whitespace-nowrap hidden sm:block">check-status/</span>
                   <Input
                     id="slug-input"
@@ -246,6 +267,12 @@ export default function SettingsPage() {
                     }}
                     className="border-0 bg-transparent focus-visible:ring-0 flex-1"
                   />
+                  {/* Availability indicator */}
+                  <div className="pr-3 shrink-0">
+                    {slugAvailability === 'checking' && <Loader2 className="h-4 w-4 animate-spin text-stone-400" />}
+                    {slugAvailability === 'available' && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                    {(slugAvailability === 'taken' || slugAvailability === 'invalid') && <XCircle className="h-4 w-4 text-red-400" />}
+                  </div>
                 </div>
                 <Button
                   onClick={handleSaveSlug}
@@ -255,9 +282,20 @@ export default function SettingsPage() {
                   {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
                 </Button>
               </div>
-              {slugError && (
+              {/* Availability status text */}
+              {slugAvailability === 'taken' && (
                 <p className="text-xs text-red-400 flex items-center gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 shrink-0" /> {slugError}
+                  <XCircle className="h-3.5 w-3.5 shrink-0" /> This slug is already taken. Try another.
+                </p>
+              )}
+              {slugAvailability === 'invalid' && (
+                <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <XCircle className="h-3.5 w-3.5 shrink-0" /> Only lowercase letters, numbers, and hyphens.
+                </p>
+              )}
+              {slugAvailability === 'available' && slug !== currentSlug && (
+                <p className="text-xs text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> This slug is available!
                 </p>
               )}
             </div>

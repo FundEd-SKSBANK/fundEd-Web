@@ -211,3 +211,25 @@ export async function updateAdminSlug(slug: string) {
         return { success: false, error: 'Failed to update slug.' };
     }
 }
+
+export async function checkSlugAvailability(slug: string) {
+    try {
+        const session = await getSession();
+        if (!session || !session.user) return { available: null };
+
+        const trimmed = slug.trim().toLowerCase();
+
+        // Don't check until meaningful length
+        if (trimmed.length < 3) return { available: null };
+        if (!/^[a-z0-9-]+$/.test(trimmed)) return { available: false, error: 'Only lowercase letters, numbers, and hyphens.' };
+
+        const existing = await prisma.user.findFirst({
+            where: { slug: trimmed, NOT: { id: session.user.id } },
+            select: { id: true }
+        });
+
+        return { available: !existing };
+    } catch {
+        return { available: null }; // silent fail — save button will still validate
+    }
+}
