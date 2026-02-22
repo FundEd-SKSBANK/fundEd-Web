@@ -298,7 +298,10 @@ export default function EventsPage() {
                     <Button
                         variant="ghost"
                         onClick={handleSharePortal}
-                        className="gap-2 bg-white/5 border border-white/10 hover:bg-white/10 flex-1 md:flex-none"
+                        className={cn(
+                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity",
+                            !adminSlug ? "opacity-40 hover:bg-white/5" : "hover:bg-white/10"
+                        )}
                     >
                         <Share2 className="h-4 w-4" />
                         <span className="hidden sm:inline">Share Portal</span>
