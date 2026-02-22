@@ -199,11 +199,13 @@ const NotificationItem = ({ transaction }: { transaction: Transaction }) => {
 interface DashboardClientLayoutProps {
     children: React.ReactNode;
     user: any;
+    initialEvents?: { id: string; name: string }[];
 }
 
 export default function DashboardClientLayout({
     children,
-    user
+    user,
+    initialEvents = []
 }: DashboardClientLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
@@ -211,7 +213,7 @@ export default function DashboardClientLayout({
 
     // Use prop directly, fallback to default only if null
     const adminUser = user;
-    const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>([]);
+    const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>(initialEvents);
 
     useEffect(() => {
         const initData = async () => {

@@ -251,12 +251,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="slug-input">Your Unique Slug</Label>
-              <div className="flex gap-2">
-                <div className={`flex-1 flex items-center gap-0 bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
-                    slugAvailability === 'taken' || slugAvailability === 'invalid' ? 'border-red-500/40' :
-                      'border-white/10'
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className={`flex items-center w-full sm:w-[320px] bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
+                  slugAvailability === 'taken' || slugAvailability === 'invalid' ? 'border-red-500/40' :
+                    'border-white/10'
                   }`}>
-                  <span className="text-xs text-stone-500 pl-3 pr-1 whitespace-nowrap hidden sm:block">check-status/</span>
                   <Input
                     id="slug-input"
                     placeholder="e.g., sks-bank-2025"
@@ -265,7 +264,7 @@ export default function SettingsPage() {
                       setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
                       setSlugError('');
                     }}
-                    className="border-0 bg-transparent focus-visible:ring-0 flex-1"
+                    className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ring-0 ring-offset-0 shadow-none flex-1 h-9 text-sm px-3"
                   />
                   {/* Availability indicator */}
                   <div className="pr-3 shrink-0">
@@ -277,9 +276,11 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSaveSlug}
                   disabled={!canSaveSlug}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0"
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all"
                 >
-                  {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                  {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save Slug
                 </Button>
               </div>
               {/* Availability status text */}

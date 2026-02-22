@@ -363,7 +363,13 @@ export default function ReportsPage() {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateFrom}
+                                        onSelect={setDateFrom}
+                                        initialFocus
+                                        disabled={(date) => date > new Date()}
+                                    />
                                 </PopoverContent>
                             </Popover>
                         </div>
@@ -385,7 +391,13 @@ export default function ReportsPage() {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateTo}
+                                        onSelect={setDateTo}
+                                        initialFocus
+                                        disabled={(date) => date > new Date()}
+                                    />
                                 </PopoverContent>
                             </Popover>
                         </div>

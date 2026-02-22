@@ -1,6 +1,7 @@
 import DashboardClientLayout from './client-layout';
 import prisma from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { getEvents } from '@/actions/events';
 
 async function getUser() {
   const session = await getSession();
@@ -22,9 +23,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getUser();
+  const eventsRes = await getEvents();
+  const initialEvents = eventsRes.success && eventsRes.data ? (eventsRes.data as any[]).map(e => ({ id: e.id, name: e.name })) : [];
 
   return (
-    <DashboardClientLayout user={user}>
+    <DashboardClientLayout user={user} initialEvents={initialEvents}>
       {children}
     </DashboardClientLayout>
   );
