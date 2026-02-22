@@ -54,12 +54,13 @@ import {
     TrendingUp,
     DollarSign,
     Users,
+    Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '@/actions/events';
 import { getStudents } from '@/actions/students';
-import { getQrCodes } from '@/actions/settings';
+import { getQrCodes, getCurrentAdmin } from '@/actions/users';
 import type { Event, Student, QrCode } from '@/lib/types';
 import { format } from 'date-fns';
 import { GlassCard } from '@/components/ui/glass-card';
@@ -84,6 +85,7 @@ export default function EventsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+    const [adminSlug, setAdminSlug] = useState<string | null>(null);
     const { toast } = useToast();
 
     // Form state
@@ -106,10 +108,11 @@ export default function EventsPage() {
 
     const fetchData = async (isBackground = false) => {
         if (!isBackground) setIsLoading(true);
-        const [eventsRes, studentsRes, qrRes] = await Promise.all([
+        const [eventsRes, studentsRes, qrRes, adminRes] = await Promise.all([
             getEvents(),
             getStudents(),
-            getQrCodes()
+            getQrCodes(),
+            getCurrentAdmin()
         ]);
 
         if (eventsRes.success && eventsRes.data) {
@@ -122,6 +125,10 @@ export default function EventsPage() {
 
         if (qrRes.success) {
             setQrCodes(qrRes.data as QrCode[]);
+        }
+
+        if (adminRes.success && adminRes.data) {
+            setAdminSlug(adminRes.data.slug);
         }
 
         setIsLoading(false);
@@ -251,6 +258,24 @@ export default function EventsPage() {
         toast({ title: 'Link Copied', description: 'Payment link copied to clipboard' });
     };
 
+    const handleSharePortal = () => {
+        if (!adminSlug) {
+            toast({
+                variant: 'destructive',
+                title: 'Portal Not Configured',
+                description: 'Please set up your student portal link in Settings before sharing.',
+            });
+            return;
+        }
+
+        const url = `${window.location.origin}/check-status/${adminSlug}`;
+        navigator.clipboard.writeText(url);
+        toast({
+            title: 'Link Copied',
+            description: 'Student portal link copied to clipboard!',
+        });
+    };
+
     if (isLoading) {
         return <PageLoader message="Loading events..." />;
     }
@@ -269,6 +294,16 @@ export default function EventsPage() {
                 </div>
 
                 <div className="flex gap-2 w-full md:w-auto">
+                    <Button
+                        variant="ghost"
+                        onClick={handleSharePortal}
+                        className="gap-2 bg-white/5 border border-white/10 hover:bg-white/10 flex-1 md:flex-none"
+                    >
+                        <Share2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Share Portal</span>
+                        <span className="sm:hidden">Share</span>
+                    </Button>
+
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         if (!open) {
                             fetchData(true); // Background refresh on close
