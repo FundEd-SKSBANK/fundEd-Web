@@ -99,7 +99,7 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                         <Wallet className="w-4 h-4 text-emerald-400" />
                         <span className="text-emerald-300/90 font-mono text-xs tracking-wider">STUDENT PORTAL</span>
                     </div>
-                    <h1 className="text-4xl md:text-7xl font-bold text-white tracking-tight leading-tight">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight">
                         Check your <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">payment status</span>
                     </h1>
@@ -113,20 +113,22 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                 {/* Search Bar */}
                 <div className="w-full max-w-xl relative group mb-16">
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative flex items-center gap-4 bg-black/50 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-2 shadow-2xl">
-                        <Search className="w-5 h-5 text-emerald-500 ml-4" />
-                        <Input
-                            placeholder="Search by Name or Roll Number..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            className="border-0 bg-transparent focus-visible:ring-0 text-lg h-12 text-white placeholder:text-stone-500 font-light"
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-                        />
+                    <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-black/50 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-2 sm:p-2 shadow-2xl">
+                        <div className="flex items-center flex-1 px-2">
+                            <Search className="w-5 h-5 text-emerald-500 mr-2 shrink-0" />
+                            <Input
+                                placeholder="Name or Roll Number..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                className="border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg h-12 text-white placeholder:text-stone-500 font-light w-full"
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                            />
+                        </div>
                         <Button
                             size="lg"
                             onClick={handleSearch}
                             disabled={isLoading}
-                            className="rounded-xl px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-medium tracking-wide shadow-lg shadow-emerald-900/20 transition-all hover:scale-[1.02]"
+                            className="rounded-xl px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-medium tracking-wide shadow-lg shadow-emerald-900/20 transition-all active:scale-95 sm:hover:scale-[1.02] h-12 sm:h-auto"
                         >
                             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
                         </Button>
@@ -142,7 +144,7 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                     )}
 
                     {results.map((item) => (
-                        <div key={item.student.id} className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 p-8 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10">
+                        <div key={item.student.id} className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 p-6 md:p-8 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10">
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-white/5 pb-6">
                                 <div>
