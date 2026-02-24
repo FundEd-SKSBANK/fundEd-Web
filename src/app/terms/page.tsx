@@ -89,28 +89,32 @@ export default function TermsPage() {
             </div>
 
             {/* Nav */}
-            <nav className="relative z-10 border-b border-white/5 bg-black/40 backdrop-blur-xl px-6 md:px-16 py-5">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-emerald-300 hover:text-emerald-200 transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                        FundEd
+            <nav className="fixed top-0 w-full z-[60] bg-black/40 backdrop-blur-xl py-6 md:py-8 border-b border-white/5">
+                <div className="max-w-7xl mx-auto px-6 md:px-16 flex items-center justify-between gap-4">
+                    <Link href="/" className="flex items-center gap-4 group">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
+                            <span className="relative text-xs md:text-sm font-bold tracking-[0.25em] text-white group-hover:text-emerald-200 transition-colors uppercase whitespace-nowrap">
+                                FundEd <span className="text-emerald-500/50 mx-2 md:mx-3">●</span> Terms
+                            </span>
+                        </div>
                     </Link>
-                    <span className="text-xs font-mono text-stone-600 tracking-wider">TERMS & CONDITIONS</span>
+                    <span className="hidden sm:inline text-[10px] font-mono text-stone-600 tracking-[0.3em] uppercase">LEGAL_TERMS</span>
                 </div>
             </nav>
 
             <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 py-20">
                 {/* Header */}
-                <div className="mb-16">
+                <div className="mb-16 pt-10 md:pt-0">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
                         <FileText className="w-4 h-4 text-emerald-400" />
-                        <span className="text-emerald-300/90 font-mono text-xs tracking-wider">TERMS & CONDITIONS</span>
+                        <span className="text-emerald-300/90 font-mono text-[10px] tracking-[0.2em]">TERMS & CONDITIONS</span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
+                    <h1 className="text-4xl md:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6">
                         Use it right,<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 italic font-light">use it well.</span>
                     </h1>
-                    <p className="text-stone-400 text-lg max-w-2xl leading-relaxed">
+                    <p className="text-stone-400 text-base md:text-lg max-w-2xl leading-relaxed">
                         By accessing or using FundEd, you agree to these terms. Please read them carefully before proceeding.
                     </p>
                     <p className="text-stone-600 text-sm mt-4 font-mono">Last updated: February 2026</p>
@@ -139,13 +143,13 @@ export default function TermsPage() {
                 </div>
 
                 {/* Governing Law */}
-                <div className="mt-12 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 p-8">
-                    <h2 className="text-xl font-semibold text-white mb-3">Governing Law</h2>
-                    <p className="text-stone-400 leading-relaxed">
-                        These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in India. For questions, contact{' '}
-                        <a href="mailto:sksdmprod@gmail.com" className="text-emerald-400 hover:text-emerald-300 transition-colors underline underline-offset-4">
-                            sksdmprod@gmail.com
-                        </a>
+                <div className="mt-12 p-8 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 backdrop-blur-md">
+                    <h3 className="text-xl font-semibold text-white mb-2">Questions or concerns?</h3>
+                    <p className="text-stone-400">
+                        If you have any questions about these Terms, please contact us at{' '}
+                        <Link href="/support" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium border-b border-emerald-500/30">
+                            support@funded.com
+                        </Link>
                     </p>
                 </div>
             </main>

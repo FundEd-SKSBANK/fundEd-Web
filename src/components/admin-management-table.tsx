@@ -347,7 +347,7 @@ export function AdminManagementTable() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-stone-400">
-                                        {new Date(admin.createdAt).toLocaleDateString()}
+                                        {new Date(admin.createdAt).toLocaleDateString('en-GB')}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">

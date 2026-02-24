@@ -49,6 +49,8 @@ const faqs = [
     },
 ];
 
+import SupportForm from '@/components/SupportForm';
+
 export default function SupportPage() {
     return (
         <div className="min-h-screen bg-black text-stone-200 font-sans">
@@ -58,29 +60,32 @@ export default function SupportPage() {
                 <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-cyan-600/15 to-transparent blur-[120px] opacity-45" />
             </div>
 
-            {/* Nav */}
-            <nav className="relative z-10 border-b border-white/5 bg-black/40 backdrop-blur-xl px-6 md:px-16 py-5">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-emerald-300 hover:text-emerald-200 transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                        FundEd
+            <nav className="fixed top-0 w-full z-[60] bg-black/40 backdrop-blur-xl py-6 md:py-8 border-b border-white/5">
+                <div className="max-w-7xl mx-auto px-6 md:px-16 flex items-center justify-between gap-4">
+                    <Link href="/" className="flex items-center gap-4 group">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
+                            <span className="relative text-xs md:text-sm font-bold tracking-[0.25em] text-white group-hover:text-emerald-200 transition-colors uppercase whitespace-nowrap">
+                                FundEd <span className="text-emerald-500/50 mx-2 md:mx-3">●</span> Support
+                            </span>
+                        </div>
                     </Link>
-                    <span className="text-xs font-mono text-stone-600 tracking-wider">SUPPORT</span>
+                    <span className="hidden sm:inline text-[10px] font-mono text-stone-600 tracking-[0.3em] uppercase">HELP_CENTER</span>
                 </div>
             </nav>
 
-            <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 py-20">
+            <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 py-16 md:py-24">
                 {/* Header */}
-                <div className="mb-16">
+                <div className="mb-16 pt-10 md:pt-0">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
                         <LifeBuoy className="w-4 h-4 text-emerald-400" />
-                        <span className="text-emerald-300/90 font-mono text-xs tracking-wider">HELP & SUPPORT</span>
+                        <span className="text-emerald-300/90 font-mono text-[10px] tracking-[0.2em]">HELP & SUPPORT</span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
+                    <h1 className="text-4xl md:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6">
                         We&apos;ve got<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 italic font-light">your back.</span>
                     </h1>
-                    <p className="text-stone-400 text-lg max-w-2xl leading-relaxed">
+                    <p className="text-stone-400 text-base md:text-lg max-w-2xl leading-relaxed">
                         Find answers to common questions, or reach out to us directly. We&apos;re here to keep FundEd running smoothly for your institution.
                     </p>
                 </div>
@@ -100,7 +105,7 @@ export default function SupportPage() {
                             title: 'Report an Issue',
                             desc: 'Found a bug or security concern?',
                             action: 'report@funded.com',
-                            href: 'mailto:sksdmprod@gmail.com',
+                            href: '#report-form',
                         },
                         {
                             icon: <BookOpen className="w-6 h-6" />,
@@ -113,6 +118,8 @@ export default function SupportPage() {
                         <a
                             key={i}
                             href={card.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="group rounded-3xl bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 p-7 hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10"
                         >
                             <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 w-fit mb-5 group-hover:scale-110 transition-transform">
@@ -123,6 +130,11 @@ export default function SupportPage() {
                             <span className="text-emerald-400 text-sm font-mono group-hover:text-emerald-300 transition-colors">{card.action}</span>
                         </a>
                     ))}
+                </div>
+
+                {/* Support Form Section */}
+                <div className="mb-24">
+                    <SupportForm />
                 </div>
 
                 {/* FAQ */}
@@ -147,21 +159,26 @@ export default function SupportPage() {
                 </div>
 
                 {/* Still stuck */}
-                <div className="mt-12 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 p-8 text-center">
-                    <LifeBuoy className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold text-white mb-3">Still need help?</h2>
-                    <p className="text-stone-400 leading-relaxed max-w-lg mx-auto">
+                <div className="rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 p-12 text-center backdrop-blur-md">
+                    <div className="inline-flex p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-6">
+                        <LifeBuoy className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-4">Still need help?</h2>
+                    <p className="text-stone-400 max-w-xl mx-auto mb-8">
                         If your question isn&apos;t answered above, email us at{' '}
-                        <a href="mailto:sksdmprod@gmail.com" className="text-emerald-400 hover:text-emerald-300 transition-colors underline underline-offset-4">
-                            sksdmprod@gmail.com
-                        </a>{' '}
-                        and we&apos;ll get back to you within 24 hours.
+                        <a
+                            href="#report-form"
+                            className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium border-b border-emerald-500/30"
+                        >
+                            support@funded.com
+                        </a>
+                        {' '}and we&apos;ll get back to you within 24 hours.
                     </p>
                 </div>
-            </main>
+            </main >
 
             {/* Footer */}
-            <footer className="relative z-10 border-t border-white/5 px-6 md:px-16 py-8 mt-12">
+            < footer className="relative z-10 border-t border-white/5 px-6 md:px-16 py-8 mt-12" >
                 <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-600">
                     <p>© {new Date().getFullYear()} FundEd · A sub-product of <span className="text-emerald-500/80">SKS DM</span></p>
                     <div className="flex gap-6">
@@ -169,7 +186,7 @@ export default function SupportPage() {
                         <Link href="/terms" className="hover:text-emerald-400 transition-colors">Terms</Link>
                     </div>
                 </div>
-            </footer>
-        </div>
+            </footer >
+        </div >
     );
 }
