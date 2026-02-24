@@ -100,31 +100,34 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                     </p>
                 </div>
 
-                {/* Search Bar - Redesigned for premium look and responsiveness */}
-                <div className="w-full max-w-2xl relative group mb-20 px-4 sm:px-0">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition-all duration-1000"></div>
-                    <div className="relative bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-3 shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)] group-hover:border-emerald-500/50 transition-all duration-500">
-                        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
-                            <div className="relative flex-1 w-full flex items-center bg-black/40 rounded-2xl border border-white/5 group-focus-within:border-emerald-500/30 transition-all px-4 h-14">
-                                <Search className="w-5 h-5 text-emerald-500/60 group-focus-within:text-emerald-400 shrink-0 mr-3" />
-                                <Input
-                                    placeholder="Enter Name or Roll Number..."
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    className="border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg text-white placeholder:text-stone-600 font-light w-full h-full p-0"
-                                />
-                                {isLoading && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
-                            </div>
-                            <Button
-                                type="submit"
-                                size="lg"
-                                disabled={isLoading || !query.trim()}
-                                className="w-full sm:w-auto h-14 px-10 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold tracking-[0.05em] shadow-[0_10px_20px_-10px_rgba(16,185,129,0.5)] transition-all active:scale-95 sm:hover:scale-[1.05] border-0"
-                            >
-                                Search Status
-                            </Button>
-                        </form>
-                    </div>
+                {/* Search Bar - Perfected Premium Design */}
+                <div className="w-full max-w-2xl relative mb-24 px-4 sm:px-0">
+                    <div className="absolute -inset-4 bg-emerald-500/10 blur-[100px] rounded-full opacity-30 pointer-events-none"></div>
+
+                    <form onSubmit={handleSearch} className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl p-3 shadow-2xl transition-all duration-300 focus-within:border-emerald-500/40 focus-within:shadow-emerald-500/10">
+                        <div className="flex-1 flex items-center px-4 h-14 bg-white/[0.02] rounded-2xl border border-white/5 focus-within:bg-white/[0.04] transition-all">
+                            <Search className="w-5 h-5 text-emerald-400/80 mr-3 shrink-0" />
+                            <Input
+                                placeholder="Student Name or Roll Number"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                className="border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg text-white placeholder:text-stone-500 font-normal w-full h-full p-0"
+                            />
+                            {isLoading && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={isLoading || !query.trim()}
+                            className="h-14 sm:h-14 px-10 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-base tracking-wide transition-all active:scale-95 shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)] border-0"
+                        >
+                            {isLoading ? 'Searching...' : 'Search Status'}
+                        </Button>
+                    </form>
+
+                    <p className="mt-4 text-center text-xs text-stone-500 tracking-widest uppercase opacity-60">
+                        Enter details as registered in the institution
+                    </p>
                 </div>
 
                 {/* Results */}
