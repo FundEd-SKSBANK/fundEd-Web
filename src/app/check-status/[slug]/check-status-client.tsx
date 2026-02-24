@@ -18,8 +18,18 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasSearched, setHasSearched] = useState(false);
     const { toast } = useToast();
+    const [hasSearched, setHasSearched] = useState(false);
+
+    // Save portal info to localStorage for returning visitors
+    useState(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('lastStatusSlug', slug);
+            if (adminName) {
+                localStorage.setItem('lastStatusAdminName', adminName);
+            }
+        }
+    });
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();

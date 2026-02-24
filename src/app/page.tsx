@@ -16,6 +16,7 @@ import { Logo } from '@/components/icons';
 import { GlassCard } from '@/components/ui/glass-card';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
+import { PortalReturn } from '@/components/portal-return';
 
 export default function Home() {
   const features = [
@@ -176,6 +177,7 @@ export default function Home() {
                 Bringing <span className="text-emerald-300 font-medium">transparency</span> and <span className="text-emerald-300 font-medium">efficiency</span> to students, reps, and admins.
                 Eliminate the chaos of cash.
               </p>
+              <PortalReturn />
             </div>
 
             <Link href="/login">
