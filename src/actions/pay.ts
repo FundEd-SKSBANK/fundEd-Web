@@ -14,7 +14,10 @@ export async function getPaymentPageData(slugOrId: string) {
               { slug: slugOrId }
           ]
       },
-      include: { participants: { select: { id: true } } }
+      include: { 
+        participants: { select: { id: true } },
+        createdBy: { select: { slug: true } }
+      }
     });
 
     if (!event) return { success: false, error: 'Event not found' };
@@ -60,7 +63,14 @@ export async function getPaymentPageData(slugOrId: string) {
     return { 
       success: true, 
       data: {
-        event: { ...event, deadline: event.deadline.toISOString(), createdAt: event.createdAt.toISOString(), updatedAt: event.updatedAt.toISOString(), paymentOptions: JSON.parse(event.paymentOptions) },
+        event: { 
+            ...event, 
+            deadline: event.deadline.toISOString(), 
+            createdAt: event.createdAt.toISOString(), 
+            updatedAt: event.updatedAt.toISOString(), 
+            paymentOptions: JSON.parse(event.paymentOptions),
+            adminSlug: (event as any).createdBy?.slug || null
+        },
         availableStudents
       }
     };
@@ -106,7 +116,10 @@ export async function createPayment(data: {
              // Only send if confirmed 'Paid'
              if (data.status === 'Paid' && payment.student?.email) {
                  const [eventDetails, allPayments] = await Promise.all([
-                     prisma.event.findUnique({ where: { id: data.eventId } }),
+                     prisma.event.findUnique({ 
+                        where: { id: data.eventId },
+                        include: { createdBy: { select: { slug: true } } }
+                     }),
                      prisma.payment.findMany({
                         where: {
                             eventId: data.eventId,
@@ -132,7 +145,7 @@ export async function createPayment(data: {
                         paymentDate: payment.paymentDate.toISOString(),
                         balanceDue: balanceDue,
                         totalCost: eventDetails.cost,
-                        checkStatusLink: `${baseUrl}/check-status`
+                        checkStatusLink: `${baseUrl}/check-status/${(eventDetails as any).createdBy?.slug || ''}`
                     });
                  }
              }

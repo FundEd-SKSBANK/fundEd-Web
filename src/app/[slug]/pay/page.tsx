@@ -665,7 +665,7 @@ export default function PaymentPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:justify-center mt-4">
             <AlertDialogAction asChild className="bg-emerald-600 hover:bg-emerald-500 text-white px-8">
-              <Link href={`/check-status/${slug}`}>Check Status</Link>
+              <Link href={`/check-status/${event.adminSlug || slug}`}>Check Status</Link>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

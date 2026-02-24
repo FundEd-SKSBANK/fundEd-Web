@@ -42,6 +42,7 @@ export type Event = {
   pendingCount?: number;
   status?: string; // Added status field
   slug?: string | null;
+  adminSlug?: string | null;
 };
 
 export type Student = {
