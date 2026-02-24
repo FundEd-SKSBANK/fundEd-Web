@@ -296,8 +296,8 @@ export default function ReportsPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">Reports & Analytics</h2>
-                <p className="text-muted-foreground mt-2">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Reports & Analytics</h2>
+                <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
                     Generate detailed reports and download transaction data
                 </p>
             </div>
@@ -476,13 +476,13 @@ export default function ReportsPage() {
             {
                 transactions.length > 0 && (
                     <GlassCard className="shadow-md animate-slide-up">
-                        <CardHeader>
-                            <CardTitle>Transaction Preview</CardTitle>
-                            <CardDescription>
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg sm:text-xl">Transaction Preview</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm">
                                 Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0 sm:p-6">
+                        <CardContent className="p-0 sm:px-6 sm:pb-6">
                             <div className="overflow-x-auto -mx-2 sm:mx-0">
                                 <Table>
                                     <TableHeader>

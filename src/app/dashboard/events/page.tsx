@@ -289,7 +289,7 @@ export default function EventsPage() {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Events</h2>
-                    <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
+                    <p className="text-muted-foreground mt-0.5 md:mt-1 text-sm md:text-base">
                         Manage fund collection events and track payments
                     </p>
                 </div>
@@ -299,11 +299,11 @@ export default function EventsPage() {
                         variant="ghost"
                         onClick={handleSharePortal}
                         className={cn(
-                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity",
+                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity h-10",
                             !adminSlug ? "opacity-40 hover:bg-white/5" : "hover:bg-white/10"
                         )}
                     >
-                        <Share2 className="h-4 w-4" />
+                        <Share2 className="h-4 w-4 shrink-0" />
                         <span className="hidden sm:inline">Share Portal</span>
                         <span className="sm:hidden">Share</span>
                     </Button>

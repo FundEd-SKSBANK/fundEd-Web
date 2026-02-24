@@ -36,9 +36,9 @@ interface StatCardProps {
 function StatCard({ title, value, description, icon, trend, className }: StatCardProps) {
     return (
         <GlassCard className={`relative overflow-hidden transition-all hover:shadow-lg w-full min-w-0 ${className}`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pr-8 sm:pr-10 md:pr-12">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium truncate pr-2">{title}</CardTitle>
-                <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     {icon}
                 </div>
             </CardHeader>
@@ -142,19 +142,21 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
             {/* Active Events - Quick Access */}
             {events && events.length > 0 && (
                 <GlassCard className="shadow-md">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Receipt className="h-5 w-5 text-emerald-400" />
-                                    Quick Access — Expenses
+                    <CardHeader className="pb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="min-w-0">
+                                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                                    <Receipt className="h-5 w-5 text-emerald-400 shrink-0" />
+                                    <span className="truncate">Quick Access — Expenses</span>
                                 </CardTitle>
-                                <CardDescription className="mt-1">
+                                <CardDescription className="mt-1 line-clamp-1 sm:line-clamp-none">
                                     Jump directly to any event's expense tracker
                                 </CardDescription>
                             </div>
-                            <Link href="/dashboard/events">
-                                <span className="text-sm text-primary hover:underline cursor-pointer">All Events →</span>
+                            <Link href="/dashboard/events" className="shrink-0">
+                                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-auto p-0 font-medium">
+                                    All Events <ArrowRight className="h-3 w-3 ml-1" />
+                                </Button>
                             </Link>
                         </div>
                     </CardHeader>
@@ -180,18 +182,18 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
 
             {/* Recent Transactions */}
             <GlassCard className="shadow-md">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Recent Transactions</CardTitle>
-                            <CardDescription className="mt-1">
+                <CardHeader className="pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="min-w-0">
+                            <CardTitle className="text-lg sm:text-xl truncate">Recent Transactions</CardTitle>
+                            <CardDescription className="mt-1 line-clamp-1 sm:line-clamp-none">
                                 Latest payment activities across all events
                             </CardDescription>
                         </div>
-                        <Link href="/dashboard/reports">
-                            <span className="text-sm text-primary hover:underline cursor-pointer">
-                                View all →
-                            </span>
+                        <Link href="/dashboard/reports" className="shrink-0">
+                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-auto p-0 font-medium">
+                                View all <ArrowRight className="h-3 w-3 ml-1" />
+                            </Button>
                         </Link>
                     </div>
                 </CardHeader>

@@ -241,8 +241,35 @@ export default function PaymentPage() {
         name: 'FundEd',
         description: `Payment for ${event.name}`,
         order_id: order.id,
-        handler: function (response: any) {
-          setShowSuccessDialog(true);
+        handler: async function (response: any) {
+          setIsSubmitting(true);
+          try {
+            const verifyRes = await fetch('/api/razorpay/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              setShowSuccessDialog(true);
+            } else {
+              const errorData = await verifyRes.json();
+              toast({
+                variant: 'destructive',
+                title: 'Verification Failed',
+                description: errorData.error || 'Payment was successful but we couldn\'t verify it. Please contact support.'
+              });
+            }
+          } catch (error) {
+            console.error('Verification error:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'An error occurred during verification.' });
+          } finally {
+            setIsSubmitting(false);
+          }
         },
         prefill: {
           name: selectedStudent.name,

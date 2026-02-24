@@ -259,16 +259,16 @@ export default function EventPaymentsPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <Button asChild variant="outline" size="icon" className="shrink-0">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Button asChild variant="outline" size="icon" className="h-9 w-9 shrink-0">
             <Link href="/dashboard/events">
               <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">Back</span>
             </Link>
           </Button>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Payments for {event.name}</h2>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+          <div className="min-w-0">
+            <h2 className="text-[1.25rem] font-bold tracking-tight truncate">Payments for {event.name}</h2>
+            <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm md:text-base line-clamp-1">
               Manage and track all transactions for this event
             </p>
           </div>
@@ -297,9 +297,9 @@ export default function EventPaymentsPage() {
             preSelectedEvent={event}
             onSuccess={fetchPayments}
             trigger={
-              <Button className="gap-2 gradient-primary w-full md:w-auto justify-center">
-                <DollarSign className="h-4 w-4" />
-                Record Cash Payment
+              <Button className="gap-2 gradient-primary w-full md:w-auto justify-center h-10">
+                <DollarSign className="h-4 w-4 shrink-0" />
+                <span>Record Cash Payment</span>
               </Button>
             }
           />
