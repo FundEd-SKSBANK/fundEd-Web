@@ -100,26 +100,30 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                     </p>
                 </div>
 
-                {/* Search Bar */}
-                <div className="w-full max-w-xl relative group mb-16">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative flex items-center gap-4 bg-black/50 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-2 shadow-2xl">
-                        <Search className="w-5 h-5 text-emerald-500 ml-4" />
-                        <Input
-                            placeholder="Search by Name or Roll Number..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            className="border-0 bg-transparent focus-visible:ring-0 text-lg h-12 text-white placeholder:text-stone-500 font-light"
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
-                        />
-                        <Button
-                            size="lg"
-                            onClick={handleSearch}
-                            disabled={isLoading}
-                            className="rounded-xl px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-medium tracking-wide shadow-lg shadow-emerald-900/20 transition-all hover:scale-[1.02]"
-                        >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
-                        </Button>
+                {/* Search Bar - Redesigned for premium look and responsiveness */}
+                <div className="w-full max-w-2xl relative group mb-20 px-4 sm:px-0">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition-all duration-1000"></div>
+                    <div className="relative bg-zinc-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-3 shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)] group-hover:border-emerald-500/50 transition-all duration-500">
+                        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
+                            <div className="relative flex-1 w-full flex items-center bg-black/40 rounded-2xl border border-white/5 group-focus-within:border-emerald-500/30 transition-all px-4 h-14">
+                                <Search className="w-5 h-5 text-emerald-500/60 group-focus-within:text-emerald-400 shrink-0 mr-3" />
+                                <Input
+                                    placeholder="Enter Name or Roll Number..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    className="border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg text-white placeholder:text-stone-600 font-light w-full h-full p-0"
+                                />
+                                {isLoading && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
+                            </div>
+                            <Button
+                                type="submit"
+                                size="lg"
+                                disabled={isLoading || !query.trim()}
+                                className="w-full sm:w-auto h-14 px-10 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold tracking-[0.05em] shadow-[0_10px_20px_-10px_rgba(16,185,129,0.5)] transition-all active:scale-95 sm:hover:scale-[1.05] border-0"
+                            >
+                                Search Status
+                            </Button>
+                        </form>
                     </div>
                 </div>
 
