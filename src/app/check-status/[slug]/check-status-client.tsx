@@ -100,34 +100,26 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                     </p>
                 </div>
 
-                {/* Search Bar - Perfected Premium Design */}
-                <div className="w-full max-w-2xl relative mb-24 px-4 sm:px-0">
-                    <div className="absolute -inset-4 bg-emerald-500/10 blur-[100px] rounded-full opacity-30 pointer-events-none"></div>
-
-                    <form onSubmit={handleSearch} className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-3xl p-3 shadow-2xl transition-all duration-300 focus-within:border-emerald-500/40 focus-within:shadow-emerald-500/10">
-                        <div className="flex-1 flex items-center px-4 h-14 bg-white/[0.02] rounded-2xl border border-white/5 focus-within:bg-white/[0.04] transition-all">
-                            <Search className="w-5 h-5 text-emerald-400/80 mr-3 shrink-0" />
+                {/* Simple Search Bar */}
+                <div className="w-full max-w-xl relative mb-16 px-4">
+                    <form onSubmit={handleSearch} className="relative flex items-center gap-2">
+                        <div className="relative flex-1 group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500 group-focus-within:text-emerald-500 transition-colors" />
                             <Input
-                                placeholder="Student Name or Roll Number"
+                                placeholder="Name or Roll Number..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                className="border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg text-white placeholder:text-stone-500 font-normal w-full h-full p-0"
+                                className="pl-11 h-12 bg-white/[0.05] border-white/10 rounded-xl text-white placeholder:text-stone-500 focus-visible:ring-1 focus-visible:ring-emerald-500/50 focus-visible:border-emerald-500/50 transition-all font-normal"
                             />
-                            {isLoading && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-2" />}
                         </div>
-
                         <Button
                             type="submit"
                             disabled={isLoading || !query.trim()}
-                            className="h-14 sm:h-14 px-10 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-base tracking-wide transition-all active:scale-95 shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)] border-0"
+                            className="h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all shadow-lg shadow-emerald-900/20 active:scale-95 shrink-0"
                         >
-                            {isLoading ? 'Searching...' : 'Search Status'}
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
                         </Button>
                     </form>
-
-                    <p className="mt-4 text-center text-xs text-stone-500 tracking-widest uppercase opacity-60">
-                        Enter details as registered in the institution
-                    </p>
                 </div>
 
                 {/* Results */}
