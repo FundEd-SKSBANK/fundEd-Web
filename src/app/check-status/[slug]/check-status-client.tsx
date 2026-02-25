@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,16 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const { toast } = useToast();
+
+    // Persist portal info for landing page return button
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('lastStatusSlug', slug);
+            if (adminName) {
+                localStorage.setItem('lastStatusAdminName', adminName);
+            }
+        }
+    }, [slug, adminName]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,9 +79,9 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                         <div className="relative group">
                             <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
                             <span className="relative text-base font-bold tracking-[0.25em] text-white group-hover:text-emerald-200 transition-colors uppercase">
-                                {adminName ? adminName : 'FundEd'}
+                                FundEd
                                 <span className="text-emerald-500/50 mx-3 hidden sm:inline">●</span>
-                                <span className="hidden sm:inline">Status Portal</span>
+                                <span className="hidden sm:inline">check status</span>
                             </span>
                         </div>
                     </Link>
