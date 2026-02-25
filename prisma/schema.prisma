@@ -1,49 +1,46 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  image     String?   // Base64 or URL
-  slug      String?  @unique // unique public slug for check-status URL
-  role      String   @default("admin") // 'admin' | 'superuser'
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdStudents Student[] @relation("CreatedStudents")
-  createdEvents   Event[]   @relation("CreatedEvents")
+  id               String    @id @default(cuid())
+  email            String    @unique
+  password         String
+  name             String?
+  image            String?
+  role             String    @default("admin")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  slug             String?   @unique
+  resetToken       String?   @unique
+  resetTokenExpires DateTime?
+  createdEvents    Event[]   @relation("CreatedEvents")
   recordedExpenses Expense[]
+  createdStudents  Student[] @relation("CreatedStudents")
 
   @@index([email])
+  @@index([resetToken])
 }
 
 model Student {
-  id        String   @id @default(cuid())
-  rollNo    String
-  name      String
-  email     String
-  phone     String?
-  class     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  createdById String? 
-  createdBy   User?   @relation("CreatedStudents", fields: [createdById], references: [id])
-
-  payments           Payment[]
-  printDistributions PrintDistribution[]
-  participatingEvents Event[]
+  id                  String              @id @default(cuid())
+  rollNo              String
+  name                String
+  email               String
+  class               String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  createdById         String?
+  phone               String?
+  payments            Payment[]
+  printDistributions  PrintDistribution[]
+  createdBy           User?               @relation("CreatedStudents", fields: [createdById], references: [id])
+  participatingEvents Event[]             @relation("EventToStudent")
 
   @@unique([rollNo, class, createdById])
   @@index([rollNo])
@@ -52,28 +49,25 @@ model Student {
 }
 
 model Event {
-  id             String   @id @default(cuid())
-  name           String   @default("New Event")
-  slug           String?  @unique
-  description    String   @default("")
-  deadline       DateTime @default(now())
-  cost           Float    @default(0)
-  paymentOptions String   @default("[\"Razorpay\"]") // Stored as JSON string
-  qrCodeUrl      String?
-  category       String   @default("Normal") // 'Normal' | 'Print'
-  status         String   @default("PUBLISHED") // 'DRAFT' | 'PUBLISHED'
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  createdById String?
-  createdBy   User?   @relation("CreatedEvents", fields: [createdById], references: [id])
-
+  id                 String              @id @default(cuid())
+  name               String              @default("New Event")
+  description        String              @default("")
+  deadline           DateTime            @default(now())
+  cost               Float               @default(0)
+  paymentOptions     String              @default("[\"Razorpay\"]")
+  qrCodeUrl          String?
+  category           String              @default("Normal")
+  status             String              @default("PUBLISHED")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  createdById        String?
+  slug               String?             @unique
+  createdBy          User?               @relation("CreatedEvents", fields: [createdById], references: [id])
+  expenses           Expense[]
   payments           Payment[]
   printDistributions PrintDistribution[]
-  expenses           Expense[]
+  participants       Student[]           @relation("EventToStudent")
 
-  participants       Student[]
-  
   @@index([deadline])
   @@index([category])
   @@index([createdAt])
@@ -83,26 +77,21 @@ model Payment {
   id                String   @id @default(cuid())
   amount            Float
   paymentDate       DateTime @default(now())
-  transactionId     String?   // Optional because it might not exist for Cash
-  status            String   // 'Paid' | 'Pending' | 'Failed' | 'Verification Pending'
-  paymentMethod     String   // 'Razorpay' | 'QR Scan' | 'Cash' | 'N/A'
+  transactionId     String?
+  status            String
+  paymentMethod     String
   screenshotUrl     String?
   razorpay_order_id String?
-  
-  // Manual payment tracking
   isManualEntry     Boolean  @default(false)
-  recordedBy        String?  // User ID who recorded the payment
-  manualEntryNotes  String?  // Admin notes for manual entry
-  receiptNumber     String?  // Optional receipt number
-  
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  eventId   String
-  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  recordedBy        String?
+  manualEntryNotes  String?
+  receiptNumber     String?
+  studentId         String
+  eventId           String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([eventId])
@@ -114,34 +103,29 @@ model Payment {
 model PrintDistribution {
   id            String   @id @default(cuid())
   distributedAt DateTime @default(now())
-  
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  eventId   String
-  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  studentId     String
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([eventId])
 }
 
 model Expense {
-  id          String   @id @default(cuid())
-  title       String
-  amount      Float
-  date        DateTime @default(now())
-  category    String   @default("General")
-  billUrl     String?  // Base64 encoded bill image (optional)
-  note        String?  // Optional admin note/description
-  
-  eventId     String?
-  event       Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  recordedBy  String?
-  recorder    User?    @relation(fields: [recordedBy], references: [id])
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  title      String
+  amount     Float
+  date       DateTime @default(now())
+  category   String   @default("General")
+  recordedBy String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  eventId    String?
+  billUrl    String?
+  note       String?
+  event      Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recorder   User?    @relation(fields: [recordedBy], references: [id])
 
   @@index([date])
   @@index([eventId])

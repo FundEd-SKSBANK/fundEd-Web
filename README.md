@@ -39,7 +39,9 @@ FundEd is a modern, full-stack web application designed to streamline event paym
 -   **Dark Mode**: A sleek, emerald-themed dark interface with animated background orbs.
 -   **Smooth Animations**: Fluid transitions, micro-interactions, and custom cursor effects.
 -   **Mobile First**: Fully responsive design optimized for screens as small as 353px width.
--   **Custom Components**: Branded loaders, glass cards, and interactive elements.
+- [x] **Unified Authentication**: Seamlessly switch between login, signup, and forgot password on a single dynamic page.
+- [x] **Premium Communication**: Branded email templates with the "Classroom OS" aesthetic for all transactional emails.
+- [x] **Custom Components**: Branded loaders, glass cards, and interactive elements.
 
 ## 🛠️ Tech Stack
 
@@ -161,6 +163,13 @@ fundEd-Web/
 ```
 
 ## 🎯 Recent Updates
+
+### Unified Auth & Premium Communication (v1.5.0)
+- ✅ **Unified Auth Page**: Merged Login, Signup, and Forgot Password into a single, high-performance dynamic page.
+- ✅ **Compact Design**: Forms optimized for single-glance visibility on mobile screens with no scrolling required.
+- ✅ **Superadmin Notifications**: Added notification system for superadmins to monitor new user registrations in real-time.
+- ✅ **Premium Email Branding**: Re-styled all outgoing emails (Reset Password, Event Invitations, Receipts) with GraduationCap logo and Classroom OS branding.
+- ✅ **Port Standardization**: Unified local development fallback port to `9002` across all server actions.
 
 ### Admin Workspace Isolation & Student Portal (v1.4.0)
 - ✅ Each admin workspace now gets a **unique public check-status URL** (`/check-status/[slug]`)
