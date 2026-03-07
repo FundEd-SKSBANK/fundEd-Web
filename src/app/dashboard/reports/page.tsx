@@ -217,8 +217,8 @@ export default function ReportsPage() {
 
                 const summaryData = [
                     ['Total Transactions', (reportSummary.totalTransactions || 0).toString()],
-                    ['Total Collected', `₹${(reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()}`],
-                    ['Pending Amount', `₹${(reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()}`],
+                    ['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()],
+                    ['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()],
                     ['Paid Count', (reportSummary.paidCount || 0).toString()],
                 ];
 
