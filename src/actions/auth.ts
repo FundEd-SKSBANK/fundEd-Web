@@ -1,6 +1,6 @@
 'use server'
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import prisma from '@/lib/db';
 import { encrypt, getSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
@@ -131,7 +131,10 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     });
 
     // Send actual email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:9002';
+    const headerList = await headers();
+    const host = headerList.get('host');
+    const protocol = host?.includes('localhost') ? 'http' : 'https';
+    const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:9002');
     const resetLink = `${appUrl}/reset-password?token=${token}`;
 
     const result = await sendResetPasswordEmail({
