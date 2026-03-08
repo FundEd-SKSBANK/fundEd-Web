@@ -17,45 +17,45 @@ const prisma = getPrismaClient();
 
 async function main() {
   const targetEmail = 'sabinksanthosh6@gmail.com';
-  const sourceEmail = 'super@funded.com';
-
   const targetUser = await prisma.user.findUnique({ where: { email: targetEmail } });
-  const sourceUser = await prisma.user.findUnique({ where: { email: sourceEmail } });
 
   if (!targetUser) {
     console.error(`Target user ${targetEmail} not found`);
     return;
   }
 
-  if (!sourceUser) {
-    console.warn(`Source user ${sourceEmail} not found, checking for orphans only.`);
+  console.log(`Target User ID: ${targetUser.id}`);
+
+  // 1. Move everything CURRENTLY owned by super@funded.com
+  const sourceUser = await prisma.user.findUnique({ where: { email: 'super@funded.com' } });
+  if (sourceUser) {
+    console.log(`Found source user super@funded.com with ID: ${sourceUser.id}`);
+    const e1 = await prisma.event.updateMany({
+        where: { createdById: sourceUser.id },
+        data: { createdById: targetUser.id }
+    });
+    const s1 = await prisma.student.updateMany({
+        where: { createdById: sourceUser.id },
+        data: { createdById: targetUser.id }
+    });
+    console.log(`Moved ${e1.count} events and ${s1.count} students from super@funded.com`);
   }
 
-  console.log(`Reassigning records to: ${targetUser.email} (ID: ${targetUser.id})`);
-
-  // Update Events
-  const updatedEvents = await prisma.event.updateMany({
-    where: { 
-      OR: [
-        { createdById: null },
-        ...(sourceUser ? [{ createdById: sourceUser.id }] : [])
-      ]
-    },
-    data: { createdById: targetUser.id },
+  // 2. Move all orphans
+  const e2 = await prisma.event.updateMany({
+    where: { createdById: null },
+    data: { createdById: targetUser.id }
   });
-  console.log(`Updated ${updatedEvents.count} events`);
-
-  // Update Students
-  const updatedStudents = await prisma.student.updateMany({
-    where: { 
-      OR: [
-        { createdById: null },
-        ...(sourceUser ? [{ createdById: sourceUser.id }] : [])
-      ]
-    },
-    data: { createdById: targetUser.id },
+  const s2 = await prisma.student.updateMany({
+    where: { createdById: null },
+    data: { createdById: targetUser.id }
   });
-  console.log(`Updated ${updatedStudents.count} students`);
+  console.log(`Moved ${e2.count} orphan events and ${s2.count} orphan students`);
+
+  // Final count
+  const finalE = await prisma.event.count({ where: { createdById: targetUser.id } });
+  const finalS = await prisma.student.count({ where: { createdById: targetUser.id } });
+  console.log(`Final count for ${targetEmail}: ${finalE} events, ${finalS} students`);
 }
 
 main()
