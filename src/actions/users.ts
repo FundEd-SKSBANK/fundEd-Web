@@ -12,7 +12,7 @@ export async function getUsers() {
         const session = await getSession();
         if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-        if (session.user.role === 'superuser') {
+        if (session.user.role === 'superadmin') {
             const users = await prisma.user.findMany({
                 orderBy: { createdAt: 'desc' },
                 select: { id: true, name: true, email: true, role: true, image: true, createdAt: true }
@@ -74,7 +74,7 @@ export async function createUser(data: { name: string; email: string; password: 
     try {
         const role = await getUserRole();
         
-        if (role !== 'superuser') {
+        if (role !== 'superadmin') {
              return { success: false, error: "Only Superusers can create new Admins." };
         }
 
@@ -112,7 +112,7 @@ export async function createUser(data: { name: string; email: string; password: 
 export async function deleteUser(userId: string) {
     try {
         const role = await getUserRole();
-        if (role !== 'superuser') {
+        if (role !== 'superadmin') {
             return { success: false, error: "Unauthorized" };
         }
         
@@ -132,8 +132,8 @@ export async function updateUser(data: { id: string; name: string; email: string
         const session = await getSession();
         if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-        // Allow update if user is editing themselves OR if user is superuser
-        if (session.user.id !== data.id && session.user.role !== 'superuser') {
+        // Allow update if user is editing themselves OR if user is superadmin
+        if (session.user.id !== data.id && session.user.role !== 'superadmin') {
              return { success: false, error: "Unauthorized" };
         }
 

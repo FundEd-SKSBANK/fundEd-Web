@@ -17,7 +17,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         // Enforce isolation: only payments for events created by this admin
         whereClause.event = { createdById: session.user.id };
     } else if (adminId) {

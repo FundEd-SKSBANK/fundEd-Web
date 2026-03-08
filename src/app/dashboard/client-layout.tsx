@@ -83,7 +83,7 @@ const navItems = [
 
 function MainNav({ user, events }: { user?: any; events?: { id: string; name: string }[] }) {
     const pathname = usePathname();
-    const isSuperUser = user?.role === 'superuser';
+    const isSuperUser = user?.role === 'superadmin';
     const [expensesOpen, setExpensesOpen] = useState(false);
 
     const items = isSuperUser
@@ -211,7 +211,7 @@ export default function DashboardClientLayout({
     const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
     const [userNotifications, setUserNotifications] = useState<any[]>([]);
 
-    const isSuperUser = user?.role === 'superuser';
+    const isSuperUser = user?.role === 'superadmin';
     const adminUser = user;
     const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>(initialEvents);
 

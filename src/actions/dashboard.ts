@@ -11,7 +11,7 @@ export async function getDashboardData() {
     const eventWhere: any = {};
     const paymentWhere: any = {};
 
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         eventWhere.createdById = session.user.id;
         paymentWhere.event = { createdById: session.user.id };
     }
