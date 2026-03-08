@@ -78,8 +78,22 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 async function downloadWithWatermark(billUrl: string, eventName: string, category: string) {
+    // If it's a PDF, we don't watermark it, just download directly
+    if (billUrl.startsWith('data:application/pdf')) {
+        const a = document.createElement('a');
+        a.href = billUrl;
+
+        const safeName = eventName.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const safeCat = category.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        a.download = `${safeName}-${safeCat}.pdf`;
+
+        a.click();
+        return;
+    }
+
     return new Promise<void>((resolve, reject) => {
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => {
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
@@ -169,11 +183,19 @@ function BillViewerDialog({ expense, eventName }: { expense: Expense; eventName:
                 <div className="py-2">
                     <div className="rounded-lg overflow-hidden border border-white/10 bg-white/5 max-h-[65vh] flex items-center justify-center">
                         {expense.billUrl ? (
-                            <img
-                                src={expense.billUrl}
-                                alt={`Bill for ${expense.title}`}
-                                className="max-w-full max-h-[65vh] object-contain"
-                            />
+                            expense.billUrl.startsWith('data:application/pdf') ? (
+                                <iframe
+                                    src={expense.billUrl}
+                                    className="w-full h-[65vh] border-0"
+                                    title={`PDF for ${expense.title}`}
+                                />
+                            ) : (
+                                <img
+                                    src={expense.billUrl}
+                                    alt={`Bill for ${expense.title}`}
+                                    className="max-w-full max-h-[65vh] object-contain"
+                                />
+                            )
                         ) : (
                             <p className="text-stone-500 p-8">No bill image available.</p>
                         )}
@@ -209,10 +231,25 @@ function BillUploadField({
     onChange: (val: string | null) => void;
 }) {
     const fileRef = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
-    const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    const handleFile = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+        let file: File | undefined;
+
+        if (e.type === 'drop') {
+            file = (e as React.DragEvent).dataTransfer.files?.[0];
+        } else {
+            file = (e as React.ChangeEvent<HTMLInputElement>).target.files?.[0];
+        }
+
         if (!file) return;
+
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            return; // In a real app, maybe show a toast here
+        }
+
         const base64 = await fileToBase64(file);
         onChange(base64);
     };
@@ -222,16 +259,40 @@ function BillUploadField({
         if (fileRef.current) fileRef.current.value = '';
     };
 
+    const onDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const onDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const onDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        handleFile(e);
+    };
+
+    const isPdf = billUrl?.startsWith('data:application/pdf');
+
     return (
         <div className="space-y-2">
             <label className="text-sm font-medium">Bill / Receipt <span className="text-stone-500">(optional)</span></label>
             {billUrl ? (
                 <div className="relative rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <img
-                        src={billUrl}
-                        alt="Bill preview"
-                        className="w-full max-h-40 object-contain"
-                    />
+                    {isPdf ? (
+                        <div className="flex items-center justify-center h-40 bg-white/5 flex-col gap-2">
+                            <Receipt className="h-12 w-12 text-emerald-400 opacity-50" />
+                            <span className="text-xs text-stone-400">PDF Document Uploaded</span>
+                        </div>
+                    ) : (
+                        <img
+                            src={billUrl}
+                            alt="Bill preview"
+                            className="w-full max-h-40 object-contain"
+                        />
+                    )}
                     <button
                         type="button"
                         onClick={handleRemove}
@@ -243,19 +304,31 @@ function BillUploadField({
                 </div>
             ) : (
                 <label
-                    className="flex items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/10 transition-colors"
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onDrop={onDrop}
+                    className={cn(
+                        "flex items-center gap-3 rounded-lg border border-dashed px-4 py-8 cursor-pointer transition-all duration-200",
+                        isDragging
+                            ? "border-emerald-500 bg-emerald-500/10 scale-[1.01]"
+                            : "border-white/20 bg-white/5 hover:bg-white/10"
+                    )}
                 >
-                    <Upload className="h-4 w-4 text-stone-400 shrink-0" />
-                    <div>
-                        <span className="text-sm text-stone-400">Click to upload bill image</span>
-                        <span className="block text-xs text-stone-600">JPG, PNG, WEBP (optional)</span>
+                    <Upload className={cn("h-6 w-6 shrink-0 transition-colors", isDragging ? "text-emerald-400" : "text-stone-400")} />
+                    <div className="min-w-0">
+                        <span className={cn("text-sm block font-medium", isDragging ? "text-emerald-400" : "text-stone-300")}>
+                            {isDragging ? "Drop your bill here" : "Click or drag to upload bill"}
+                        </span>
+                        <span className="block text-xs text-stone-600 mt-1 uppercase tracking-wider">
+                            JPG, PNG, WEBP, PDF (Max 5MB)
+                        </span>
                     </div>
                     <input
                         ref={fileRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         className="hidden"
-                        onChange={handleFile}
+                        onChange={(e) => handleFile(e)}
                     />
                 </label>
             )}
