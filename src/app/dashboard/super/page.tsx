@@ -5,6 +5,7 @@ import { SuperStatsCards } from '@/components/super-stats-cards';
 import { AdminManagementTable } from '@/components/admin-management-table';
 import { RevenueTrendChart, ExpenseBreakdownChart } from '@/components/super-analytics-charts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SuperFinancialsTable } from '@/components/super-financials-table';
 
 export default async function SuperDashboardPage() {
     const role = await getUserRole();
@@ -69,9 +70,7 @@ export default async function SuperDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="financials" className="space-y-4">
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 min-h-[200px] flex items-center justify-center text-stone-500">
-                        Detailed Financial Reports (Coming Soon)
-                    </div>
+                    <SuperFinancialsTable />
                 </TabsContent>
             </Tabs>
         </div>

@@ -116,9 +116,9 @@ export default function EventExpensesPage() {
             doc.text('Financial Summary', 14, 45);
 
             const summaryData = [
-                ['Total Collected', `Rs. ${stats.totalCollected.toLocaleString()}`],
-                ['Total Expenses', `Rs. ${stats.totalExpenses.toLocaleString()}`],
-                ['Net Balance', `Rs. ${stats.netBalance.toLocaleString()}`]
+                ['Total Collected', `Rs. ${stats.totalCollected.toLocaleString('en-IN')}`],
+                ['Total Expenses', `Rs. ${stats.totalExpenses.toLocaleString('en-IN')}`],
+                ['Net Balance', `Rs. ${stats.netBalance.toLocaleString('en-IN')}`]
             ];
 
             autoTable(doc, {
@@ -138,7 +138,7 @@ export default function EventExpensesPage() {
                 format(new Date(expense.date), 'MMM dd, yyyy'),
                 expense.title,
                 expense.category,
-                `Rs. ${expense.amount.toLocaleString()}`
+                `Rs. ${expense.amount.toLocaleString('en-IN')}`
             ]);
 
             autoTable(doc, {
@@ -196,7 +196,7 @@ export default function EventExpensesPage() {
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-400">₹{stats.totalCollected.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-emerald-400">₹{stats.totalCollected.toLocaleString('en-IN')}</div>
                         <p className="text-xs text-emerald-500/60 flex items-center mt-1">
                             <TrendingUp className="h-3 w-3 mr-1" />
                             Revenue from payments
@@ -210,7 +210,7 @@ export default function EventExpensesPage() {
                         <Wallet className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-400">₹{stats.totalExpenses.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-red-400">₹{stats.totalExpenses.toLocaleString('en-IN')}</div>
                         <p className="text-xs text-red-500/60 flex items-center mt-1">
                             <TrendingDown className="h-3 w-3 mr-1" />
                             Total outflow
@@ -224,7 +224,7 @@ export default function EventExpensesPage() {
                         <Wallet className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-400">₹{stats.netBalance.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-blue-400">₹{stats.netBalance.toLocaleString('en-IN')}</div>
                         <p className="text-xs text-blue-500/60 flex items-center mt-1">
                             Available for use
                         </p>

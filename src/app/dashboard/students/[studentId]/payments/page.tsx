@@ -169,15 +169,15 @@ export default function StudentPaymentsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Cost</p>
-                      <p className="font-semibold">₹{summary.eventCost.toLocaleString()}</p>
+                      <p className="font-semibold">₹{summary.eventCost.toLocaleString('en-IN')}</p>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Paid: ₹{summary.totalPaid.toLocaleString()}</span>
+                      <span>Paid: ₹{summary.totalPaid.toLocaleString('en-IN')}</span>
                       <span className={summary.pendingAmount > 0 ? "text-emerald-500 font-medium" : "text-green-500"}>
-                        {summary.pendingAmount > 0 ? `Due: ₹${summary.pendingAmount.toLocaleString()}` : "Cleared"}
+                        {summary.pendingAmount > 0 ? `Due: ₹${summary.pendingAmount.toLocaleString('en-IN')}` : "Cleared"}
                       </span>
                     </div>
                     <Progress value={Math.min(progress, 100)} className="h-2" />
@@ -220,7 +220,7 @@ export default function StudentPaymentsPage() {
                 <CardContent className="grid gap-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Amount</span>
-                    <span className="font-semibold">₹{transaction.amount.toLocaleString()}</span>
+                    <span className="font-semibold">₹{transaction.amount.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Date</span>
@@ -255,7 +255,7 @@ export default function StudentPaymentsPage() {
                     <TableCell className="text-center">
                       <div className="font-medium">{transaction.eventName}</div>
                     </TableCell>
-                    <TableCell className="text-center">₹{transaction.amount.toLocaleString()}</TableCell>
+                    <TableCell className="text-center">₹{transaction.amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-center">{formatDate(transaction.paymentDate)}</TableCell>
                     <TableCell className="text-center">{transaction.paymentMethod}</TableCell>
                     <TableCell className="text-center">

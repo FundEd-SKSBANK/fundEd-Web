@@ -322,9 +322,9 @@ export default function EventPaymentsPage() {
 
                 return (
                   <div>
-                    <div className="text-2xl font-bold truncate">₹{totalCollected.toLocaleString()}</div>
+                    <div className="text-2xl font-bold truncate">₹{totalCollected.toLocaleString('en-IN')}</div>
                     <p className="text-xs text-muted-foreground truncate">
-                      Target: ₹{totalExpected.toLocaleString()}
+                      Target: ₹{totalExpected.toLocaleString('en-IN')}
                     </p>
                   </div>
                 );
@@ -367,7 +367,7 @@ export default function EventPaymentsPage() {
 
                 return (
                   <div>
-                    <div className="text-2xl font-bold truncate">₹{outstanding.toLocaleString()}</div>
+                    <div className="text-2xl font-bold truncate">₹{outstanding.toLocaleString('en-IN')}</div>
                     <p className="text-xs text-muted-foreground truncate">
                       {pendingTxns.length} students pending
                     </p>
@@ -452,7 +452,7 @@ export default function EventPaymentsPage() {
                 <CardContent className="grid gap-3 pt-0">
                   <div className="flex items-center justify-between text-sm gap-4">
                     <span className="text-muted-foreground shrink-0">Amount</span>
-                    <span className="font-semibold shrink-0">₹{transaction.amount.toLocaleString()}</span>
+                    <span className="font-semibold shrink-0">₹{transaction.amount.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm gap-4">
                     <span className="text-muted-foreground shrink-0">Date</span>
@@ -501,7 +501,7 @@ export default function EventPaymentsPage() {
                         {transaction.studentRoll}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">₹{transaction.amount.toLocaleString()}</TableCell>
+                    <TableCell className="text-center">₹{transaction.amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-center">{formatDate(transaction.paymentDate)}</TableCell>
                     <TableCell className="text-center">{transaction.paymentMethod}</TableCell>
                     <TableCell className="text-center">

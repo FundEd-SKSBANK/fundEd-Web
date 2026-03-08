@@ -659,7 +659,7 @@ export default function EventsPage() {
                             <CardContent className="space-y-4">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-muted-foreground">Cost per student</span>
-                                    <span className="font-semibold text-lg">₹{event.cost.toLocaleString()}</span>
+                                    <span className="font-semibold text-lg">₹{event.cost.toLocaleString('en-IN')}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between text-sm">
@@ -680,7 +680,7 @@ export default function EventsPage() {
                                 <div className="grid grid-cols-2 gap-2 text-sm pt-2">
                                     <div className="flex flex-col">
                                         <span className="text-muted-foreground text-xs">Collected</span>
-                                        <span className="font-medium text-emerald-600">₹{event.totalCollected?.toLocaleString() || '0'}</span>
+                                        <span className="font-medium text-emerald-600">₹{event.totalCollected?.toLocaleString('en-IN') || '0'}</span>
                                     </div>
                                     <div className="flex flex-col items-end">
                                         <span className="text-muted-foreground text-xs">Students Paid</span>

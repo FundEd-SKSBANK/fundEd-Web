@@ -217,8 +217,8 @@ export default function ReportsPage() {
 
                 const summaryData = [
                     ['Total Transactions', (reportSummary.totalTransactions || 0).toString()],
-                    ['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()],
-                    ['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()],
+                    ['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString('en-IN')],
+                    ['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString('en-IN')],
                     ['Paid Count', (reportSummary.paidCount || 0).toString()],
                 ];
 
@@ -459,7 +459,7 @@ export default function ReportsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                                    ₹{(reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()}
+                                    ₹{(reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString('en-IN')}
                                 </div>
                             </CardContent>
                         </GlassCard>
@@ -470,7 +470,7 @@ export default function ReportsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
-                                    ₹{(reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()}
+                                    ₹{(reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString('en-IN')}
                                 </div>
                             </CardContent>
                         </GlassCard>
