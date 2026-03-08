@@ -43,7 +43,7 @@ export async function getPendingTransactions() {
 export async function getUserNotifications() {
   try {
     const session = await getSession();
-    if (!session || !session.user || session.user.role !== 'superuser') {
+    if (!session || !session.user || session.user.role !== 'superadmin') {
       return { success: false, error: 'Unauthorized' };
     }
 

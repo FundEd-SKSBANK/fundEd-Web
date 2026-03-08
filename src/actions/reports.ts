@@ -38,7 +38,7 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
       return { success: false, error: 'Event not found' };
     }
 
-    if (session.user.role !== 'superuser' && event.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && event.createdById !== session.user.id) {
         return { success: false, error: 'Unauthorized to access this event report' };
     }
 
@@ -91,7 +91,7 @@ export async function generateTransactionReport(filters: ReportFilters) {
 
     const whereClause: any = {};
 
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.event = { createdById: session.user.id };
     }
 
@@ -182,7 +182,7 @@ export async function generateStudentReport(studentId: string) {
       return { success: false, error: 'Student not found' };
     }
 
-    if (session.user.role !== 'superuser' && student.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && student.createdById !== session.user.id) {
         return { success: false, error: 'Unauthorized to access this student report' };
     }
 
@@ -276,7 +276,7 @@ export async function generateTransactionSummary(filters?: ReportFilters) {
 
     const whereClause: any = {};
 
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.event = { createdById: session.user.id };
     }
     
@@ -358,7 +358,7 @@ export async function generateStudentWiseReport(filters?: ReportFilters) {
     const whereClause: any = {};
     const studentWhereClause: any = {};
 
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.event = { createdById: session.user.id };
         studentWhereClause.createdById = session.user.id;
     }

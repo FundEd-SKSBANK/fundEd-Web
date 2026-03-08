@@ -8,7 +8,7 @@ import type { Event, Transaction } from '@/lib/types';
 export default async function DashboardPage() {
     // 1. Server-side Role Check & Redirect
     const role = await getUserRole();
-    if (role === 'superuser') {
+    if (role === 'superadmin') {
         redirect('/dashboard/super');
     }
 

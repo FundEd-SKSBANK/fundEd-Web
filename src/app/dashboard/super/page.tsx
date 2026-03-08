@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default async function SuperDashboardPage() {
     const role = await getUserRole();
-    if (role !== 'superuser') {
+    if (role !== 'superadmin') {
         redirect('/dashboard');
     }
 

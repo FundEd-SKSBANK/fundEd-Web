@@ -7,7 +7,7 @@ import { startOfDay, startOfWeek, subDays, subWeeks, subMonths, format, startOfM
 export async function getSuperuserStats() {
     try {
         const session = await getSession();
-        if (session?.user?.role !== 'superuser') {
+        if (session?.user?.role !== 'superadmin') {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -47,7 +47,7 @@ export async function getSuperuserStats() {
         };
 
     } catch (error) {
-        console.error("Failed to fetch superuser stats:", error);
+        console.error("Failed to fetch superadmin stats:", error);
         return { success: false, error: "Failed to fetch stats" };
     }
 }
@@ -55,7 +55,7 @@ export async function getSuperuserStats() {
 export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'month' = 'week') {
     try {
         const session = await getSession();
-        if (session?.user?.role !== 'superuser') {
+        if (session?.user?.role !== 'superadmin') {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -157,7 +157,7 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
 export async function getExpenseCategoryBreakdown() {
     try {
         const session = await getSession();
-         if (session?.user?.role !== 'superuser') {
+         if (session?.user?.role !== 'superadmin') {
             return { success: false, error: "Unauthorized" };
         }
 

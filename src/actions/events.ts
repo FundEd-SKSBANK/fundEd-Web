@@ -11,7 +11,7 @@ export async function getEvents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const whereClause: any = {};
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.createdById = session.user.id;
     }
 
@@ -44,7 +44,7 @@ export async function getEvents() {
     ]);
     
     // Correct student count for workspace
-    const workspaceTotalStudents = session.user.role === 'superuser' 
+    const workspaceTotalStudents = session.user.role === 'superadmin' 
         ? globalTotalStudents 
         : await prisma.student.count({ where: { createdById: session.user.id } });
 
@@ -252,7 +252,7 @@ export async function saveDraft(data: {
       // Verify ownership
       const existing = await prisma.event.findUnique({ where: { id: data.id }});
       if (!existing) return { success: false, error: "Event not found" };
-      if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+      if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
           return { success: false, error: "Unauthorized" };
       }
 
@@ -302,7 +302,7 @@ export async function updateEvent(id: string, data: {
     // Verify ownership
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };
-    if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
         return { success: false, error: "Unauthorized" };
     }
 
@@ -354,7 +354,7 @@ export async function deleteEvent(id: string) {
 
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };
-    if (session.user.role !== 'superuser' && (existing as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
         return { success: false, error: "Unauthorized" };
     }
 

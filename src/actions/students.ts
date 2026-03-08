@@ -29,7 +29,7 @@ export async function addStudent(input: AddStudentInput) {
     }
 
     const whereClause: any = { rollNo: input.rollNumber };
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.createdById = session.user.id;
     }
 
@@ -80,7 +80,7 @@ export async function updateStudent(input: UpdateStudentInput) {
     const targetStudent = await prisma.student.findUnique({ where: { id: input.id } });
     if (!targetStudent) return { success: false, error: "Student not found" };
 
-    if (session.user.role !== 'superuser' && (targetStudent as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== session.user.id) {
         return { success: false, error: "Unauthorized to update this student" };
     }
 
@@ -89,7 +89,7 @@ export async function updateStudent(input: UpdateStudentInput) {
         rollNo: input.rollNumber,
         NOT: { id: input.id }
     };
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.createdById = session.user.id;
     }
 
@@ -137,7 +137,7 @@ export async function getStudents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const whereClause: any = {};
-    if (session.user.role !== 'superuser') {
+    if (session.user.role !== 'superadmin') {
         whereClause.createdById = session.user.id;
     }
 
@@ -173,7 +173,7 @@ export async function deleteStudent(id: string) {
     const targetStudent = await prisma.student.findUnique({ where: { id } });
     if (!targetStudent) return { success: false, error: "Student not found" };
 
-    if (session.user.role !== 'superuser' && (targetStudent as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== session.user.id) {
         return { success: false, error: "Unauthorized to delete this student" };
     }
 
@@ -202,7 +202,7 @@ export async function uploadStudentsCsv(studentsData: any[]) {
     for (const student of studentsData) {
       try {
         const whereClause: any = { rollNo: student.rollNo };
-        if (session.user.role !== 'superuser') {
+        if (session.user.role !== 'superadmin') {
             whereClause.createdById = session.user.id;
         }
 
