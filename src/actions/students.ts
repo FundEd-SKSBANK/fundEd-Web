@@ -28,10 +28,10 @@ export async function addStudent(input: AddStudentInput) {
         return { success: false, error: "Unauthorized" };
     }
 
-    const whereClause: any = { rollNo: input.rollNumber };
-    if (session.user.role !== 'superadmin') {
-        whereClause.createdById = session.user.id;
-    }
+    const whereClause: any = { 
+        rollNo: input.rollNumber,
+        createdById: session.user.id
+    };
 
     const existingStudent = await prisma.student.findFirst({
       where: whereClause
@@ -87,11 +87,9 @@ export async function updateStudent(input: UpdateStudentInput) {
     // Check for duplicates
     const whereClause: any = { 
         rollNo: input.rollNumber,
-        NOT: { id: input.id }
+        NOT: { id: input.id },
+        createdById: session.user.id
     };
-    if (session.user.role !== 'superadmin') {
-        whereClause.createdById = session.user.id;
-    }
 
     const existingStudent = await prisma.student.findFirst({
       where: whereClause
@@ -136,10 +134,9 @@ export async function getStudents() {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const whereClause: any = {};
-    if (session.user.role !== 'superadmin') {
-        whereClause.createdById = session.user.id;
-    }
+    const whereClause: any = {
+        createdById: session.user.id
+    };
 
     const students = await prisma.student.findMany({
       where: whereClause,
@@ -201,10 +198,10 @@ export async function uploadStudentsCsv(studentsData: any[]) {
 
     for (const student of studentsData) {
       try {
-        const whereClause: any = { rollNo: student.rollNo };
-        if (session.user.role !== 'superadmin') {
-            whereClause.createdById = session.user.id;
-        }
+        const whereClause: any = { 
+            rollNo: student.rollNo,
+            createdById: session.user.id
+        };
 
         const existing = await prisma.student.findFirst({
           where: whereClause
