@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, ArrowRight } from 'lucide-react';
 
 export function PortalReturn() {
     const [portalInfo, setPortalInfo] = useState<{ slug: string; adminName: string | null } | null>(null);
@@ -19,15 +19,15 @@ export function PortalReturn() {
     if (!portalInfo) return null;
 
     return (
-        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="mt-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             <Link href={`/check-status/${portalInfo.slug}`}>
-                <Button className="group relative px-8 py-5 bg-white/5 backdrop-blur-md border border-white/10 text-stone-200 text-sm font-medium tracking-[0.1em] uppercase hover:border-emerald-500/40 hover:text-emerald-400 transition-all flex items-center gap-3 rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                    <Search className="w-4 h-4 text-emerald-500" />
-                    <span>
-                        Check Status {portalInfo.adminName ? `at ${portalInfo.adminName}` : ''}
+                <Button className="group relative px-10 py-7 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-md border-2 border-emerald-400/40 text-white text-sm md:text-base font-bold tracking-[0.15em] uppercase hover:border-emerald-300/60 transition-all flex items-center gap-4 rounded-full overflow-hidden shadow-[0_20px_40px_-15px_rgba(16,185,129,0.3)]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/30 to-teal-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <Search className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform text-emerald-400" />
+                    <span className="relative z-10">
+                        {portalInfo.adminName ? `Portal: ${portalInfo.adminName}` : 'Check Status'}
                     </span>
-                    <Sparkles className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400 animate-pulse" />
+                    <ArrowRight className="w-5 h-5 relative z-10 transition-transform group-hover:translate-x-2 text-emerald-400" />
                 </Button>
             </Link>
         </div>

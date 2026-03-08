@@ -94,7 +94,7 @@ export async function recordCashPayment(data: {
 
             const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
             const balanceDue = Math.max(0, event.cost - totalPaid);
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:9002';
             const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
 
             if (student.email) {

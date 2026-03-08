@@ -1,0 +1,1 @@
+SELECT slug FROM "User" WHERE slug IS NOT NULL LIMIT 1;

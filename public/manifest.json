@@ -8,14 +8,16 @@
   "theme_color": "#0d9488",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M22 10v6M2 10l10-5 10 5-10 5z'/%3e%3cpath d='M6 12v5c3 3 9 3 12 0v-5'/%3e%3c/svg%3e",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M22 10v6M2 10l10-5 10 5-10 5z'/%3e%3cpath d='M6 12v5c3 3 9 3 12 0v-5'/%3e%3c/svg%3e",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

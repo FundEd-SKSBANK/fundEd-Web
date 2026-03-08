@@ -180,16 +180,19 @@ export default function Home() {
               <PortalReturn />
             </div>
 
-            <Link href="/login">
-              <Button className="group relative px-10 py-6 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-md border-2 border-emerald-400/40 text-white text-base font-bold tracking-[0.2em] uppercase hover:border-emerald-300/60 transition-all flex items-center gap-4 rounded-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/30 to-teal-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Lock className="w-5 h-5 relative z-10 group-hover:rotate-12 transition-transform" />
-                <span className="relative z-10 flex items-center gap-3">
-                  Get Started
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
-                </span>
-              </Button>
-            </Link>
+            <div className="flex flex-col items-center md:items-end gap-6">
+              <Link href="/login">
+                <Button className="group relative px-10 py-6 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-md border-2 border-emerald-400/40 text-white text-base font-bold tracking-[0.2em] uppercase hover:border-emerald-300/60 transition-all flex items-center gap-4 rounded-full overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/30 to-teal-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <Lock className="w-5 h-5 relative z-10 group-hover:rotate-12 transition-transform" />
+                  <span className="relative z-10 flex items-center gap-3">
+                    Get Started
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
+                  </span>
+                </Button>
+              </Link>
+              <PortalReturn />
+            </div>
           </div>
 
         </div>

@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/db';
 import Papa from 'papaparse';
+import { getSession } from '@/lib/auth';
 
 export interface ReportFilters {
   dateFrom?: string;
@@ -14,6 +15,9 @@ export interface ReportFilters {
 
 export async function generateEventReport(eventId: string, filters?: { dateFrom?: string; dateTo?: string }) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -32,6 +36,10 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
 
     if (!event) {
       return { success: false, error: 'Event not found' };
+    }
+
+    if (session.user.role !== 'superuser' && event.createdById !== session.user.id) {
+        return { success: false, error: 'Unauthorized to access this event report' };
     }
 
     const reportData = event.payments.map(p => ({
@@ -78,7 +86,14 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
 
 export async function generateTransactionReport(filters: ReportFilters) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
     const whereClause: any = {};
+
+    if (session.user.role !== 'superuser') {
+        whereClause.event = { createdById: session.user.id };
+    }
 
     if (filters.dateFrom) {
       whereClause.paymentDate = { ...whereClause.paymentDate, gte: new Date(filters.dateFrom) };
@@ -148,6 +163,9 @@ export async function generateTransactionReport(filters: ReportFilters) {
 
 export async function generateStudentReport(studentId: string) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
     const student = await prisma.student.findUnique({
       where: { id: studentId },
       include: {
@@ -162,6 +180,10 @@ export async function generateStudentReport(studentId: string) {
 
     if (!student) {
       return { success: false, error: 'Student not found' };
+    }
+
+    if (session.user.role !== 'superuser' && student.createdById !== session.user.id) {
+        return { success: false, error: 'Unauthorized to access this student report' };
     }
 
     const reportData = student.payments.map(p => ({
@@ -249,7 +271,14 @@ export async function exportToCSV(data: any[], filename: string, summary?: any) 
 // Generate Transaction Summary Report
 export async function generateTransactionSummary(filters?: ReportFilters) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
     const whereClause: any = {};
+
+    if (session.user.role !== 'superuser') {
+        whereClause.event = { createdById: session.user.id };
+    }
     
     if (filters?.dateFrom) {
       whereClause.paymentDate = { ...whereClause.paymentDate, gte: new Date(filters.dateFrom) };
@@ -323,16 +352,19 @@ export async function generateTransactionSummary(filters?: ReportFilters) {
 // Generate Student-wise Report
 export async function generateStudentWiseReport(filters?: ReportFilters) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
     const whereClause: any = {};
-    
-    if (filters?.dateFrom) {
-      whereClause.paymentDate = { ...whereClause.paymentDate, gte: new Date(filters.dateFrom) };
-    }
-    if (filters?.dateTo) {
-      whereClause.paymentDate = { ...whereClause.paymentDate, lte: new Date(filters.dateTo) };
+    const studentWhereClause: any = {};
+
+    if (session.user.role !== 'superuser') {
+        whereClause.event = { createdById: session.user.id };
+        studentWhereClause.createdById = session.user.id;
     }
 
     const students = await prisma.student.findMany({
+      where: studentWhereClause,
       include: {
         payments: {
           where: whereClause,

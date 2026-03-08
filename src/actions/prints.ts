@@ -2,15 +2,27 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getSession } from '@/lib/auth';
 
 export async function getPrintData() {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const eventWhere: any = { category: 'Print' };
+    const studentWhere: any = {};
+    if (session.user.role !== 'superuser') {
+        eventWhere.createdById = session.user.id;
+        studentWhere.createdById = session.user.id;
+    }
+
     const [events, distributions, payments, students] = await Promise.all([
       prisma.event.findMany({
-        where: { category: 'Print' },
+        where: eventWhere,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.printDistribution.findMany({
+        where: session.user.role !== 'superuser' ? { event: { createdById: session.user.id } } : {},
         include: {
           student: true,
           event: true,
@@ -19,7 +31,7 @@ export async function getPrintData() {
       }),
       prisma.payment.findMany({
         where: {
-          event: { category: 'Print' },
+          event: eventWhere,
           status: 'Paid'
         },
         include: {
@@ -28,6 +40,7 @@ export async function getPrintData() {
         }
       }),
       prisma.student.findMany({
+        where: studentWhere,
         orderBy: { name: 'asc' }
       })
     ]);
@@ -68,6 +81,20 @@ export async function getPrintData() {
 
 export async function deleteDistribution(id: string) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const targetDistribution = await prisma.printDistribution.findUnique({
+      where: { id },
+      include: { event: true }
+    });
+
+    if (!targetDistribution) return { success: false, error: "Distribution not found" };
+
+    if (session.user.role !== 'superuser' && targetDistribution.event.createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized to delete this distribution" };
+    }
+
     await prisma.printDistribution.delete({
       where: { id },
     });
@@ -85,6 +112,16 @@ export async function distributePrint(data: {
   eventId: string;
 }) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const event = await prisma.event.findUnique({ where: { id: data.eventId } });
+    if (!event) return { success: false, error: "Event not found" };
+    
+    if (session.user.role !== 'superuser' && event.createdById !== session.user.id) {
+        return { success: false, error: "Unauthorized to distribute for this event" };
+    }
+
     // Check if already distributed
     const existing = await prisma.printDistribution.findFirst({
       where: {

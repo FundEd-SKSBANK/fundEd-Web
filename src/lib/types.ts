@@ -124,3 +124,10 @@ export const PaymentReceiptEmailInputSchema = z.object({
   checkStatusLink: z.string(),
 });
 export type PaymentReceiptEmailInput = z.infer<typeof PaymentReceiptEmailInputSchema>;
+
+export const ResetPasswordEmailInputSchema = z.object({
+  email: z.string().email(),
+  resetLink: z.string(),
+  name: z.string().optional(),
+});
+export type ResetPasswordEmailInput = z.infer<typeof ResetPasswordEmailInputSchema>;

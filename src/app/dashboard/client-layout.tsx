@@ -17,6 +17,7 @@ import {
     Receipt,
     ChevronDown,
     ChevronRight,
+    Shield,
 } from 'lucide-react';
 import {
     SidebarProvider,
@@ -47,14 +48,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { Transaction } from '@/lib/types';
-import { useEffect, useState } from 'react';
-import { logout } from '@/actions/auth';
-import { getPendingTransactions } from '@/actions/notifications';
+import { getPendingTransactions, getUserNotifications } from '@/actions/notifications';
 import { getEvents } from '@/actions/events';
+import { logout } from '@/actions/auth';
+import { useEffect, useState } from 'react';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
-
-import { Shield } from 'lucide-react';
 
 /** Generate up to 2-letter initials from an email address.
  *  e.g. superadmin@funded.com → SA
@@ -210,16 +209,24 @@ export default function DashboardClientLayout({
     const pathname = usePathname();
     const router = useRouter();
     const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
+    const [userNotifications, setUserNotifications] = useState<any[]>([]);
 
-    // Use prop directly, fallback to default only if null
+    const isSuperUser = user?.role === 'superuser';
     const adminUser = user;
     const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>(initialEvents);
 
     useEffect(() => {
         const initData = async () => {
-            const notifRes = await getPendingTransactions();
-            if (notifRes.success && notifRes.data) {
-                setPendingTransactions(notifRes.data as unknown as Transaction[]);
+            if (!isSuperUser) {
+                const notifRes = await getPendingTransactions();
+                if (notifRes.success && notifRes.data) {
+                    setPendingTransactions(notifRes.data as unknown as Transaction[]);
+                }
+            } else {
+                const userNotifRes = await getUserNotifications();
+                if (userNotifRes.success && userNotifRes.data) {
+                    setUserNotifications(userNotifRes.data as any[]);
+                }
             }
             const eventsRes = await getEvents();
             if (eventsRes.success && eventsRes.data) {
@@ -232,7 +239,7 @@ export default function DashboardClientLayout({
         // Poll every minute
         const interval = setInterval(initData, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [isSuperUser]);
 
     const handleLogout = async () => {
         await logout();
@@ -241,26 +248,16 @@ export default function DashboardClientLayout({
     return (
         <div className="dark min-h-screen bg-black text-stone-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-100 overflow-x-hidden relative cursor-none">
 
-            {/* Custom Cursor */}
             <CustomCursor />
 
-            {/* Noise Texture Overlay */}
             <div className="fixed inset-0 z-[50] opacity-[0.07] pointer-events-none mix-blend-overlay"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
             </div>
 
-            {/* Floating Orbs Background */}
             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                {/* Orb 1: Deep Emerald */}
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-emerald-600/30 via-emerald-800/20 to-transparent blur-[120px] mix-blend-screen opacity-60 animate-float will-change-transform" />
-
-                {/* Orb 2: Bright Lime */}
                 <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-lime-500/20 via-lime-700/15 to-transparent blur-[100px] mix-blend-screen opacity-50 animate-float-delayed will-change-transform" />
-
-                {/* Orb 3: Cool Teal */}
                 <div className="absolute bottom-[-15%] left-[15%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-br from-teal-600/25 via-teal-800/20 to-transparent blur-[110px] mix-blend-screen opacity-55 animate-float-slow will-change-transform" />
-
-                {/* Mouse Follower Light */}
                 <MouseFollower />
             </div>
 
@@ -302,34 +299,51 @@ export default function DashboardClientLayout({
                         <header className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-2 sm:px-4 md:px-8 sticky top-0 z-30">
                             <MobileNav user={adminUser} events={recentEvents} />
                             <div className="flex-1">
-                                {/* Optional: Add a search bar here */}
                             </div>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-white/10 h-8 w-8 sm:h-10 sm:w-10 shrink-0">
                                         <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-stone-300" />
-                                        {pendingTransactions && pendingTransactions.length > 0 && (
+                                        {((!isSuperUser && pendingTransactions.length > 0) || (isSuperUser && userNotifications.length > 0)) && (
                                             <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[10px] sm:text-xs bg-emerald-500">
-                                                {pendingTransactions.length}
+                                                {!isSuperUser ? pendingTransactions.length : userNotifications.length}
                                             </Badge>
                                         )}
                                         <span className="sr-only">Toggle notifications</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-80 bg-black/95 border-white/10 backdrop-blur-xl">
-                                    <DropdownMenuLabel className="text-white">Pending Verifications</DropdownMenuLabel>
+                                    <DropdownMenuLabel className="text-white">
+                                        {isSuperUser ? 'User Notifications' : 'Pending Verifications'}
+                                    </DropdownMenuLabel>
                                     <DropdownMenuSeparator className="bg-white/10" />
-                                    {pendingTransactions && pendingTransactions.length > 0 ? (
-                                        <DropdownMenuGroup>
-                                            {pendingTransactions.map(t => (
-                                                <NotificationItem key={t.id} transaction={t} />
-                                            ))}
-                                        </DropdownMenuGroup>
+                                    {!isSuperUser ? (
+                                        pendingTransactions.length > 0 ? (
+                                            <DropdownMenuGroup>
+                                                {pendingTransactions.map(t => (
+                                                    <NotificationItem key={t.id} transaction={t} />
+                                                ))}
+                                            </DropdownMenuGroup>
+                                        ) : (
+                                            <div className="p-4 text-center text-stone-500 text-sm italic">No pending verifications</div>
+                                        )
                                     ) : (
-                                        <div className="px-2 py-4 text-center text-sm text-stone-400">
-                                            No pending verifications.
-                                        </div>
+                                        userNotifications.length > 0 ? (
+                                            <DropdownMenuGroup>
+                                                {userNotifications.map(n => (
+                                                    <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/5 transition-colors">
+                                                        <div className="flex items-center justify-between w-full">
+                                                            <span className="text-sm font-semibold text-white">{n.title}</span>
+                                                            <span className="text-[10px] text-stone-500">{new Date(n.date).toLocaleDateString()}</span>
+                                                        </div>
+                                                        <p className="text-xs text-stone-400 leading-relaxed">{n.description}</p>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuGroup>
+                                        ) : (
+                                            <div className="p-4 text-center text-stone-500 text-sm italic">No new notifications</div>
+                                        )
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -375,7 +389,6 @@ export default function DashboardClientLayout({
                             {children}
                         </main>
 
-                        {/* Footer with Branding */}
                         <footer className="border-t border-white/5 bg-black/40 backdrop-blur-xl px-4 md:px-8 py-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
                                 <p>© 2024 FundEd - Classroom OS. All rights reserved.</p>
@@ -385,8 +398,8 @@ export default function DashboardClientLayout({
                             </div>
                         </footer>
                     </div>
-                </div>
-            </SidebarProvider>
-        </div>
+                </div >
+            </SidebarProvider >
+        </div >
     );
 }
