@@ -10,10 +10,9 @@ export async function getEvents() {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const whereClause: any = {};
-    if (session.user.role !== 'superadmin') {
-        whereClause.createdById = session.user.id;
-    }
+    const whereClause: any = {
+        createdById: session.user.id
+    };
 
     const [events, globalTotalStudents] = await Promise.all([
       prisma.event.findMany({
