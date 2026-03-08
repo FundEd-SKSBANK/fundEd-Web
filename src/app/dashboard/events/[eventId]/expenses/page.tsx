@@ -90,6 +90,19 @@ export default function EventExpensesPage() {
             const autoTable = (await import('jspdf-autotable')).default;
 
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            const addWatermarks = (data?: any) => {
+                doc.setFontSize(10);
+                doc.setTextColor(180, 180, 180);
+                doc.text('FUNDED', pageWidth - 14, 10, { align: 'right' });
+                doc.text('GENERATED USING FUNDED', pageWidth - 14, pageHeight - 10, { align: 'right' });
+                doc.setTextColor(0, 0, 0); // Reset
+            };
+
+            // First Page Watermarks
+            addWatermarks();
 
             // Title
             doc.setFontSize(20);
@@ -114,6 +127,7 @@ export default function EventExpensesPage() {
                 body: summaryData,
                 theme: 'grid',
                 headStyles: { fillColor: [22, 163, 74] }, // Emerald color
+                didDrawPage: addWatermarks,
             });
 
             // Expenses Table
@@ -133,6 +147,7 @@ export default function EventExpensesPage() {
                 body: tableData,
                 theme: 'striped',
                 headStyles: { fillColor: [40, 40, 40] },
+                didDrawPage: addWatermarks,
             });
 
             const safeName = (stats.eventName || 'Event').replace(/[^a-zA-Z0-9-_]/g, '-');
