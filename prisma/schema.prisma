@@ -64,7 +64,7 @@ model Event {
   slug               String?             @unique
   createdBy          User?               @relation("CreatedEvents", fields: [createdById], references: [id])
   expenses           Expense[]
-  payments           Payments[]
+  payments           Payment[]
   printDistributions PrintDistribution[]
   participants       Student[]           @relation("EventToStudent")
 
