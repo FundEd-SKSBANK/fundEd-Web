@@ -6,7 +6,8 @@ import {
     type SendNewEventEmailInput,
     type PaymentReceiptEmailInput,
     type SendEmailOutput,
-    type SendEmailInput
+    type SendEmailInput,
+    type ResetPasswordEmailInput
 } from '@/lib/types';
 
 
@@ -21,22 +22,27 @@ const generateEmailLayout = (title: string, contentHtml: string, actionButton?: 
         <title>${title}</title>
         <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-            .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-            .header { background-color: #10b981; padding: 30px; text-align: center; }
-            .header h1 { color: #ffffff; margin: 0; font-size: 24px; letter-spacing: -0.5px; font-weight: 700; }
-            .content { padding: 40px 30px; color: #334155; line-height: 1.6; font-size: 16px; }
-            .content h2 { color: #0f172a; margin-top: 0; font-size: 20px; font-weight: 600; margin-bottom: 20px; }
-            .details-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 25px 0; width: 100%; box-sizing: border-box; }
+            .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+            .header { background-color: #059669; padding: 40px 30px; text-align: center; }
+            .logo-container { display: inline-table; margin: 0 auto; }
+            .logo-icon { display: table-cell; vertical-align: middle; padding-right: 15px; }
+            .logo-box { background-color: rgba(255,255,255,0.15); border-radius: 10px; width: 44px; height: 44px; text-align: center; line-height: 44px; }
+            .logo-text { display: table-cell; vertical-align: middle; text-align: left; }
+            .brand-name { color: #ffffff; margin: 0; font-size: 28px; letter-spacing: -0.5px; font-weight: 700; line-height: 1; }
+            .brand-subtitle { color: rgba(255,255,255,0.7); margin: 4px 0 0 0; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+            .content { padding: 40px 35px; color: #334155; line-height: 1.6; font-size: 16px; }
+            .content h2 { color: #0f172a; margin-top: 0; font-size: 22px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.025em; }
+            .details-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin: 30px 0; width: 100%; box-sizing: border-box; }
             .details-table { width: 100%; border-collapse: collapse; }
-            .details-table td { padding: 12px 0; vertical-align: top; border-bottom: 1px dashed #e2e8f0; }
+            .details-table td { padding: 14px 0; vertical-align: top; border-bottom: 1px dashed #e2e8f0; }
             .details-table tr:last-child td { border-bottom: none; }
-            .label { color: #64748b; font-size: 14px; width: 40%; text-align: left; }
+            .label { color: #64748b; font-size: 14px; width: 40%; text-align: left; font-weight: 500; }
             .value { color: #0f172a; font-weight: 600; font-size: 14px; text-align: right; width: 60%; }
-            .button-container { text-align: center; margin-top: 35px; }
-            .button { background-color: #10b981; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
-            .footer { background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
-            .footer p { color: #94a3b8; font-size: 12px; margin: 5px 0; }
-            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            .button-container { text-align: center; margin-top: 40px; }
+            .button { background-color: #059669; color: #ffffff !important; padding: 16px 36px; text-decoration: none; border-radius: 10px; font-weight: 700; display: inline-block; font-size: 16px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); }
+            .footer { background-color: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0; }
+            .footer p { color: #94a3b8; font-size: 12px; margin: 6px 0; }
+            .status-badge { display: inline-block; padding: 5px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
             .status-success { background-color: #dcfce7; color: #166534; }
             .status-pending { background-color: #fee2e2; color: #991b1b; }
         </style>
@@ -44,7 +50,17 @@ const generateEmailLayout = (title: string, contentHtml: string, actionButton?: 
     <body>
         <div class="container">
             <div class="header">
-                <h1>FundEd</h1>
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <div class="logo-box">
+                            <span style="font-size: 24px;">🎓</span>
+                        </div>
+                    </div>
+                    <div class="logo-text">
+                        <div class="brand-name">FundEd</div>
+                        <div class="brand-subtitle">Classroom OS</div>
+                    </div>
+                </div>
             </div>
             <div class="content">
                 ${contentHtml}
@@ -56,7 +72,7 @@ const generateEmailLayout = (title: string, contentHtml: string, actionButton?: 
                 ` : ''}
             </div>
             <div class="footer">
-                <p>Secure payment powered by FundEd Classroom OS</p>
+                <p>Secure management powered by <strong>FundEd Classroom OS</strong></p>
                 <p>&copy; ${new Date().getFullYear()} FundEd. All rights reserved.</p>
             </div>
         </div>
@@ -250,4 +266,33 @@ export async function sendPrintDistributionEmail(input: SendEmailInput): Promise
             message: result.message || 'Failed to send email via the email service.',
         };
     }
+}
+
+// Flow for sending password reset email
+export async function sendResetPasswordEmail(input: ResetPasswordEmailInput): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Reset Your Password</h2>
+        <p>Hi ${input.name || 'there'},</p>
+        <p>We received a request to reset your password for your FundEd account. Click the button below to set a new password. This link will expire in 1 hour.</p>
+        
+        <div class="details-box" style="text-align: center;">
+            <p style="margin: 0; font-size: 14px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+    `;
+
+    const emailHtml = generateEmailLayout(
+        'Reset Your Password',
+        content,
+        { text: 'Reset Password', url: input.resetLink }
+    );
+
+    const result = await sendEmail({
+        to: input.email,
+        subject: 'Reset Your FundEd Password',
+        html: emailHtml,
+    });
+
+    return result.success
+        ? { success: true, message: `Reset email sent to ${input.email}` }
+        : { success: false, message: result.message || 'Failed to send reset email' };
 }

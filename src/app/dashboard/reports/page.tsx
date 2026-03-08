@@ -183,7 +183,8 @@ export default function ReportsPage() {
             const { default: jsPDF } = await import('jspdf');
             const { default: autoTable } = await import('jspdf-autotable');
 
-            const doc = new jsPDF();
+            // Use landscape for better column fitting
+            const doc = new jsPDF({ orientation: 'landscape' });
 
             // Add title
             doc.setFontSize(18);
@@ -216,8 +217,8 @@ export default function ReportsPage() {
 
                 const summaryData = [
                     ['Total Transactions', (reportSummary.totalTransactions || 0).toString()],
-                    ['Total Collected', `₹${(reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()}`],
-                    ['Pending Amount', `₹${(reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()}`],
+                    ['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString()],
+                    ['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString()],
                     ['Paid Count', (reportSummary.paidCount || 0).toString()],
                 ];
 
@@ -243,7 +244,21 @@ export default function ReportsPage() {
             yPosition += 5;
 
             if (transactions.length > 0) {
-                const headers = Object.keys(transactions[0]);
+                const headerMap: Record<string, string> = {
+                    'Transaction ID': 'Txn ID',
+                    'Student Name': 'Student',
+                    'Roll Number': 'Roll No',
+                    'Event Name': 'Event',
+                    'Payment Date': 'Date',
+                    'Payment Method': 'Method',
+                    'Transaction Reference': 'Ref',
+                    'Manual Entry': 'Manual',
+                    'Recorded By': 'By',
+                    'Receipt Number': 'Receipt',
+                };
+
+                const originalHeaders = Object.keys(transactions[0]);
+                const headers = originalHeaders.map(h => headerMap[h] || h);
                 const data = transactions.map(t => Object.values(t).map(String));
 
                 autoTable(doc, {
@@ -251,8 +266,8 @@ export default function ReportsPage() {
                     head: [headers],
                     body: data,
                     theme: 'striped',
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+                    styles: { fontSize: 7, cellPadding: 1, overflow: 'linebreak' },
+                    headStyles: { fillColor: [16, 185, 129], textColor: 255, halign: 'center' },
                     alternateRowStyles: { fillColor: [245, 245, 245] },
                 });
             }
