@@ -16,7 +16,12 @@ export async function getEventPayments(eventId: string) {
               rollNo: true,
               class: true, // Needed for Top Class stats
             }
-          } 
+          },
+          createdBy: {
+            select: {
+              slug: true
+            }
+          }
         }
       }),
       prisma.payment.findMany({
@@ -121,7 +126,16 @@ export async function updatePaymentStatus(id: string, status: string) {
     const payment = await prisma.payment.update({
       where: { id },
       data: { status },
-      include: { student: true, event: true }
+      include: { 
+        student: true, 
+        event: {
+          include: {
+            createdBy: {
+              select: { slug: true }
+            }
+          }
+        } 
+      }
     });
     
     revalidatePath(`/dashboard/events/${payment.eventId}/payments`);

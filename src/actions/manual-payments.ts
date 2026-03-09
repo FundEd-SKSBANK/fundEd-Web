@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { getSession } from '@/lib/auth';
 import { sendPaymentReceiptEmail } from '@/lib/email-templates';
 
@@ -94,7 +95,10 @@ export async function recordCashPayment(data: {
 
             const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
             const balanceDue = Math.max(0, event.cost - totalPaid);
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:9002';
+            const headerList = await headers();
+            const host = headerList.get('host');
+            const protocol = host?.includes('localhost') ? 'http' : 'https';
+            const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000');
             const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
 
             if (student.email) {

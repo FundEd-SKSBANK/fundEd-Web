@@ -87,7 +87,7 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
                                 Total {metric === 'collections' ? 'Collections' : 'Transactions'}
                             </span>
                             <span className="text-lg font-bold text-emerald-600">
-                                {metric === 'collections' ? `₹${totalValue.toLocaleString()}` : totalValue}
+                                {metric === 'collections' ? `₹${totalValue.toLocaleString('en-IN')}` : totalValue}
                             </span>
                         </div>
 
@@ -102,7 +102,7 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
                                         {/* Value on hover */}
                                         <div className="h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <span className="text-xs font-medium text-emerald-600">
-                                                {metric === 'collections' ? `₹${value.toLocaleString()}` : value}
+                                                {metric === 'collections' ? `₹${value.toLocaleString('en-IN')}` : value}
                                             </span>
                                         </div>
 
@@ -114,7 +114,7 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
                                             >
                                                 {/* Tooltip */}
                                                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                    {metric === 'collections' ? `₹${value.toLocaleString()}` : `${value} txns`}
+                                                    {metric === 'collections' ? `₹${value.toLocaleString('en-IN')}` : `${value} txns`}
                                                 </div>
                                             </div>
                                         </div>

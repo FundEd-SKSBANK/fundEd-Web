@@ -201,7 +201,7 @@ function BillViewerDialog({ expense, eventName }: { expense: Expense; eventName:
                         )}
                     </div>
                     <p className="text-xs text-stone-500 mt-2">
-                        Category: <span className="text-stone-400">{expense.category}</span> · Amount: <span className="text-red-400">₹{expense.amount.toLocaleString()}</span>
+                        Category: <span className="text-stone-400">{expense.category}</span> · Amount: <span className="text-red-400">₹{expense.amount.toLocaleString('en-IN')}</span>
                     </p>
                 </div>
                 <DialogFooter>
@@ -572,7 +572,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                                         <p className="font-medium text-stone-200 truncate">{expense.title}</p>
                                         <p className="text-xs text-stone-500 mt-0.5">{format(new Date(expense.date), 'MMM dd, yyyy')}</p>
                                     </div>
-                                    <span className="font-semibold text-red-400 shrink-0 text-sm">-₹{expense.amount.toLocaleString()}</span>
+                                    <span className="font-semibold text-red-400 shrink-0 text-sm">-₹{expense.amount.toLocaleString('en-IN')}</span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
@@ -665,7 +665,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right font-medium text-red-400">
-                                            -₹{expense.amount.toLocaleString()}
+                                            -₹{expense.amount.toLocaleString('en-IN')}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {expense.billUrl ? (

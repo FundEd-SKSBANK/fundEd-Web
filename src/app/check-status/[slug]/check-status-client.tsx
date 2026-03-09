@@ -104,9 +104,7 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">payment status</span>
                     </h1>
                     <p className="text-stone-300 text-lg font-light max-w-lg mx-auto leading-relaxed">
-                        {adminName
-                            ? `View your complete event history and outstanding dues for ${adminName}.`
-                            : 'View your complete event history and outstanding dues by entering your details below.'}
+                        View your complete event history and outstanding dues by entering your details below.
                     </p>
                 </div>
 
@@ -180,14 +178,14 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                                                     </div>
                                                     <div className="text-right whitespace-nowrap shrink-0">
                                                         <p className="text-[10px] text-stone-500 uppercase tracking-wider mb-0.5">Total</p>
-                                                        <p className="font-bold text-lg text-white">₹{summary.eventCost.toLocaleString()}</p>
+                                                        <p className="font-bold text-lg text-white">₹{summary.eventCost.toLocaleString('en-IN')}</p>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-3 pt-2 border-t border-white/5">
                                                     <div className="flex justify-between items-center text-sm font-medium gap-2">
-                                                        <span className="text-stone-400 truncate">Paid: <span className="text-stone-200">₹{summary.totalPaid.toLocaleString()}</span></span>
+                                                        <span className="text-stone-400 truncate">Paid: <span className="text-stone-200">₹{summary.totalPaid.toLocaleString('en-IN')}</span></span>
                                                         <span className="whitespace-nowrap text-emerald-400">
-                                                            {summary.pendingAmount > 0 ? `₹${summary.pendingAmount.toLocaleString()} Due` : 'Settled'}
+                                                            {summary.pendingAmount > 0 ? `₹${summary.pendingAmount.toLocaleString('en-IN')} Due` : 'Settled'}
                                                         </span>
                                                     </div>
                                                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">

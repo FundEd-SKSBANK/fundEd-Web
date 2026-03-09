@@ -179,3 +179,41 @@ export async function getExpenseCategoryBreakdown() {
         return { success: false, error: "Failed to fetch expense breakdown" };
     }
 }
+
+export async function getGlobalEventFinancials() {
+    try {
+        const session = await getSession();
+        if (session?.user?.role !== 'superadmin') {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const events = await prisma.event.findMany({
+            include: {
+                createdBy: { select: { name: true, email: true } },
+                payments: { where: { status: 'Paid' } },
+                expenses: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const data = events.map(event => {
+            const totalCollected = event.payments.reduce((sum, p) => sum + p.amount, 0);
+            const totalExpenses = event.expenses.reduce((sum, e) => sum + e.amount, 0);
+            return {
+                id: event.id,
+                name: event.name,
+                creator: event?.createdBy?.name || event?.createdBy?.email || 'System',
+                totalCollected,
+                totalExpenses,
+                netBalance: totalCollected - totalExpenses,
+                status: event.status,
+                createdAt: event.createdAt.toISOString()
+            };
+        });
+
+        return { success: true, data };
+    } catch (error) {
+        console.error("Failed to fetch global event financials:", error);
+        return { success: false, error: "Failed to fetch financials" };
+    }
+}
