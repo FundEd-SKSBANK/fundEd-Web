@@ -100,7 +100,7 @@ export async function sendNewEventEmail(input: SendNewEventEmailInput): Promise<
                 </tr>
                 <tr>
                     <td class="label">Amount Due</td>
-                    <td class="value" style="font-size: 18px; color: #059669;">₹${input.cost.toLocaleString()}</td>
+                    <td class="value" style="font-size: 18px; color: #059669;">₹${input.cost.toLocaleString('en-IN')}</td>
                 </tr>
                 <tr>
                     <td class="label">Deadline</td>
@@ -161,7 +161,7 @@ export async function sendPaymentReceiptEmail(input: PaymentReceiptEmailInput): 
                 </tr>
                 <tr>
                     <td class="label">Paid Now</td>
-                    <td class="value">₹${input.amountPaid.toLocaleString()}</td>
+                    <td class="value">₹${input.amountPaid.toLocaleString('en-IN')}</td>
                 </tr>
                  <tr>
                     <td class="label">Status</td>
@@ -174,7 +174,7 @@ export async function sendPaymentReceiptEmail(input: PaymentReceiptEmailInput): 
                 ${!isFullPayment ? `
                 <tr>
                     <td class="label" style="color: #b91c1c;">Balance Remaining</td>
-                    <td class="value" style="color: #b91c1c;">₹${input.balanceDue.toLocaleString()}</td>
+                    <td class="value" style="color: #b91c1c;">₹${input.balanceDue.toLocaleString('en-IN')}</td>
                 </tr>` : ''}
             </table>
         </div>
@@ -211,7 +211,7 @@ export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput)
             <table class="details-table">
                 <tr>
                     <td class="label">Amount Approved</td>
-                    <td class="value" style="font-size: 18px; color: #059669;">₹${input.amount.toLocaleString()}</td>
+                    <td class="value" style="font-size: 18px; color: #059669;">₹${input.amount.toLocaleString('en-IN')}</td>
                 </tr>
             </table>
         </div>
@@ -222,7 +222,7 @@ export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput)
     const emailHtml = generateEmailLayout(
         `Approved: ${input.eventName}`,
         content,
-        { text: 'View Dashboard', url: process.env.NEXT_PUBLIC_APP_URL || '#' }
+        { text: 'Check Status', url: input.checkStatusLink }
     );
     
     const result = await sendEmail({

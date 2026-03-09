@@ -115,7 +115,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                 />
                 <StatCard
                     title="Total Collected"
-                    value={`₹${stats.totalCollected.toLocaleString()}`}
+                    value={`₹${stats.totalCollected.toLocaleString('en-IN')}`}
                     description="Successfully collected funds"
                     icon={<TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />}
                     trend="+12% from last month"
@@ -123,7 +123,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                 />
                 <StatCard
                     title="Pending Payments"
-                    value={`₹${stats.pendingAmount.toLocaleString()}`}
+                    value={`₹${stats.pendingAmount.toLocaleString('en-IN')}`}
                     description="Awaiting verification"
                     icon={<Clock className="h-3 w-3 sm:h-4 sm:w-4" />}
                     className="border-orange-200 dark:border-orange-900"
@@ -223,7 +223,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                                     <div className="flex items-center justify-between text-sm gap-4">
                                         <span className="text-muted-foreground shrink-0">Amount</span>
                                         <span className="font-semibold text-green-600 dark:text-green-400 shrink-0">
-                                            ₹{transaction.amount.toLocaleString()}
+                                            ₹{transaction.amount.toLocaleString('en-IN')}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-sm gap-4">
@@ -268,7 +268,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span className="font-semibold text-green-600 dark:text-green-400">
-                                                ₹{transaction.amount.toLocaleString()}
+                                                ₹{transaction.amount.toLocaleString('en-IN')}
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-center text-sm">{formatDate(transaction.paymentDate)}</TableCell>

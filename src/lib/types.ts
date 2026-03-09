@@ -98,6 +98,7 @@ export const PaymentApprovedEmailInputSchema = z.object({
   studentEmail: z.string().email(),
   eventName: z.string(),
   amount: z.number(),
+  checkStatusLink: z.string(),
 });
 export type PaymentApprovedEmailInput = z.infer<typeof PaymentApprovedEmailInputSchema>;
 

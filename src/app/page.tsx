@@ -174,7 +174,6 @@ export default function Home() {
               </div>
               <p className="text-lg md:text-xl text-stone-300 leading-relaxed font-light">
                 Bringing <span className="text-emerald-300 font-medium">transparency</span> and <span className="text-emerald-300 font-medium">efficiency</span> to students, reps, and admins.
-                Eliminate the chaos of cash.
               </p>
             </div>
 

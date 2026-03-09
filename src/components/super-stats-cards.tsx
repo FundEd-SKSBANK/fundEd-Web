@@ -39,21 +39,21 @@ export function SuperStatsCards({ stats }: SuperStatsProps) {
         },
         {
             title: "Total Revenue",
-            value: `₹${stats.revenue.toLocaleString()}`,
+            value: `₹${stats.revenue.toLocaleString('en-IN')}`,
             icon: IndianRupee,
             description: "Lifetime collections",
             color: "text-lime-400"
         },
         {
             title: "Total Expenses",
-            value: `₹${stats.expenses.toLocaleString()}`,
+            value: `₹${stats.expenses.toLocaleString('en-IN')}`,
             icon: Wallet,
             description: "Lifetime expenses",
             color: "text-red-400"
         },
         {
             title: "Net Balance",
-            value: `₹${stats.netBalance.toLocaleString()}`,
+            value: `₹${stats.netBalance.toLocaleString('en-IN')}`,
             icon: stats.netBalance >= 0 ? TrendingUp : TrendingDown,
             description: "Revenue - Expenses",
             color: stats.netBalance >= 0 ? "text-emerald-400" : "text-red-400"

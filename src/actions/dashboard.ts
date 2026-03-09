@@ -8,13 +8,8 @@ export async function getDashboardData() {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const eventWhere: any = {};
-    const paymentWhere: any = {};
-
-    if (session.user.role !== 'superadmin') {
-        eventWhere.createdById = session.user.id;
-        paymentWhere.event = { createdById: session.user.id };
-    }
+    const eventWhere: any = { createdById: session.user.id };
+    const paymentWhere: any = { event: { createdById: session.user.id } };
 
     const [events, transactions, recentTransactions] = await Promise.all([
       prisma.event.findMany({ where: eventWhere }),

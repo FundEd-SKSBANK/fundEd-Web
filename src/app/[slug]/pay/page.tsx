@@ -167,7 +167,7 @@ export default function PaymentPage() {
     if (isSubmitting) {
       return <Loader2 className="h-5 w-5 animate-spin" />
     }
-    const amountDisplay = amountToPay ? `₹${parseFloat(amountToPay).toLocaleString()}` : '';
+    const amountDisplay = amountToPay ? `₹${parseFloat(amountToPay).toLocaleString('en-IN')}` : '';
 
     if (!selectedMethod) return amountDisplay ? `Pay ${amountDisplay}` : 'Select Amount';
 
@@ -428,8 +428,8 @@ export default function PaymentPage() {
                 <span className="font-bold text-3xl text-white tracking-tight flex items-center">
                   <span className="text-emerald-500 mr-1">₹</span>
                   {selectedStudent
-                    ? (event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()
-                    : event.cost.toLocaleString()
+                    ? (event.cost - (selectedStudent.paidAmount || 0)).toLocaleString('en-IN')
+                    : event.cost.toLocaleString('en-IN')
                   }
                 </span>
               </div>
@@ -508,15 +508,15 @@ export default function PaymentPage() {
                       <>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-stone-400">Total Cost</span>
-                          <span className="text-stone-400 font-medium">₹{event.cost.toLocaleString()}</span>
+                          <span className="text-stone-400 font-medium">₹{event.cost.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-stone-400">Already Paid</span>
-                          <span className="text-emerald-400 font-medium">- ₹{selectedStudent.paidAmount?.toLocaleString()}</span>
+                          <span className="text-emerald-400 font-medium">- ₹{selectedStudent.paidAmount?.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm pt-2 border-t border-white/10 mt-1">
                           <span className="text-stone-300 font-medium">Balance Due</span>
-                          <span className="text-white font-bold">₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()}</span>
+                          <span className="text-white font-bold">₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString('en-IN')}</span>
                         </div>
                       </>
                     )}
@@ -563,7 +563,7 @@ export default function PaymentPage() {
                       />
                     </div>
                     <p className="text-xs text-stone-500 text-right">
-                      Max: ₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString()}
+                      Max: ₹{(event.cost - (selectedStudent.paidAmount || 0)).toLocaleString('en-IN')}
                     </p>
                   </div>
                 )}
@@ -623,7 +623,7 @@ export default function PaymentPage() {
               Scan to Pay
             </AlertDialogTitle>
             <AlertDialogDescription className="text-stone-400">
-              Use any UPI app to scan the QR code below to pay <span className="text-white font-bold">₹{amountToPay ? parseFloat(amountToPay).toLocaleString() : event.cost.toLocaleString()}</span> from the form.
+              Use any UPI app to scan the QR code below to pay <span className="text-white font-bold">₹{amountToPay ? parseFloat(amountToPay).toLocaleString('en-IN') : event.cost.toLocaleString('en-IN')}</span> from the form.
               After paying, click the submit button below for verification.
               <br />
               <span className="block mt-2 text-xs text-yellow-500/80">
