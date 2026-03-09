@@ -16,7 +16,6 @@ import { Logo } from '@/components/icons';
 import { GlassCard } from '@/components/ui/glass-card';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
-import { PortalReturn } from '@/components/portal-return';
 
 export default function Home() {
   const features = [
