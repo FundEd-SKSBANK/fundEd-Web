@@ -134,7 +134,7 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     const headerList = await headers();
     const host = headerList.get('host');
     const protocol = host?.includes('localhost') ? 'http' : 'https';
-    const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:9002');
+    const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000');
     const resetLink = `${appUrl}/reset-password?token=${token}`;
 
     const result = await sendResetPasswordEmail({

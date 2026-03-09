@@ -222,7 +222,7 @@ export async function sendPaymentApprovedEmail(input: PaymentApprovedEmailInput)
     const emailHtml = generateEmailLayout(
         `Approved: ${input.eventName}`,
         content,
-        { text: 'View Dashboard', url: process.env.NEXT_PUBLIC_APP_URL || '#' }
+        { text: 'Check Status', url: input.checkStatusLink }
     );
     
     const result = await sendEmail({
