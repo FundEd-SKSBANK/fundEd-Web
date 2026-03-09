@@ -135,6 +135,8 @@ export default function EventPaymentsPage() {
 
       if (newStatus === 'Paid' && event && res.data) {
         const student = res.data.student;
+        const adminSlug = (res.data.event as any)?.createdBy?.slug || '';
+
         if (student) {
           // Fire-and-forget
           sendPaymentApprovedEmail({
@@ -142,6 +144,8 @@ export default function EventPaymentsPage() {
             studentEmail: student.email,
             eventName: event.name,
             amount: transaction.amount,
+            adminSlug: adminSlug,
+            checkStatusLink: '', // Will be filled by server action
           });
           toast({
             title: "Approval Email Queued",
