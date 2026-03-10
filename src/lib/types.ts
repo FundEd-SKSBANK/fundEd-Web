@@ -32,6 +32,7 @@ export type Event = {
   totalPending: number;
   paymentOptions: ('Razorpay' | 'QR' | 'Cash')[];
   qrCodeUrl?: string;
+  upiString?: string;
   category: 'Normal' | 'Print';
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -58,6 +59,7 @@ export type QrCode = {
   id: string;
   name: string;
   url: string;
+  upiString?: string | null;
 };
 
 export type PrintDistribution = {
