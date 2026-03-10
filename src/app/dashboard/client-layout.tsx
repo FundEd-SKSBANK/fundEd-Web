@@ -335,7 +335,7 @@ export default function DashboardClientLayout({
                                                     <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/5 transition-colors">
                                                         <div className="flex items-center justify-between w-full">
                                                             <span className="text-sm font-semibold text-white">{n.title}</span>
-                                                            <span className="text-[10px] text-stone-500">{new Date(n.date).toLocaleDateString()}</span>
+                                                            <span className="text-[10px] text-stone-500">{new Date(n.date).toLocaleDateString('en-GB')}</span>
                                                         </div>
                                                         <p className="text-xs text-stone-400 leading-relaxed">{n.description}</p>
                                                     </DropdownMenuItem>

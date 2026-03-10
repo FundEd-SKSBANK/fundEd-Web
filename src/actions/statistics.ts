@@ -56,7 +56,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
         const dayPayments = allPayments.filter(p => p.paymentDate >= dayStart && p.paymentDate < dayEnd);
 
         dataPoints.push({
-          date: format(date, 'MMM dd'),
+          date: format(date, 'dd MMM'),
           collections: dayPayments.reduce((sum, p) => sum + p.amount, 0),
           transactions: dayPayments.length,
         });
@@ -71,7 +71,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
         const weekPayments = allPayments.filter(p => p.paymentDate >= weekStart && p.paymentDate < weekEnd);
 
         dataPoints.push({
-          date: `Week ${format(weekStart, 'MMM dd')}`,
+          date: `Week ${format(weekStart, 'dd MMM')}`,
           collections: weekPayments.reduce((sum, p) => sum + p.amount, 0),
           transactions: weekPayments.length,
         });
