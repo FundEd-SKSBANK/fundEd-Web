@@ -497,8 +497,58 @@ export default function ReportsPage() {
                                 Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0 sm:px-6 sm:pb-6">
-                            <div className="overflow-x-auto -mx-2 sm:mx-0">
+                        <CardContent className="p-0 sm:p-6 sm:pb-6">
+                            {/* Mobile View - Cards */}
+                            <div className="grid gap-4 md:hidden p-4">
+                                {transactions.slice(0, 10).map((transaction, idx) => (
+                                    <GlassCard key={idx} variant="bordered" className="bg-white/5 border-white/10 overflow-hidden">
+                                        <CardHeader className="pb-3 border-b border-white/5">
+                                            <div className="flex justify-between items-start gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <CardTitle className="text-xs font-code break-all text-stone-300">
+                                                        #{transaction['Transaction ID']?.slice(-8) || transaction['Txn ID']?.slice(-8) || 'N/A'}
+                                                    </CardTitle>
+                                                    <CardDescription className="mt-1 text-sm font-medium text-white break-words">
+                                                        {transaction['Student Name'] || transaction['Student'] || 'Unknown'}
+                                                    </CardDescription>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    <StatusBadge status={transaction['Status'] || transaction['status'] || 'Default'} />
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="grid gap-2 pt-3 text-xs sm:text-sm">
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-muted-foreground shrink-0 text-[10px] uppercase tracking-wider font-semibold">Event</span>
+                                                <span className="text-right font-medium text-stone-200 truncate max-w-[150px]">
+                                                    {transaction['Event Name'] || transaction['Event'] || 'N/A'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-muted-foreground shrink-0 text-[10px] uppercase tracking-wider font-semibold">Amount</span>
+                                                <span className="font-bold text-green-500">
+                                                    ₹{transaction['Amount']?.toLocaleString('en-IN') || transaction['Paid']?.toLocaleString('en-IN') || '0'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-muted-foreground shrink-0 text-[10px] uppercase tracking-wider font-semibold">Roll No</span>
+                                                <span className="text-stone-300">
+                                                    {transaction['Roll Number'] || transaction['Roll No'] || 'N/A'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-muted-foreground shrink-0 text-[10px] uppercase tracking-wider font-semibold">Date</span>
+                                                <span className="text-stone-400">
+                                                    {transaction['Payment Date'] || transaction['Date'] || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </CardContent>
+                                    </GlassCard>
+                                ))}
+                            </div>
+
+                            {/* Desktop View - Table */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -528,7 +578,7 @@ export default function ReportsPage() {
                             </div>
 
                             {transactions.length > 10 && (
-                                <p className="text-sm text-muted-foreground mt-4 text-center">
+                                <p className="text-sm text-muted-foreground mt-4 pb-4 px-4 text-center">
                                     Showing first 10 of {transactions.length} transactions. Download CSV for full report.
                                 </p>
                             )}
