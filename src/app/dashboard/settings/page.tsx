@@ -390,7 +390,7 @@ export default function SettingsPage() {
                       <ImageDropzone
                         onFileSelect={handleFileSelect}
                         previewUrl={newQrUrl}
-                        onClear={() => { setNewQrUrl(''); setIsValidQr(null); }}
+                        onClear={() => { setNewQrUrl(''); setIsValidQr(null); setUpiString(''); }}
                         validationStatus={validationStatus as any}
                       />
 
@@ -399,12 +399,6 @@ export default function SettingsPage() {
                         <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
                           <XCircle className="h-3.5 w-3.5 shrink-0" />
                           Please upload a payment QR code image.
-                        </p>
-                      )}
-                      {!newQrUrl && !submitted && (
-                        <p className="flex items-center gap-1.5 text-xs text-amber-400/80 mt-1">
-                          <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-                          Only a Payment QR Code is accepted (GPay, PhonePe, Paytm, UPI).
                         </p>
                       )}
                       {newQrUrl && isValidating && (
@@ -422,8 +416,27 @@ export default function SettingsPage() {
                       {newQrUrl && !isValidating && isValidQr === false && (
                         <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
                           <XCircle className="h-3.5 w-3.5 shrink-0" />
-                          Not a payment QR code. Only UPI payment QR codes are accepted.
+                          Not a payment QR code. You can still enter the UPI ID manually below.
                         </p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="upi-id" className={submitted && !upiString ? 'text-red-400' : ''}>
+                        UPI ID (VPA)
+                      </Label>
+                      <Input
+                        id="upi-id"
+                        placeholder="e.g., yourname@okaxis"
+                        value={upiString.startsWith('upi://') ? (new URL(upiString).searchParams.get('pa') || upiString) : upiString}
+                        onChange={(e) => setUpiString(e.target.value)}
+                        className={submitted && !upiString ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      <p className="text-[10px] text-stone-500 leading-tight">
+                        {isValidQr ? 'Verified from QR' : 'Enter manually if QR decoding fails or is incorrect'}
+                      </p>
+                      {submitted && !upiString && (
+                        <p className="text-xs text-red-400">UPI ID is required for redirection.</p>
                       )}
                     </div>
                   </div>

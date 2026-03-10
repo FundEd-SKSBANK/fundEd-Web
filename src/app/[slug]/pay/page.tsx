@@ -116,28 +116,36 @@ export default function PaymentPage() {
   }, [searchValue, availableStudents]);
 
   const upiDeepLink = useMemo(() => {
-    if (!event?.upiString) return null;
+    const rawUpi = event?.upiString;
+    if (!rawUpi) return null;
 
-    let link = event.upiString;
-    // Use amountToPay if available, otherwise fallback to event.cost
     const amountStr = amountToPay || event.cost.toString();
     const amount = parseFloat(amountStr);
-
     if (isNaN(amount) || amount <= 0) return null;
 
-    if (link.includes('am=')) {
-      link = link.replace(/am=[^&]+/, `am=${amount}`);
+    let vpa = '';
+    let payeeName = event.name; // Fallback to event name
+
+    // Attempt to extract VPA if it's already a full URI
+    if (rawUpi.toLowerCase().startsWith('upi://pay')) {
+      try {
+        // Simple regex fallback for protocol-less parsing if URL fails
+        const paMatch = rawUpi.match(/[?&]pa=([^&]+)/i);
+        const pnMatch = rawUpi.match(/[?&]pn=([^&]+)/i);
+        vpa = paMatch ? paMatch[1] : '';
+        if (pnMatch) payeeName = decodeURIComponent(pnMatch[1]);
+      } catch (e) {
+        vpa = rawUpi; // fallback
+      }
     } else {
-      link += (link.includes('?') ? '&' : '?') + `am=${amount}`;
+      vpa = rawUpi;
     }
 
-    if (link.includes('tn=')) {
-      link = link.replace(/tn=[^&]+/, `tn=${encodeURIComponent(event.name)}`);
-    } else {
-      link += `&tn=${encodeURIComponent(event.name)}`;
-    }
+    if (!vpa) return null;
 
-    return link;
+    // Standard UPI URI format
+    // pa: Payee VPA, pn: Payee Name, am: Amount, cu: Currency, tn: Transaction Note
+    return `upi://pay?pa=${vpa}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(event.name)}`;
   }, [event, amountToPay]);
 
 
