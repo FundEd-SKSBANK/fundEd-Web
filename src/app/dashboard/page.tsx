@@ -18,10 +18,9 @@ export default async function DashboardPage() {
     // Handle loading/error states if needed, though for a Server Component 
     // simply returning the UI is standard.
     if (!res.success || !res.data) {
-        // You could render an error state component here
         return (
             <div className="p-8 text-center text-red-500">
-                Failed to load dashboard data. Please try again later.
+                Failed to load dashboard data: {res.error}. Please try again later.
             </div>
         );
     }
