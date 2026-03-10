@@ -68,15 +68,24 @@ interface DashboardClientProps {
 export function DashboardClient({ events, transactions, recentTransactions }: DashboardClientProps) {
 
     const stats = useMemo(() => {
+        if (!transactions || !events) {
+            return {
+                totalEvents: 0,
+                totalCollected: 0,
+                pendingAmount: 0,
+                uniqueStudents: 0,
+            };
+        }
+
         const totalCollected = transactions
-            .filter(t => t.status === 'Paid')
-            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            .filter(t => t?.status === 'Paid')
+            .reduce((sum, t) => sum + (Number(t?.amount) || 0), 0);
 
         const pendingAmount = transactions
-            .filter(t => t.status === 'Pending' || t.status === 'Verification Pending')
-            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            .filter(t => t?.status === 'Pending' || t?.status === 'Verification Pending')
+            .reduce((sum, t) => sum + (Number(t?.amount) || 0), 0);
 
-        const uniqueStudents = new Set(transactions.map(t => t.studentId)).size;
+        const uniqueStudents = new Set(transactions.map(t => t?.studentId).filter(Boolean)).size;
 
         return {
             totalEvents: events.length,
