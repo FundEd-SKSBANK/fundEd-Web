@@ -264,6 +264,18 @@ export default function PrintsPage() {
               </PopoverContent>
             </Popover>
           </div>
+          {selectedEventId && (
+            <div className="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-400 opacity-70">Distributed</p>
+                <p className="text-xl font-bold text-white">{filteredDistributions.length}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-orange-400 opacity-70">Pending</p>
+                <p className="text-xl font-bold text-white">{studentsWhoPaid.length}</p>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Button disabled={!selectedStudent || isSubmitting} onClick={handleDistribute}>
