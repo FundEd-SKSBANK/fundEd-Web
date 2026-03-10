@@ -20,27 +20,7 @@ export async function login(prevState: any, formData: FormData) {
     where: { email },
   });
 
-  if (!user || !bcrypt.compareSync(password, user.password)) {
-    // Fallback: If no users exist in DB at all, create this one as admin
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
-        const hashedPassword = bcrypt.hashSync(password, 10);
-        const newUser = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name: 'Admin',
-                role: 'admin'
-            }
-        });
-        
-        // Login immediately
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const session = await encrypt({ user: { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role }, expires });
-        (await cookies()).set('session', session, { expires, httpOnly: true });
-        redirect('/dashboard');
-    }
-
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return { error: 'Invalid credentials' };
   }
 
@@ -79,7 +59,7 @@ export async function signup(prevState: any, formData: FormData) {
       return { error: 'A user with this email already exists' };
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
         email,
@@ -180,7 +160,7 @@ export async function resetPassword(prevState: any, formData: FormData) {
       return { error: 'Invalid or expired reset token' };
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await (prisma.user as any).update({
       where: { id: user.id },
