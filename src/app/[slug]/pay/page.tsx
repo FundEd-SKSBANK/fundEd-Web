@@ -115,38 +115,6 @@ export default function PaymentPage() {
     );
   }, [searchValue, availableStudents]);
 
-  const upiDeepLink = useMemo(() => {
-    const rawUpi = event?.upiString;
-    if (!rawUpi) return null;
-
-    const amountStr = amountToPay || event.cost.toString();
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) return null;
-
-    let vpa = '';
-    let payeeName = event.name; // Fallback to event name
-
-    // Attempt to extract VPA if it's already a full URI
-    if (rawUpi.toLowerCase().startsWith('upi://pay')) {
-      try {
-        // Simple regex fallback for protocol-less parsing if URL fails
-        const paMatch = rawUpi.match(/[?&]pa=([^&]+)/i);
-        const pnMatch = rawUpi.match(/[?&]pn=([^&]+)/i);
-        vpa = paMatch ? paMatch[1] : '';
-        if (pnMatch) payeeName = decodeURIComponent(pnMatch[1]);
-      } catch (e) {
-        vpa = rawUpi; // fallback
-      }
-    } else {
-      vpa = rawUpi;
-    }
-
-    if (!vpa) return null;
-
-    // Standard UPI URI format
-    // pa: Payee VPA, pn: Payee Name, am: Amount, cu: Currency, tn: Transaction Note
-    return `upi://pay?pa=${vpa}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(event.name)}`;
-  }, [event, amountToPay]);
 
 
   if (isLoading) {
@@ -677,18 +645,6 @@ export default function PaymentPage() {
               )}
             </div>
 
-            {upiDeepLink && (
-              <Button
-                asChild
-                variant="outline"
-                className="w-full bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-500 gap-2 h-12"
-              >
-                <a href={upiDeepLink}>
-                  <ExternalLink className="h-4 w-4" />
-                  Pay via UPI App
-                </a>
-              </Button>
-            )}
           </div>
           <AlertDialogFooter>
             <Button variant="ghost" onClick={() => setShowQrDialog(false)} disabled={isSubmitting} className="text-stone-400 hover:text-white">Cancel</Button>
