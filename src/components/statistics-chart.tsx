@@ -29,8 +29,10 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
         fetchData();
     }, [period]);
 
-    const maxValue = Math.max(...data.map(d => metric === 'collections' ? d.collections : d.transactions), 1);
-    const totalValue = data.reduce((sum, d) => sum + (metric === 'collections' ? d.collections : d.transactions), 0);
+    const maxValue = data.length > 0
+        ? Math.max(...data.map(d => metric === 'collections' ? (Number(d.collections) || 0) : (Number(d.transactions) || 0)), 1)
+        : 1;
+    const totalValue = data.reduce((sum, d) => sum + (metric === 'collections' ? (Number(d.collections) || 0) : (Number(d.transactions) || 0)), 0);
 
     return (
         <Card className={className}>
