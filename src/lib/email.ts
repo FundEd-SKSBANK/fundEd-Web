@@ -10,10 +10,9 @@ interface SendEmailOptions {
 
 // Create a reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.GMAIL_EMAIL, // Your Gmail address from .env
     pass: process.env.GMAIL_APP_PASSWORD, // Your App Password from .env
