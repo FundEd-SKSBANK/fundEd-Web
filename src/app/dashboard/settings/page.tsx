@@ -88,6 +88,7 @@ export default function SettingsPage() {
   const [isValidQr, setIsValidQr] = useState<boolean | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [upiString, setUpiString] = useState<string>('');
 
   // Compute the validation status for the dropzone icon
   const validationStatus = !newQrUrl
@@ -163,6 +164,11 @@ export default function SettingsPage() {
       const decoded = await decodeQrFromDataUrl(imageUrl);
       const valid = decoded !== null && isUpiQr(decoded);
       setIsValidQr(valid);
+      if (valid && decoded) {
+        setUpiString(decoded);
+      } else {
+        setUpiString('');
+      }
       setIsValidating(false);
     } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to process the image.' });
@@ -176,10 +182,10 @@ export default function SettingsPage() {
       return;
     }
     setIsSubmittingQr(true);
-    const res = await addQrCode({ name: newQrName, url: newQrUrl });
+    const res = await addQrCode({ name: newQrName, url: newQrUrl, upiString });
     if (res.success) {
       toast({ title: 'QR Code Added' });
-      setNewQrName(''); setNewQrUrl(''); setIsValidQr(null);
+      setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setUpiString('');
       setOpenQr(false);
       fetchData();
     } else {
@@ -224,7 +230,7 @@ export default function SettingsPage() {
   };
 
   const resetDialog = () => {
-    setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setIsValidating(false); setSubmitted(false);
+    setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setIsValidating(false); setSubmitted(false); setUpiString('');
   };
 
   if (isLoading) return <PageLoader message="Loading settings..." />;

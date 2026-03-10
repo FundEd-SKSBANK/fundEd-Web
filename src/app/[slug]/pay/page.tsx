@@ -115,6 +115,31 @@ export default function PaymentPage() {
     );
   }, [searchValue, availableStudents]);
 
+  const upiDeepLink = useMemo(() => {
+    if (!event?.upiString) return null;
+
+    let link = event.upiString;
+    // Use amountToPay if available, otherwise fallback to event.cost
+    const amountStr = amountToPay || event.cost.toString();
+    const amount = parseFloat(amountStr);
+
+    if (isNaN(amount) || amount <= 0) return null;
+
+    if (link.includes('am=')) {
+      link = link.replace(/am=[^&]+/, `am=${amount}`);
+    } else {
+      link += (link.includes('?') ? '&' : '?') + `am=${amount}`;
+    }
+
+    if (link.includes('tn=')) {
+      link = link.replace(/tn=[^&]+/, `tn=${encodeURIComponent(event.name)}`);
+    } else {
+      link += `&tn=${encodeURIComponent(event.name)}`;
+    }
+
+    return link;
+  }, [event, amountToPay]);
+
 
   if (isLoading) {
     return (
@@ -631,15 +656,30 @@ export default function PaymentPage() {
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex justify-center p-6 bg-white rounded-xl mx-auto my-2">
-            {event.qrCodeUrl && (
-              <Image
-                src={event.qrCodeUrl}
-                alt="QR Code"
-                width={200}
-                height={200}
-                className="mix-blend-multiply"
-              />
+          <div className="flex flex-col items-center gap-4 py-6">
+            <div className="p-4 bg-white rounded-xl">
+              {event.qrCodeUrl && (
+                <Image
+                  src={event.qrCodeUrl}
+                  alt="QR Code"
+                  width={200}
+                  height={200}
+                  className="mix-blend-multiply"
+                />
+              )}
+            </div>
+
+            {upiDeepLink && (
+              <Button
+                asChild
+                variant="outline"
+                className="w-full bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-500 gap-2 h-12"
+              >
+                <a href={upiDeepLink}>
+                  <ExternalLink className="h-4 w-4" />
+                  Pay via UPI App
+                </a>
+              </Button>
             )}
           </div>
           <AlertDialogFooter>

@@ -13,7 +13,7 @@ export async function getQrCodes() {
   }
 }
 
-export async function addQrCode(data: { name: string; url: string }) {
+export async function addQrCode(data: { name: string; url: string; upiString?: string }) {
   try {
     const qrCode = await prisma.qrCode.create({
       data,
