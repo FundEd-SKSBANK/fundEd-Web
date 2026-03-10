@@ -56,7 +56,6 @@ model Event {
   cost               Float               @default(0)
   paymentOptions     String              @default("[\"Razorpay\"]")
   qrCodeUrl          String?
-  upiString          String?
   category           String              @default("Normal")
   status             String              @default("PUBLISHED")
   createdAt          DateTime            @default(now())
@@ -136,7 +135,6 @@ model QrCode {
   id        String @id @default(cuid())
   name      String
   url       String
-  upiString String?
 
   @@index([name])
 }

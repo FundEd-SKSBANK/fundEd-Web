@@ -112,7 +112,6 @@ export async function createEvent(data: {
   deadline: string;
   paymentOptions: string[];
   qrCodeUrl?: string;
-  upiString?: string;
   category: string;
   selectedStudents: string[];
 }) {
@@ -144,7 +143,6 @@ export async function createEvent(data: {
         deadline: new Date(data.deadline),
         paymentOptions: JSON.stringify(data.paymentOptions),
         qrCodeUrl: data.qrCodeUrl,
-        upiString: data.upiString,
         category: data.category,
         status: 'PUBLISHED',
         createdById: session.user.id,
@@ -297,7 +295,6 @@ export async function updateEvent(id: string, data: {
   deadline: string;
   paymentOptions: string[];
   qrCodeUrl?: string;
-  upiString?: string;
   category: string;
   selectedStudents: string[];
 }) {
@@ -338,7 +335,6 @@ export async function updateEvent(id: string, data: {
         deadline: new Date(data.deadline),
         paymentOptions: JSON.stringify(data.paymentOptions),
         qrCodeUrl: data.qrCodeUrl,
-        upiString: data.upiString,
         category: data.category,
         status: 'PUBLISHED', 
         participants: {

@@ -30,40 +30,7 @@ import { getCurrentAdmin, updateAdminSlug, checkSlugAvailability } from '@/actio
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
 import { fileToDataURL, validateFileSize, validateImageType } from './page.utils';
-import jsQR from 'jsqr';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
-
-/** Returns true if decoded QR text looks like a UPI payment QR */
-function isUpiQr(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  return (
-    t.startsWith('upi://') ||
-    t.startsWith('gpay://') ||
-    t.startsWith('phonepe://') ||
-    t.startsWith('paytm://') ||
-    t.includes('pa=')
-  );
-}
-
-/** Decode a base64 data URL and run jsQR on it. Returns the decoded text or null. */
-function decodeQrFromDataUrl(dataUrl: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return resolve(null);
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      ctx.drawImage(img, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = jsQR(imgData.data, imgData.width, imgData.height);
-      resolve(result ? result.data : null);
-    };
-    img.onerror = () => resolve(null);
-    img.src = dataUrl;
-  });
-}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -75,6 +42,7 @@ export default function SettingsPage() {
   const [isSubmittingQr, setIsSubmittingQr] = useState(false);
   const [newQrName, setNewQrName] = useState('');
   const [newQrUrl, setNewQrUrl] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   // Slug / Student Portal State
   const [slug, setSlug] = useState('');
@@ -84,22 +52,7 @@ export default function SettingsPage() {
   const [slugCopied, setSlugCopied] = useState(false);
   const [slugAvailability, setSlugAvailability] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
 
-  // null = no image yet | true = valid payment QR | false = invalid QR
-  const [isValidQr, setIsValidQr] = useState<boolean | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [upiString, setUpiString] = useState<string>('');
 
-  // Compute the validation status for the dropzone icon
-  const validationStatus = !newQrUrl
-    ? null
-    : isValidating
-      ? 'pending'
-      : isValidQr === true
-        ? 'valid'
-        : isValidQr === false
-          ? 'invalid'
-          : null;
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -157,35 +110,22 @@ export default function SettingsPage() {
 
     try {
       const imageUrl = await fileToDataURL(file);
-      setNewQrUrl(imageUrl);   // always show preview
-      setIsValidQr(null);
-      setIsValidating(true);
-
-      const decoded = await decodeQrFromDataUrl(imageUrl);
-      const valid = decoded !== null && isUpiQr(decoded);
-      setIsValidQr(valid);
-      if (valid && decoded) {
-        setUpiString(decoded);
-      } else {
-        setUpiString('');
-      }
-      setIsValidating(false);
+      setNewQrUrl(imageUrl);
     } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to process the image.' });
-      setIsValidating(false);
     }
   };
 
   const handleAddQrCode = async () => {
     setSubmitted(true);
-    if (!newQrName || !newQrUrl || isValidQr !== true) {
+    if (!newQrName || !newQrUrl) {
       return;
     }
     setIsSubmittingQr(true);
-    const res = await addQrCode({ name: newQrName, url: newQrUrl, upiString });
+    const res = await addQrCode({ name: newQrName, url: newQrUrl });
     if (res.success) {
       toast({ title: 'QR Code Added' });
-      setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setUpiString('');
+      setNewQrName(''); setNewQrUrl('');
       setOpenQr(false);
       fetchData();
     } else {
@@ -230,7 +170,7 @@ export default function SettingsPage() {
   };
 
   const resetDialog = () => {
-    setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setIsValidating(false); setSubmitted(false); setUpiString('');
+    setNewQrName(''); setNewQrUrl(''); setSubmitted(false);
   };
 
   if (isLoading) return <PageLoader message="Loading settings..." />;
@@ -239,8 +179,8 @@ export default function SettingsPage() {
   const portalUrl = slugPreview ? `${typeof window !== 'undefined' ? window.location.origin : ''}/check-status/${slugPreview}` : '';
   const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug && slugAvailability !== 'taken' && slugAvailability !== 'checking' && slugAvailability !== 'invalid';
 
-  // Save is enabled only when: image uploaded + validated + valid UPI QR
-  const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
+  // Save is enabled only when image is uploaded
+  const canSave = !!newQrUrl && !isSubmittingQr;
 
   return (
     <div className="grid gap-8">
@@ -390,53 +330,14 @@ export default function SettingsPage() {
                       <ImageDropzone
                         onFileSelect={handleFileSelect}
                         previewUrl={newQrUrl}
-                        onClear={() => { setNewQrUrl(''); setIsValidQr(null); setUpiString(''); }}
-                        validationStatus={validationStatus as any}
+                        onClear={() => { setNewQrUrl(''); }}
                       />
 
-                      {/* Validation status line */}
                       {!newQrUrl && submitted && (
                         <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
                           <XCircle className="h-3.5 w-3.5 shrink-0" />
                           Please upload a payment QR code image.
                         </p>
-                      )}
-                      {newQrUrl && isValidating && (
-                        <p className="flex items-center gap-1.5 text-xs text-stone-400 mt-1">
-                          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                          Validating QR code…
-                        </p>
-                      )}
-                      {newQrUrl && !isValidating && isValidQr === true && (
-                        <p className="flex items-center gap-1.5 text-xs text-emerald-400 mt-1">
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                          Valid payment QR code detected.
-                        </p>
-                      )}
-                      {newQrUrl && !isValidating && isValidQr === false && (
-                        <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
-                          <XCircle className="h-3.5 w-3.5 shrink-0" />
-                          Not a payment QR code. You can still enter the UPI ID manually below.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="upi-id" className={submitted && !upiString ? 'text-red-400' : ''}>
-                        UPI ID (VPA)
-                      </Label>
-                      <Input
-                        id="upi-id"
-                        placeholder="e.g., yourname@okaxis"
-                        value={upiString.startsWith('upi://') ? (new URL(upiString).searchParams.get('pa') || upiString) : upiString}
-                        onChange={(e) => setUpiString(e.target.value)}
-                        className={submitted && !upiString ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                      />
-                      <p className="text-[10px] text-stone-500 leading-tight">
-                        {isValidQr ? 'Verified from QR' : 'Enter manually if QR decoding fails or is incorrect'}
-                      </p>
-                      {submitted && !upiString && (
-                        <p className="text-xs text-red-400">UPI ID is required for redirection.</p>
                       )}
                     </div>
                   </div>

@@ -61,13 +61,6 @@ export async function getPaymentPageData(slugOrId: string) {
         }))
         .filter(s => s.paidAmount < event.cost);
 
-    // If event.upiString is missing but it has a qrCodeUrl, try to find it from QrCode table
-    let eventUpiString = (event as any).upiString;
-    if (!eventUpiString && event.qrCodeUrl) {
-        const qr = await prisma.qrCode.findFirst({ where: { url: event.qrCodeUrl } });
-        eventUpiString = qr?.upiString;
-    }
-
     return { 
       success: true, 
       data: {
@@ -77,7 +70,6 @@ export async function getPaymentPageData(slugOrId: string) {
             createdAt: event.createdAt.toISOString(), 
             updatedAt: event.updatedAt.toISOString(), 
             paymentOptions: JSON.parse(event.paymentOptions),
-            upiString: eventUpiString || null,
             adminSlug: (event as any).createdBy?.slug || null
         },
         availableStudents
