@@ -98,7 +98,7 @@ export function ExpenseBreakdownChart({ data }: ExpenseBreakdownProps) {
                     <Pie
                         data={data}
                         cx="50%"
-                        cy="50%"
+                        cy="45%"
                         innerRadius={60}
                         outerRadius={80}
                         paddingAngle={5}
@@ -114,10 +114,10 @@ export function ExpenseBreakdownChart({ data }: ExpenseBreakdownProps) {
                         formatter={(value: number) => `₹${value}`}
                     />
                     <Legend
-                        layout="vertical"
-                        verticalAlign="middle"
-                        align="right"
-                        wrapperStyle={{ fontSize: '12px', color: '#999' }}
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ fontSize: '12px', color: '#999', paddingTop: '20px' }}
                     />
                 </PieChart>
             </ResponsiveContainer>
