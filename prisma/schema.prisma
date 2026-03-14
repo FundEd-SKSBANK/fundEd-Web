@@ -23,6 +23,7 @@ model User {
   collabs          User[]    @relation("AdminCollabs")
   createdEvents    Event[]   @relation("CreatedEvents")
   recordedExpenses Expense[]
+  recordedRevenues AdditionalRevenue[]
   createdStudents  Student[] @relation("CreatedStudents")
   qrCodes          QrCode[]  @relation("AdminQrCodes")
 
@@ -69,6 +70,7 @@ model Event {
   createdBy          User?               @relation("CreatedEvents", fields: [createdById], references: [id])
   expenses           Expense[]
   payments           Payment[]
+  additionalRevenues AdditionalRevenue[]
   printDistributions PrintDistribution[]
   participants       Student[]           @relation("EventToStudent")
 
@@ -144,4 +146,21 @@ model QrCode {
 
   @@index([name])
   @@index([adminId])
+}
+
+model AdditionalRevenue {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float
+  source      String   @default("Other")
+  date        DateTime @default(now())
+  note        String?
+  eventId     String
+  recordedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recorder    User?    @relation(fields: [recordedBy], references: [id])
+
+  @@index([eventId])
 }
