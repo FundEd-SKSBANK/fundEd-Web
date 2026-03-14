@@ -2,10 +2,21 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 export async function getQrCodes() {
   try {
-    const qrCodes = await prisma.qrCode.findMany();
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+    const adminId = getWorkspaceId(session.user);
+
+    // Claim any legacy unscoped QR codes (created before adminId was added)
+    await prisma.qrCode.updateMany({
+      where: { adminId: null },
+      data: { adminId },
+    });
+
+    const qrCodes = await prisma.qrCode.findMany({ where: { adminId } });
     return { success: true, data: qrCodes };
   } catch (error) {
     console.error('Error fetching QR codes:', error);
@@ -15,10 +26,14 @@ export async function getQrCodes() {
 
 export async function addQrCode(data: { name: string; url: string }) {
   try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+    const adminId = getWorkspaceId(session.user);
     const qrCode = await prisma.qrCode.create({
       data: {
         name: data.name,
         url: data.url,
+        adminId,
       },
     });
     revalidatePath('/dashboard/settings');
@@ -31,8 +46,12 @@ export async function addQrCode(data: { name: string; url: string }) {
 
 export async function deleteQrCode(id: string) {
   try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+    const adminId = getWorkspaceId(session.user);
+    // Ensure the QR belongs to this admin
     await prisma.qrCode.delete({
-      where: { id },
+      where: { id, adminId },
     });
     revalidatePath('/dashboard/settings');
     return { success: true };

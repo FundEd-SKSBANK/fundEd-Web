@@ -4,17 +4,16 @@ import prisma from '@/lib/db';
 
 export async function getStudentPayments(studentId: string) {
   try {
-    const [student, transactions] = await Promise.all([
-      prisma.student.findUnique({ 
+    const student = await prisma.student.findUnique({ 
         where: { id: studentId },
         include: { participatingEvents: true } 
-      }),
-      prisma.payment.findMany({
+    });
+    
+    const transactions = await prisma.payment.findMany({
         where: { studentId },
         include: { event: true },
         orderBy: { paymentDate: 'desc' }
-      })
-    ]);
+    });
 
     if (!student) return { success: false, error: 'Student not found' };
 

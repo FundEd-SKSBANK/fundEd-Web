@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 interface AddStudentInput {
   name: string;
@@ -28,9 +28,10 @@ export async function addStudent(input: AddStudentInput) {
         return { success: false, error: "Unauthorized" };
     }
 
+    const workspaceId = getWorkspaceId(session.user);
     const whereClause: any = { 
         rollNo: input.rollNumber,
-        createdById: session.user.id
+        createdById: workspaceId
     };
 
     const existingStudent = await prisma.student.findFirst({
@@ -49,7 +50,7 @@ export async function addStudent(input: AddStudentInput) {
         email: input.email || '',
         phone: input.phone || '',
         class: input.class,
-        createdById: session.user.id,
+        createdById: workspaceId,
       } as any,
     });
 
@@ -80,7 +81,8 @@ export async function updateStudent(input: UpdateStudentInput) {
     const targetStudent = await prisma.student.findUnique({ where: { id: input.id } });
     if (!targetStudent) return { success: false, error: "Student not found" };
 
-    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== session.user.id) {
+    const workspaceId = getWorkspaceId(session.user);
+    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== workspaceId) {
         return { success: false, error: "Unauthorized to update this student" };
     }
 
@@ -88,7 +90,7 @@ export async function updateStudent(input: UpdateStudentInput) {
     const whereClause: any = { 
         rollNo: input.rollNumber,
         NOT: { id: input.id },
-        createdById: session.user.id
+        createdById: workspaceId
     };
 
     const existingStudent = await prisma.student.findFirst({
@@ -134,8 +136,9 @@ export async function getStudents() {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
+    const workspaceId = getWorkspaceId(session.user);
     const whereClause: any = {
-        createdById: session.user.id
+        createdById: workspaceId
     };
 
     const students = await prisma.student.findMany({
@@ -170,7 +173,7 @@ export async function deleteStudent(id: string) {
     const targetStudent = await prisma.student.findUnique({ where: { id } });
     if (!targetStudent) return { success: false, error: "Student not found" };
 
-    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (targetStudent as any).createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: "Unauthorized to delete this student" };
     }
 
@@ -196,11 +199,13 @@ export async function uploadStudentsCsv(studentsData: any[]) {
     let successCount = 0;
     let failCount = 0;
 
+    const workspaceId = getWorkspaceId(session.user);
+
     for (const student of studentsData) {
       try {
         const whereClause: any = { 
             rollNo: student.rollNo,
-            createdById: session.user.id
+            createdById: workspaceId
         };
 
         const existing = await prisma.student.findFirst({
@@ -214,7 +219,7 @@ export async function uploadStudentsCsv(studentsData: any[]) {
               rollNo: student.rollNo,
               email: student.email || '',
               class: student.class || '',
-              createdById: session.user.id,
+              createdById: workspaceId,
             } as any
           });
           successCount++;

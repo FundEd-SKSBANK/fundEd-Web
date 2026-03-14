@@ -70,7 +70,7 @@ export async function recordCashPayment(data: {
         paymentMethod: 'Cash',
         transactionId: `CASH_${Date.now()}`,
         isManualEntry: true,
-        recordedBy: session.userId,
+        recordedBy: session.user.id,
         manualEntryNotes: data.notes,
         receiptNumber: data.receiptNumber,
       },

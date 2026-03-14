@@ -1,0 +1,8 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-patient-shadow-ahfp1jpf.c-3.us-east-1.aws.neon.tech"
+
+Error: P1001: Can't reach database server at `ep-patient-shadow-ahfp1jpf.c-3.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-patient-shadow-ahfp1jpf.c-3.us-east-1.aws.neon.tech:5432`.

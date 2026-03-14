@@ -1,29 +1,28 @@
 'use server'
 
 import prisma from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 export async function getDashboardData() {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const eventWhere: any = { createdById: session.user.id };
-    const paymentWhere: any = { event: { createdById: session.user.id } };
+    const workspaceId = getWorkspaceId(session.user);
+    const eventWhere: any = { createdById: workspaceId };
+    const paymentWhere: any = { event: { createdById: workspaceId } };
 
-    const [events, transactions, recentTransactions] = await Promise.all([
-      prisma.event.findMany({ where: eventWhere }),
-      prisma.payment.findMany({ 
-          where: paymentWhere,
-          include: { student: true, event: true } 
-      }),
-      prisma.payment.findMany({
+    const events = await prisma.event.findMany({ where: eventWhere });
+    const transactions = await prisma.payment.findMany({ 
         where: paymentWhere,
-        take: 5,
-        orderBy: { paymentDate: 'desc' },
-        include: { student: true, event: true }
-      })
-    ]);
+        include: { student: true, event: true } 
+    });
+    const recentTransactions = await prisma.payment.findMany({
+      where: paymentWhere,
+      take: 5,
+      orderBy: { paymentDate: 'desc' },
+      include: { student: true, event: true }
+    });
 
     const mapTransaction = (t: any) => ({
       ...t,

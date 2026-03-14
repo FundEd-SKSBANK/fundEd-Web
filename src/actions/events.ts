@@ -4,49 +4,46 @@ import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { sendNewEventEmail } from '@/lib/email-templates';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 export async function getEvents() {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
+    const workspaceId = getWorkspaceId(session.user);
     const whereClause: any = {
-        createdById: session.user.id
+        createdById: workspaceId
     };
 
-    const [events, globalTotalStudents] = await Promise.all([
-      prisma.event.findMany({
-        where: whereClause,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        include: {
-          payments: {
-            select: {
-              amount: true,
-              status: true,
-              studentId: true,
-            }
-          },
-          _count: {
-            select: { participants: true }
-          },
-          participants: {
-            select: { id: true }
+    const events = await prisma.event.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        payments: {
+          select: {
+            amount: true,
+            status: true,
+            studentId: true,
           }
+        },
+        _count: {
+          select: { participants: true }
+        },
+        participants: {
+          select: { id: true }
         }
-      }),
-      prisma.student.count(), // This might need filtering too if we want stats relative to workspace? 
-      // For now, let's keep globalTotalStudents as global or filter? 
-      // Usually used for "Select All" logic. 
-      // If isolation is strict, this should be count({ where: { createdById: session.user.id } })
-    ]);
+      }
+    });
+
+    const globalTotalStudents = await prisma.student.count();
     
     // Correct student count for workspace
     const workspaceTotalStudents = session.user.role === 'superadmin' 
         ? globalTotalStudents 
-        : await prisma.student.count({ where: { createdById: session.user.id } });
+        : await prisma.student.count({ where: { createdById: workspaceId } });
 
     // Calculate totals
     const eventsWithStats = events.map(event => {
@@ -145,7 +142,7 @@ export async function createEvent(data: {
         qrCodeUrl: data.qrCodeUrl,
         category: data.category,
         status: 'PUBLISHED',
-        createdById: session.user.id,
+        createdById: getWorkspaceId(session.user),
         participants: { 
              connect: data.selectedStudents.map(id => ({ id }))
         }
@@ -255,7 +252,7 @@ export async function saveDraft(data: {
       // Verify ownership
       const existing = await prisma.event.findUnique({ where: { id: data.id }});
       if (!existing) return { success: false, error: "Event not found" };
-      if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
+      if (session.user.role !== 'superadmin' && (existing as any).createdById !== getWorkspaceId(session.user)) {
           return { success: false, error: "Unauthorized" };
       }
 
@@ -269,7 +266,7 @@ export async function saveDraft(data: {
         data: eventData,
       });
     } else {
-      eventData.createdById = session.user.id;
+      eventData.createdById = getWorkspaceId(session.user);
       if (data.selectedStudents) {
         eventData.participants = {
           connect: data.selectedStudents.map(id => ({ id }))
@@ -305,7 +302,7 @@ export async function updateEvent(id: string, data: {
     // Verify ownership
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };
-    if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (existing as any).createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: "Unauthorized" };
     }
 
@@ -357,7 +354,7 @@ export async function deleteEvent(id: string) {
 
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };
-    if (session.user.role !== 'superadmin' && (existing as any).createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && (existing as any).createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: "Unauthorized" };
     }
 

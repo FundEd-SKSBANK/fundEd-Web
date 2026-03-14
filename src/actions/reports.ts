@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import Papa from 'papaparse';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 export interface ReportFilters {
   dateFrom?: string;
@@ -38,7 +38,7 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
       return { success: false, error: 'Event not found' };
     }
 
-    if (session.user.role !== 'superadmin' && event.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && event.createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: 'Unauthorized to access this event report' };
     }
 
@@ -92,7 +92,7 @@ export async function generateTransactionReport(filters: ReportFilters) {
     const whereClause: any = {};
 
     if (session.user.role !== 'superadmin') {
-        whereClause.event = { createdById: session.user.id };
+        whereClause.event = { createdById: getWorkspaceId(session.user) };
     }
 
     if (filters.dateFrom) {
@@ -182,7 +182,7 @@ export async function generateStudentReport(studentId: string) {
       return { success: false, error: 'Student not found' };
     }
 
-    if (session.user.role !== 'superadmin' && student.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && student.createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: 'Unauthorized to access this student report' };
     }
 
@@ -277,7 +277,7 @@ export async function generateTransactionSummary(filters?: ReportFilters) {
     const whereClause: any = {};
 
     if (session.user.role !== 'superadmin') {
-        whereClause.event = { createdById: session.user.id };
+        whereClause.event = { createdById: getWorkspaceId(session.user) };
     }
     
     if (filters?.dateFrom) {
@@ -359,8 +359,9 @@ export async function generateStudentWiseReport(filters?: ReportFilters) {
     const studentWhereClause: any = {};
 
     if (session.user.role !== 'superadmin') {
-        whereClause.event = { createdById: session.user.id };
-        studentWhereClause.createdById = session.user.id;
+        const workspaceId = getWorkspaceId(session.user);
+        whereClause.event = { createdById: workspaceId };
+        studentWhereClause.createdById = workspaceId;
     }
 
     const students = await prisma.student.findMany({

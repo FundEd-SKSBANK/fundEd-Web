@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 import { startOfDay, startOfWeek, startOfMonth, subDays, subWeeks, subMonths, format } from 'date-fns';
 
 export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 'week', adminId?: string) {
@@ -18,7 +18,7 @@ export async function getDashboardStatistics(period: 'day' | 'week' | 'month' = 
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     if (session.user.role !== 'superadmin') {
-        whereClause.event = { createdById: session.user.id };
+        whereClause.event = { createdById: getWorkspaceId(session.user) };
     } else if (adminId) {
         whereClause.event = { createdById: adminId };
     }
