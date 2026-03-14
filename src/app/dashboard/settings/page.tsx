@@ -70,7 +70,11 @@ export default function SettingsPage() {
       }
       
       const qrRes = await getQrCodes();
-      if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
+      if (qrRes.success) {
+        setQrCodes(qrRes.data as QrCode[]);
+      } else {
+        toast({ variant: 'destructive', title: 'Failed to load QR codes', description: qrRes.error });
+      }
     } catch (e) {
       console.error(e);
     }
