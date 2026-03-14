@@ -10,13 +10,10 @@ export async function getQrCodes() {
     if (!session?.user) return { success: false, error: 'Unauthorized' };
     const adminId = getWorkspaceId(session.user);
 
-    // Claim any legacy unscoped QR codes (created before adminId was added)
-    await prisma.qrCode.updateMany({
-      where: { adminId: null },
-      data: { adminId },
+    const qrCodes = await prisma.qrCode.findMany({
+      where: { adminId },
+      orderBy: { name: 'asc' },
     });
-
-    const qrCodes = await prisma.qrCode.findMany({ where: { adminId } });
     return { success: true, data: qrCodes };
   } catch (error) {
     console.error('Error fetching QR codes:', error);
