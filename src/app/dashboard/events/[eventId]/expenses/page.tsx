@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { getEventExpenses, getEventBalance, getEventExpensesBreakdown, getEventFinancialsOverTime } from '@/actions/expenses';
+import { getEventExpenses, getEventBalance, getEventExpensesBreakdown, getEventFinancialsOverTime, getAdditionalRevenues } from '@/actions/expenses';
 
 import dynamic from 'next/dynamic';
 
 const ExpenseBreakdownChart = dynamic(() => import('@/components/super-analytics-charts').then(mod => mod.ExpenseBreakdownChart), { ssr: false });
 const RevenueTrendChart = dynamic(() => import('@/components/super-analytics-charts').then(mod => mod.RevenueTrendChart), { ssr: false });
 import { ExpenseTable } from '@/components/expense-table';
+import { AdditionalRevenuePanel } from '@/components/additional-revenue-panel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, DollarSign, TrendingDown, TrendingUp, Wallet, Download } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingDown, TrendingUp, Wallet, Download, HandCoins } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -24,8 +25,11 @@ export default function EventExpensesPage() {
 
     const [loading, setLoading] = useState(true);
     const [expenses, setExpenses] = useState<any[]>([]);
+    const [additionalRevenues, setAdditionalRevenues] = useState<any[]>([]);
     const [stats, setStats] = useState({
         eventName: '',
+        studentCollected: 0,
+        totalAdditionalRevenue: 0,
         totalCollected: 0,
         totalExpenses: 0,
         netBalance: 0
@@ -40,8 +44,9 @@ export default function EventExpensesPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [expensesRes, balanceRes, breakdownRes, financialsRes] = await Promise.all([
+            const [expensesRes, revenuesRes, balanceRes, breakdownRes, financialsRes] = await Promise.all([
                 getEventExpenses(eventId),
+                getAdditionalRevenues(eventId),
                 getEventBalance(eventId),
                 getEventExpensesBreakdown(eventId),
                 getEventFinancialsOverTime(eventId, 'week')
@@ -49,6 +54,10 @@ export default function EventExpensesPage() {
 
             if (expensesRes.success && expensesRes.data) {
                 setExpenses(expensesRes.data.expenses);
+            }
+
+            if (revenuesRes.success && revenuesRes.data) {
+                setAdditionalRevenues(revenuesRes.data);
             }
 
             if (balanceRes.success && balanceRes.data) {
@@ -116,6 +125,8 @@ export default function EventExpensesPage() {
             doc.text('Financial Summary', 14, 45);
 
             const summaryData = [
+                ['Student Collections', `Rs. ${stats.studentCollected.toLocaleString('en-IN')}`],
+                ['Additional Revenue', `Rs. ${stats.totalAdditionalRevenue.toLocaleString('en-IN')}`],
                 ['Total Collected', `Rs. ${stats.totalCollected.toLocaleString('en-IN')}`],
                 ['Total Expenses', `Rs. ${stats.totalExpenses.toLocaleString('en-IN')}`],
                 ['Net Balance', `Rs. ${stats.netBalance.toLocaleString('en-IN')}`]
@@ -130,9 +141,34 @@ export default function EventExpensesPage() {
                 didDrawPage: addWatermarks,
             });
 
+            let currentY = (doc as any).lastAutoTable.finalY + 15;
+
+            // Additional Revenues Table
+            if (additionalRevenues.length > 0) {
+                 doc.setFontSize(14);
+                 doc.text('Additional Revenue Sources', 14, currentY);
+                 
+                 const revenueData = additionalRevenues.map(rev => [
+                     format(new Date(rev.date), 'MMM dd, yyyy'),
+                     rev.title,
+                     rev.source,
+                     `Rs. ${rev.amount.toLocaleString('en-IN')}`
+                 ]);
+
+                 autoTable(doc, {
+                     startY: currentY + 5,
+                     head: [['Date', 'Title', 'Source', 'Amount']],
+                     body: revenueData,
+                     theme: 'striped',
+                     headStyles: { fillColor: [5, 150, 105] }, // Emerald 600
+                     didDrawPage: addWatermarks,
+                 });
+                 currentY = (doc as any).lastAutoTable.finalY + 15;
+            }
+
             // Expenses Table
             doc.setFontSize(14);
-            doc.text('Detailed Expenses', 14, (doc as any).lastAutoTable.finalY + 15);
+            doc.text('Detailed Expenses', 14, currentY);
 
             const tableData = expenses.map(expense => [
                 format(new Date(expense.date), 'MMM dd, yyyy'),
@@ -142,7 +178,7 @@ export default function EventExpensesPage() {
             ]);
 
             autoTable(doc, {
-                startY: (doc as any).lastAutoTable.finalY + 20,
+                startY: currentY + 5,
                 head: [['Date', 'Title', 'Category', 'Amount']],
                 body: tableData,
                 theme: 'striped',
@@ -167,7 +203,7 @@ export default function EventExpensesPage() {
         }
     };
 
-    if (loading) return <PageLoader message="Loading expenses..." />;
+    if (loading) return <PageLoader message="Loading finances..." />;
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -189,17 +225,38 @@ export default function EventExpensesPage() {
                 </Button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-emerald-500/10 border-emerald-500/20">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-emerald-500">Total Collected</CardTitle>
+                        <CardTitle className="text-sm font-medium text-emerald-500">Total Available</CardTitle>
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-emerald-400">₹{stats.totalCollected.toLocaleString('en-IN')}</div>
-                        <p className="text-xs text-emerald-500/60 flex items-center mt-1">
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                            Revenue from payments
+                        <p className="text-[10px] text-emerald-500/70 flex flex-col mt-1 gap-0.5">
+                            <span className="flex items-center">
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                                ₹{stats.studentCollected.toLocaleString('en-IN')} from students
+                            </span>
+                            {stats.totalAdditionalRevenue > 0 && (
+                                <span className="flex items-center">
+                                    <HandCoins className="h-3 w-3 mr-1" />
+                                    ₹{stats.totalAdditionalRevenue.toLocaleString('en-IN')} extra
+                                </span>
+                            )}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-blue-500/10 border-blue-500/20">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-blue-500">Extra Income</CardTitle>
+                        <HandCoins className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-400">₹{stats.totalAdditionalRevenue.toLocaleString('en-IN')}</div>
+                        <p className="text-xs text-blue-500/60 mt-1">
+                            From tutors, sponsors, etc.
                         </p>
                     </CardContent>
                 </Card>
@@ -218,21 +275,27 @@ export default function EventExpensesPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-blue-500/10 border-blue-500/20">
+                <Card className="bg-blue-500/10 border-blue-500/20 lg:bg-purple-500/10 lg:border-purple-500/20">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-500">Net Balance</CardTitle>
-                        <Wallet className="h-4 w-4 text-blue-500" />
+                        <CardTitle className="text-sm font-medium text-blue-500 lg:text-purple-500">Net Balance</CardTitle>
+                        <Wallet className="h-4 w-4 text-blue-500 lg:text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-400">₹{stats.netBalance.toLocaleString('en-IN')}</div>
-                        <p className="text-xs text-blue-500/60 flex items-center mt-1">
+                        <div className="text-2xl font-bold text-blue-400 lg:text-purple-400">₹{stats.netBalance.toLocaleString('en-IN')}</div>
+                        <p className="text-xs text-blue-500/60 lg:text-purple-500/60 mt-1">
                             Available for use
                         </p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="space-y-4">
+            <div className="grid gap-6 grid-cols-1">
+                <AdditionalRevenuePanel 
+                    revenues={additionalRevenues}
+                    eventId={eventId}
+                    onUpdate={() => fetchData()}
+                />
+
                 <ExpenseTable
                     expenses={expenses}
                     eventId={eventId}

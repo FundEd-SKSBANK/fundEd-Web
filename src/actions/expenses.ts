@@ -131,9 +131,16 @@ export async function getEventBalance(eventId: string) {
             where: { eventId }
         });
 
+        const additionalRevenues = await prisma.additionalRevenue.findMany({
+            where: { eventId }
+        });
+
         if (!event) return { success: false, error: "Event not found" };
 
-        const totalCollected = event.payments.reduce((sum: number, p) => sum + p.amount, 0);
+        const studentCollected = event.payments.reduce((sum: number, p) => sum + p.amount, 0);
+        const totalAdditionalRevenue = additionalRevenues.reduce((sum: number, r: { amount: number }) => sum + r.amount, 0);
+        
+        const totalCollected = studentCollected + totalAdditionalRevenue;
         const totalExpenses = expenses.reduce((sum: number, e) => sum + e.amount, 0);
 
 
@@ -141,6 +148,8 @@ export async function getEventBalance(eventId: string) {
             success: true,
             data: {
                 eventName: event.name,
+                studentCollected,
+                totalAdditionalRevenue,
                 totalCollected,
                 totalExpenses,
                 netBalance: totalCollected - totalExpenses
@@ -277,5 +286,102 @@ export async function getEventFinancialsOverTime(eventId: string, period: 'day' 
         console.error("Failed to fetch event financials:", error);
         // Return empty data instead of crashing
         return { success: true, data: [] };
+    }
+}
+
+export async function getAdditionalRevenues(eventId: string) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: "Unauthorized" };
+
+        const revenues = await prisma.additionalRevenue.findMany({
+            where: { eventId },
+            orderBy: { date: 'desc' },
+            include: { recorder: { select: { name: true } } }
+        });
+
+        return { success: true, data: revenues };
+    } catch (error) {
+        console.error("Failed to fetch additional revenues:", error);
+        return { success: false, error: "Failed to fetch additional revenues" };
+    }
+}
+
+export async function createAdditionalRevenue(data: {
+    title: string;
+    amount: number;
+    source: string;
+    date: Date;
+    eventId: string;
+    note?: string;
+}) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: "Unauthorized" };
+
+        const revenue = await prisma.additionalRevenue.create({
+            data: {
+                title: data.title,
+                amount: data.amount,
+                source: data.source,
+                date: data.date,
+                eventId: data.eventId,
+                recordedBy: getWorkspaceId(session.user),
+                note: data.note || null,
+            }
+        });
+
+        revalidatePath(`/dashboard/events/${data.eventId}/expenses`);
+        return { success: true, data: revenue };
+    } catch (error) {
+        console.error("Failed to create additional revenue:", error);
+        return { success: false, error: "Failed to create additional revenue" };
+    }
+}
+
+export async function updateAdditionalRevenue(id: string, eventId: string, data: {
+    title: string;
+    amount: number;
+    source: string;
+    date: Date;
+    note?: string | null;
+}) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: "Unauthorized" };
+
+        const revenue = await prisma.additionalRevenue.update({
+            where: { id },
+            data: {
+                title: data.title,
+                amount: data.amount,
+                source: data.source,
+                date: data.date,
+                note: data.note !== undefined ? data.note : undefined,
+            }
+        });
+
+        revalidatePath(`/dashboard/events/${eventId}/expenses`);
+        return { success: true, data: revenue };
+    } catch (error) {
+        console.error("Failed to update additional revenue:", error);
+        return { success: false, error: "Failed to update additional revenue" };
+    }
+}
+
+export async function deleteAdditionalRevenue(id: string, eventId: string) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: "Unauthorized" };
+
+        await prisma.additionalRevenue.delete({
+            where: { id }
+        });
+
+        revalidatePath(`/dashboard/events/${eventId}/expenses`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete additional revenue:", error);
+        return { success: false, error: "Failed to delete additional revenue" };
     }
 }
