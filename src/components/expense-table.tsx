@@ -437,11 +437,11 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h3 className="text-lg font-medium">Expense History</h3>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" /> Add Expense
                         </Button>
                     </DialogTrigger>
