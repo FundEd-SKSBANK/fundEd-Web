@@ -12,7 +12,7 @@ const getPrismaClient = () => {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });
-  process.removeAllListeners('warning');
+  
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };
