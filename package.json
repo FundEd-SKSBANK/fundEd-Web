@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 9002",
     "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
