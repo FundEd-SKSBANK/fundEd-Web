@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -19,12 +18,17 @@ model User {
   slug             String?   @unique
   resetToken       String?   @unique
   resetTokenExpires DateTime?
+  adminId          String?
+  admin            User?     @relation("AdminCollabs", fields: [adminId], references: [id])
+  collabs          User[]    @relation("AdminCollabs")
   createdEvents    Event[]   @relation("CreatedEvents")
   recordedExpenses Expense[]
   createdStudents  Student[] @relation("CreatedStudents")
+  qrCodes          QrCode[]  @relation("AdminQrCodes")
 
   @@index([email])
   @@index([resetToken])
+  @@index([adminId])
 }
 
 model Student {
@@ -132,9 +136,12 @@ model Expense {
 }
 
 model QrCode {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   url       String
+  adminId   String?
+  admin     User?    @relation("AdminQrCodes", fields: [adminId], references: [id])
 
   @@index([name])
+  @@index([adminId])
 }

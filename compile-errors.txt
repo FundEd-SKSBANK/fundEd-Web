@@ -1,0 +1,2 @@
+src/actions/manual-payments.ts(73,29): error TS2551: Property 'userId' does not exist on type '{ user: { id: string; email: string; name: string | null; role: string; adminId?: string | null | undefined; }; }'. Did you mean 'user'?
+src/app/dashboard/events/page.tsx(150,39): error TS2339: Property 'upiString' does not exist on type 'QrCode'.

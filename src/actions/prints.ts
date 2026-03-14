@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 
 export async function getPrintData() {
   try {
@@ -12,24 +12,26 @@ export async function getPrintData() {
     const eventWhere: any = { category: 'Print' };
     const studentWhere: any = {};
     if (session.user.role !== 'superadmin') {
-        eventWhere.createdById = session.user.id;
-        studentWhere.createdById = session.user.id;
+        const workspaceId = getWorkspaceId(session.user);
+        eventWhere.createdById = workspaceId;
+        studentWhere.createdById = workspaceId;
     }
 
-    const [events, distributions, payments, students] = await Promise.all([
-      prisma.event.findMany({
+    const events = await prisma.event.findMany({
         where: eventWhere,
         orderBy: { createdAt: 'desc' }
-      }),
-      prisma.printDistribution.findMany({
-        where: session.user.role !== 'superadmin' ? { event: { createdById: session.user.id } } : {},
+    });
+    
+    const distributions = await prisma.printDistribution.findMany({
+        where: session.user.role !== 'superadmin' ? { event: { createdById: getWorkspaceId(session.user) } } : {},
         include: {
           student: true,
           event: true,
         },
         orderBy: { distributedAt: 'desc' }
-      }),
-      prisma.payment.findMany({
+    });
+    
+    const payments = await prisma.payment.findMany({
         where: {
           event: eventWhere,
           status: 'Paid'
@@ -38,12 +40,12 @@ export async function getPrintData() {
           student: true,
           event: true,
         }
-      }),
-      prisma.student.findMany({
+    });
+    
+    const students = await prisma.student.findMany({
         where: studentWhere,
         orderBy: { name: 'asc' }
-      })
-    ]);
+    });
 
     return {
       success: true,
@@ -91,7 +93,7 @@ export async function deleteDistribution(id: string) {
 
     if (!targetDistribution) return { success: false, error: "Distribution not found" };
 
-    if (session.user.role !== 'superadmin' && targetDistribution.event.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && targetDistribution.event.createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: "Unauthorized to delete this distribution" };
     }
 
@@ -118,7 +120,7 @@ export async function distributePrint(data: {
     const event = await prisma.event.findUnique({ where: { id: data.eventId } });
     if (!event) return { success: false, error: "Event not found" };
     
-    if (session.user.role !== 'superadmin' && event.createdById !== session.user.id) {
+    if (session.user.role !== 'superadmin' && event.createdById !== getWorkspaceId(session.user)) {
         return { success: false, error: "Unauthorized to distribute for this event" };
     }
 

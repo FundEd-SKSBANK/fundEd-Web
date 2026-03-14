@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { startOfDay, startOfWeek, subDays, subWeeks, subMonths, format, startOfMonth } from 'date-fns';
 
@@ -47,7 +47,7 @@ export async function createExpense(data: {
                 category: data.category,
                 date: data.date,
                 eventId: data.eventId,
-                recordedBy: session.user.id,
+                recordedBy: getWorkspaceId(session.user),
                 billUrl: data.billUrl || null,
                 note: data.note || null,
             }
@@ -118,19 +118,18 @@ export async function getEventBalance(eventId: string) {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
 
-        const [event, expenses] = await Promise.all([
-            prisma.event.findUnique({
-                where: { id: eventId },
-                include: {
-                    payments: {
-                        where: { status: 'Paid' }
-                    }
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            include: {
+                payments: {
+                    where: { status: 'Paid' }
                 }
-            }),
-            prisma.expense.findMany({
-                where: { eventId }
-            })
-        ]);
+            }
+        });
+        
+        const expenses = await prisma.expense.findMany({
+            where: { eventId }
+        });
 
         if (!event) return { success: false, error: "Event not found" };
 
@@ -193,23 +192,22 @@ export async function getEventFinancialsOverTime(eventId: string, period: 'day' 
         else if (period === 'week') startDate = startOfWeek(subWeeks(now, 7));
         else startDate = startOfMonth(subMonths(now, 5));
 
-        const [payments, expenses] = await Promise.all([
-            prisma.payment.findMany({
-                where: {
-                    eventId,
-                    paymentDate: { gte: startDate },
-                    status: 'Paid'
-                },
-                select: { amount: true, paymentDate: true }
-            }),
-            prisma.expense.findMany({
-                where: {
-                    eventId,
-                    date: { gte: startDate }
-                },
-                select: { amount: true, date: true }
-            })
-        ]);
+        const payments = await prisma.payment.findMany({
+            where: {
+                eventId,
+                paymentDate: { gte: startDate },
+                status: 'Paid'
+            },
+            select: { amount: true, paymentDate: true }
+        });
+        
+        const expenses = await prisma.expense.findMany({
+            where: {
+                eventId,
+                date: { gte: startDate }
+            },
+            select: { amount: true, date: true }
+        });
 
         if (period === 'day') {
              for (let i = 6; i >= 0; i--) {

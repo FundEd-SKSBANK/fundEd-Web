@@ -29,8 +29,9 @@ import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
 import { getCurrentAdmin, updateAdminSlug, checkSlugAvailability } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
-import { fileToDataURL, validateFileSize, validateImageType } from './page.utils';
+import { validateFileSize, fileToDataURL, validateImageType } from './page.utils';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { CollabManagement } from '@/components/collab-management';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -51,31 +52,32 @@ export default function SettingsPage() {
   const [slugError, setSlugError] = useState('');
   const [slugCopied, setSlugCopied] = useState(false);
   const [slugAvailability, setSlugAvailability] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-
+  const [isAdminRole, setIsAdminRole] = useState(true);
 
   const fetchData = async () => {
     setIsLoading(true);
-    const [qrRes, adminRes] = await Promise.all([getQrCodes(), getCurrentAdmin()]);
-    if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
-    if (adminRes.success && adminRes.data) {
-      const s = (adminRes.data as any).slug || '';
-      setCurrentSlug(s || null);
-      setSlug(s || '');
+    try {
+      const adminRes = await getCurrentAdmin();
+      if (adminRes.success && adminRes.data) {
+        const data = adminRes.data as any;
+        setIsAdminRole(data.role === 'admin' || data.role === 'superadmin');
+        const s = data.slug || '';
+        setCurrentSlug(s || null);
+        setSlug(s || '');
+        setCurrentUserId(data.id);
+      }
+      
+      const qrRes = await getQrCodes();
+      if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
+    } catch (e) {
+      console.error(e);
     }
     setIsLoading(false);
   };
 
-  const [isAdminRole, setIsAdminRole] = useState(true);
-
   useEffect(() => {
-    const checkRole = async () => {
-      const res = await getCurrentAdmin();
-      if (res.success && res.data) {
-        setIsAdminRole((res.data as any).role === 'admin');
-      }
-    };
-    checkRole();
     fetchData();
   }, []);
 
@@ -193,9 +195,8 @@ export default function SettingsPage() {
 
       <div className="grid gap-6">
         {/* Student Portal Card */}
-        {isAdminRole && (
-          <GlassCard>
-            <CardHeader>
+        <GlassCard>
+          <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-emerald-400" />
                 Student Portal Link
@@ -281,11 +282,9 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </GlassCard>
-        )}
 
-        {isAdminRole && (
-          <GlassCard>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <GlassCard>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Manage QR Codes</CardTitle>
                 <CardDescription>Add or remove your payment QR codes.</CardDescription>
@@ -394,6 +393,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </GlassCard>
+
+        {isAdminRole && currentUserId && (
+          <CollabManagement currentUserId={currentUserId} />
         )}
       </div>
     </div>

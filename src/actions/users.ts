@@ -4,7 +4,7 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
 
-import { getSession } from '@/lib/auth';
+import { getSession, getWorkspaceId } from '@/lib/auth';
 import { getUserRole } from '@/actions/auth';
 
 export async function getUsers() {
@@ -15,17 +15,28 @@ export async function getUsers() {
         if (session.user.role === 'superadmin') {
             const users = await prisma.user.findMany({
                 orderBy: { createdAt: 'desc' },
-                select: { id: true, name: true, email: true, role: true, image: true, createdAt: true }
+                select: { id: true, name: true, email: true, role: true, image: true, createdAt: true, adminId: true }
+            });
+            return { success: true, data: users };
+        } else if (session.user.role === 'admin') {
+            // Admin sees themselves and their collab users
+            const users = await prisma.user.findMany({
+                where: {
+                    OR: [
+                        { id: session.user.id },
+                        { adminId: session.user.id }
+                    ]
+                },
+                select: { id: true, name: true, email: true, role: true, image: true, createdAt: true, adminId: true }
             });
             return { success: true, data: users };
         } else {
-            // For normal admins, currently only show themselves to prevent data leakage.
-            // Future improvement: Show "Team" if we implement shared workspaces.
-            const user = await prisma.user.findUnique({
-                where: { id: session.user.id },
-                select: { id: true, name: true, email: true, role: true, image: true, createdAt: true }
-            });
-            return { success: true, data: user ? [user] : [] };
+             // Collab user sees only themselves
+             const user = await prisma.user.findUnique({
+                 where: { id: session.user.id },
+                 select: { id: true, name: true, email: true, role: true, image: true, createdAt: true, adminId: true }
+             });
+             return { success: true, data: user ? [user] : [] };
         }
     } catch (error) {
         console.error("Failed to fetch users:", error);
@@ -54,8 +65,11 @@ export async function getCurrentAdmin() {
             return { success: false, error: "Unauthorized" };
         }
 
+        // For collab users, return the parent admin's data so they see the admin's slug/settings
+        const targetId = getWorkspaceId(session.user);
+
         const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
+            where: { id: targetId },
             select: { id: true, name: true, email: true, role: true, image: true, slug: true }
         });
 
@@ -63,7 +77,8 @@ export async function getCurrentAdmin() {
              return { success: false, error: "User not found" };
         }
 
-        return { success: true, data: user };
+        // Attach the actual logged-in user's role so the UI can gate features correctly
+        return { success: true, data: { ...user, role: session.user.role } };
     } catch (error) {
         console.error("Failed to get current admin:", error);
         return { success: false, error: "Failed to get current admin" };
@@ -108,17 +123,68 @@ export async function createUser(data: { name: string; email: string; password: 
     }
 }
 
+export async function createCollabUser(data: { name: string; email: string; password: string }) {
+    try {
+        const session = await getSession();
+        if (!session || !session.user || session.user.role !== 'admin') {
+            return { success: false, error: "Only Admins can create Collab users." };
+        }
+
+        // Check if email exists
+        const existing = await prisma.user.findUnique({
+            where: { email: data.email }
+        });
+
+        if (existing) {
+            return { success: false, error: "Email already exists" };
+        }
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+
+        const newUser = await prisma.user.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                password: hashedPassword,
+                role: 'collab',
+                adminId: session.user.id // Link to the admin running the action
+            } as any
+        });
+
+        revalidatePath('/dashboard/settings');
+        return { success: true, data: newUser };
+
+    } catch (error) {
+        console.error("Failed to create collab user:", error);
+        return { success: false, error: "Failed to create collab user" };
+    }
+}
+
 
 export async function deleteUser(userId: string) {
     try {
-        const role = await getUserRole();
-        if (role !== 'superadmin') {
+        const session = await getSession();
+        if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+        const role = session.user.role;
+        
+        if (role !== 'superadmin' && role !== 'admin') {
             return { success: false, error: "Unauthorized" };
+        }
+
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+        if (!targetUser) return { success: false, error: "User not found" };
+
+        // If admin, they can only delete their own collab users
+        if (role === 'admin' && (targetUser as any).adminId !== session.user.id) {
+            return { success: false, error: "Unauthorized to delete this user" };
         }
         
         await prisma.user.delete({
             where: { id: userId }
         });
+        
+        revalidatePath('/dashboard/settings');
         revalidatePath('/dashboard/super');
         return { success: true };
     } catch (error) {
@@ -132,9 +198,17 @@ export async function updateUser(data: { id: string; name: string; email: string
         const session = await getSession();
         if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
+        const targetUser = await prisma.user.findUnique({ where: { id: data.id } });
+        if (!targetUser) return { success: false, error: "User not found" };
+
         // Allow update if user is editing themselves OR if user is superadmin
-        if (session.user.id !== data.id && session.user.role !== 'superadmin') {
-             return { success: false, error: "Unauthorized" };
+        // OR if user is admin and modifying their own collab user
+        const isSelf = session.user.id === data.id;
+        const isSuperAdmin = session.user.role === 'superadmin';
+        const isAdminModifyingCollab = session.user.role === 'admin' && (targetUser as any).adminId === session.user.id;
+
+        if (!isSelf && !isSuperAdmin && !isAdminModifyingCollab) {
+             return { success: false, error: "Unauthorized to modify this user" };
         }
 
         // Check if email exists for *other* users

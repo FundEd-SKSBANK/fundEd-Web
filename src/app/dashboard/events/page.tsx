@@ -145,10 +145,6 @@ export default function EventsPage() {
         }
 
 
-        // Find the upiString for the selected QR code if any
-        const selectedQr = qrCodes.find(qr => qr.url === selectedQrCode);
-        const upiString = selectedQr?.upiString || undefined;
-
         // Final publish
         const eventData = {
             name,
@@ -158,7 +154,6 @@ export default function EventsPage() {
             category,
             paymentOptions,
             qrCodeUrl: selectedQrCode,
-            upiString,
             selectedStudents,
         };
 
@@ -171,7 +166,6 @@ export default function EventsPage() {
             category,
             paymentOptions,
             qrCodeUrl: selectedQrCode,
-            upiString,
             participantIds: selectedStudents,
             // Preserve or init stats
             status: 'PUBLISHED',

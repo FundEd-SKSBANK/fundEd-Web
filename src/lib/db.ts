@@ -5,13 +5,14 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 const getPrismaClient = () => {
   const connectionString = `${process.env.DATABASE_URL}`;
-  const pool = new Pool({ 
+  const pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
-    // Suppress pg SSL compatibility warning
-    ...(connectionString.includes('sslmode') ? {} : {}),
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
-  process.removeAllListeners('warning'); // suppress pg SSL deprecation noise
+  process.removeAllListeners('warning');
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };

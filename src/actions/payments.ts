@@ -5,8 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function getEventPayments(eventId: string) {
   try {
-    const [event, transactions] = await Promise.all([
-      prisma.event.findUnique({ 
+    const event = await prisma.event.findUnique({ 
         where: { id: eventId },
         include: { 
           participants: {
@@ -23,8 +22,9 @@ export async function getEventPayments(eventId: string) {
             }
           }
         }
-      }),
-      prisma.payment.findMany({
+      });
+      
+      const transactions = await prisma.payment.findMany({
         where: { eventId },
         include: { 
           student: {
@@ -37,8 +37,7 @@ export async function getEventPayments(eventId: string) {
           } 
         },
         orderBy: { paymentDate: 'desc' }
-      }),
-    ]);
+      });
 
     if (!event) return { success: false, error: 'Event not found' };
 

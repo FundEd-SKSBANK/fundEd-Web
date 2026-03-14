@@ -28,5 +28,12 @@ export async function getSession() {
   const cookieStore = await cookies();
   const session = cookieStore.get('session')?.value;
   if (!session) return null;
-  return await decrypt(session);
+  return await decrypt(session) as { user: { id: string; email: string; name: string | null; role: string; adminId?: string | null } };
+}
+
+export function getWorkspaceId(user: { id: string; role: string; adminId?: string | null }) {
+  if (user.role === 'collab' && user.adminId) {
+    return user.adminId;
+  }
+  return user.id;
 }
