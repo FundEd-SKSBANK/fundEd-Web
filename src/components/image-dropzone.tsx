@@ -76,7 +76,7 @@ export function ImageDropzone({ onFileSelect, className, previewUrl, onClear, va
                 <div className="p-8 text-center">
                     {previewUrl ? (
                         <div className="space-y-4 relative z-20">
-                            <div className="relative mx-auto w-48 h-48 rounded-lg overflow-hidden border border-white/10 bg-black/50">
+                            <div className="relative mx-auto w-36 h-36 sm:w-48 sm:h-48 rounded-lg overflow-hidden border border-white/10 bg-black/50">
                                 <Image
                                     src={previewUrl}
                                     alt="Preview"
@@ -85,17 +85,17 @@ export function ImageDropzone({ onFileSelect, className, previewUrl, onClear, va
                                 />
                                 {validationStatus === 'valid' && (
                                     <div className="absolute top-2 right-2">
-                                        <CheckCircle2 className="h-6 w-6 text-emerald-500 bg-black rounded-full" />
+                                        <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500 bg-black rounded-full" />
                                     </div>
                                 )}
                                 {validationStatus === 'invalid' && (
                                     <div className="absolute top-2 right-2">
-                                        <XCircle className="h-6 w-6 text-red-500 bg-black rounded-full" />
+                                        <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 bg-black rounded-full" />
                                     </div>
                                 )}
                                 {validationStatus === 'pending' && (
                                     <div className="absolute top-2 right-2 bg-black rounded-full p-0.5">
-                                        <Loader2 className="h-5 w-5 text-stone-400 animate-spin" />
+                                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 text-stone-400 animate-spin" />
                                     </div>
                                 )}
                             </div>
