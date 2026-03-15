@@ -383,12 +383,4 @@ export async function deleteEvent(id: string) {
   }
 }
 
-export async function getQrCodes() {
-    try {
-        const qrCodes = await prisma.qrCode.findMany();
-        return { success: true, data: qrCodes };
-    } catch (error) {
-        console.error('Error fetching QR codes:', error);
-        return { success: false, error: 'Failed to fetch QR codes' };
-    }
-}
+

@@ -29,9 +29,42 @@ import { getQrCodes, addQrCode, deleteQrCode } from '@/actions/settings';
 import { getCurrentAdmin, updateAdminSlug, checkSlugAvailability } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ImageDropzone } from '@/components/image-dropzone';
-import { validateFileSize, fileToDataURL, validateImageType } from './page.utils';
+import { fileToDataURL, validateFileSize, validateImageType } from './page.utils';
+import jsQR from 'jsqr';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { CollabManagement } from '@/components/collab-management';
+
+/** Returns true if decoded QR text looks like a UPI payment QR */
+function isUpiQr(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    t.startsWith('upi://') ||
+    t.startsWith('gpay://') ||
+    t.startsWith('phonepe://') ||
+    t.startsWith('paytm://') ||
+    t.includes('pa=')
+  );
+}
+
+/** Decode a base64 data URL and run jsQR on it. Returns the decoded text or null. */
+function decodeQrFromDataUrl(dataUrl: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(null);
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const result = jsQR(imgData.data, imgData.width, imgData.height);
+      resolve(result ? result.data : null);
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -44,6 +77,22 @@ export default function SettingsPage() {
   const [newQrName, setNewQrName] = useState('');
   const [newQrUrl, setNewQrUrl] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  // null = no image yet | true = valid payment QR | false = invalid QR
+  const [isValidQr, setIsValidQr] = useState<boolean | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [upiString, setUpiString] = useState<string>('');
+
+  // Compute the validation status for the dropzone icon
+  const validationStatus = !newQrUrl
+    ? null
+    : isValidating
+      ? 'pending'
+      : isValidQr === true
+        ? 'valid'
+        : isValidQr === false
+          ? 'invalid'
+          : null;
 
   // Slug / Student Portal State
   const [slug, setSlug] = useState('');
@@ -68,7 +117,7 @@ export default function SettingsPage() {
         setSlug(s || '');
         setCurrentUserId(data.id);
       }
-      
+
       const qrRes = await getQrCodes();
       if (qrRes.success) {
         setQrCodes(qrRes.data as QrCode[]);
@@ -117,21 +166,34 @@ export default function SettingsPage() {
     try {
       const imageUrl = await fileToDataURL(file);
       setNewQrUrl(imageUrl);
+      setIsValidQr(null);
+      setIsValidating(true);
+
+      const decoded = await decodeQrFromDataUrl(imageUrl);
+      const valid = decoded !== null && isUpiQr(decoded);
+      setIsValidQr(valid);
+      if (valid && decoded) {
+        setUpiString(decoded);
+      } else {
+        setUpiString('');
+      }
+      setIsValidating(false);
     } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to process the image.' });
+      setIsValidating(false);
     }
   };
 
   const handleAddQrCode = async () => {
     setSubmitted(true);
-    if (!newQrName || !newQrUrl) {
+    if (!newQrName || !newQrUrl || isValidQr !== true) {
       return;
     }
     setIsSubmittingQr(true);
-    const res = await addQrCode({ name: newQrName, url: newQrUrl });
+    const res = await addQrCode({ name: newQrName, url: newQrUrl, upiString });
     if (res.success) {
       toast({ title: 'QR Code Added' });
-      setNewQrName(''); setNewQrUrl('');
+      setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setUpiString('');
       setOpenQr(false);
       fetchData();
     } else {
@@ -176,7 +238,7 @@ export default function SettingsPage() {
   };
 
   const resetDialog = () => {
-    setNewQrName(''); setNewQrUrl(''); setSubmitted(false);
+    setNewQrName(''); setNewQrUrl(''); setIsValidQr(null); setIsValidating(false); setSubmitted(false); setUpiString('');
   };
 
   if (isLoading) return <PageLoader message="Loading settings..." />;
@@ -185,22 +247,23 @@ export default function SettingsPage() {
   const portalUrl = slugPreview ? `${typeof window !== 'undefined' ? window.location.origin : ''}/check-status/${slugPreview}` : '';
   const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug && slugAvailability !== 'taken' && slugAvailability !== 'checking' && slugAvailability !== 'invalid';
 
-  // Save is enabled only when image is uploaded
-  const canSave = !!newQrUrl && !isSubmittingQr;
+  // Save is enabled only when: image uploaded + validated + valid UPI QR
+  const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6 sm:gap-8">
       <GlassCard>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
-          <CardDescription>Manage your payment QR codes.</CardDescription>
+          <CardDescription>Manage your payment QR codes & Collabration</CardDescription>
         </CardHeader>
       </GlassCard>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {/* Student Portal Card */}
-        <GlassCard>
-          <CardHeader>
+        {isAdminRole && (
+          <GlassCard>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-emerald-400" />
                 Student Portal Link
@@ -213,7 +276,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="slug-input">Your Unique Slug</Label>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <div className={`flex items-center w-full sm:w-[320px] bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
+                  <div className={`flex items-center w-full sm:max-w-[320px] bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
                     slugAvailability === 'taken' || slugAvailability === 'invalid' ? 'border-red-500/40' :
                       'border-white/10'
                     }`}>
@@ -234,11 +297,11 @@ export default function SettingsPage() {
                       {(slugAvailability === 'taken' || slugAvailability === 'invalid') && <XCircle className="h-4 w-4 text-red-400" />}
                     </div>
                   </div>
-                  <Button
+                   <Button
                     onClick={handleSaveSlug}
                     disabled={!canSaveSlug}
                     size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all"
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all h-10 sm:h-9"
                   >
                     {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Save Slug
@@ -264,31 +327,35 @@ export default function SettingsPage() {
 
               {/* Preview & Copy */}
               {(slugPreview || currentSlug) && (
-                <div className="flex items-center gap-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg px-4 py-3">
-                  <p className="text-sm text-stone-400 flex-1 font-mono truncate">
-                    <span className="text-stone-600">…/check-status/</span>
-                    <span className="text-emerald-300">{slugPreview || currentSlug}</span>
-                  </p>
+                <div className="flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-emerald-500/60 font-semibold mb-0.5 sm:hidden">
+                      Student Portal Link
+                    </p>
+                    <p className="text-sm text-stone-300 font-mono truncate">
+                      <span className="text-stone-600 hidden sm:inline">…/check-status/</span>
+                      <span className="text-emerald-300 font-medium">{slugPreview || currentSlug}</span>
+                    </p>
+                  </div>
                   {currentSlug && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={handleCopySlugLink}
-                      className="shrink-0 text-stone-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+                      className="shrink-0 h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20"
                     >
-                      {slugCopied
-                        ? <><Check className="h-4 w-4 mr-1.5 text-emerald-400" /> Copied</>
-                        : <><Copy className="h-4 w-4 mr-1.5" /> Copy Link</>
-                      }
+                      {slugCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   )}
                 </div>
               )}
             </CardContent>
           </GlassCard>
+        )}
 
-        <GlassCard>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {isAdminRole && (
+          <GlassCard>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Manage QR Codes</CardTitle>
                 <CardDescription>Add or remove your payment QR codes.</CardDescription>
@@ -303,7 +370,7 @@ export default function SettingsPage() {
                     Add New QR
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-[440px] w-full mx-auto sm:rounded-2xl border-white/10 p-5 sm:p-6 !max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add a Payment QR Code</DialogTitle>
                     <DialogDescription>
@@ -333,22 +400,61 @@ export default function SettingsPage() {
                       <ImageDropzone
                         onFileSelect={handleFileSelect}
                         previewUrl={newQrUrl}
-                        onClear={() => { setNewQrUrl(''); }}
+                        onClear={() => { setNewQrUrl(''); setIsValidQr(null); setUpiString(''); }}
+                        validationStatus={validationStatus as any}
                       />
 
+                      {/* Validation status line */}
                       {!newQrUrl && submitted && (
                         <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
                           <XCircle className="h-3.5 w-3.5 shrink-0" />
                           Please upload a payment QR code image.
                         </p>
                       )}
+                      {newQrUrl && isValidating && (
+                        <p className="flex items-center gap-1.5 text-xs text-stone-400 mt-1">
+                          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                          Validating QR code…
+                        </p>
+                      )}
+                      {newQrUrl && !isValidating && isValidQr === true && (
+                        <p className="flex items-center gap-1.5 text-xs text-emerald-400 mt-1">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                          Valid payment QR code detected.
+                        </p>
+                      )}
+                      {newQrUrl && !isValidating && isValidQr === false && (
+                        <p className="flex items-center gap-1.5 text-xs text-red-400 mt-1">
+                          <XCircle className="h-3.5 w-3.5 shrink-0" />
+                          Not a payment QR code. You can still enter the UPI ID manually below.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="upi-id" className={submitted && !upiString ? 'text-red-400' : ''}>
+                        UPI ID (VPA)
+                      </Label>
+                      <Input
+                        id="upi-id"
+                        placeholder="e.g., yourname@okaxis"
+                        value={upiString.startsWith('upi://') ? (new URL(upiString).searchParams.get('pa') || upiString) : upiString}
+                        onChange={(e) => setUpiString(e.target.value)}
+                        className={submitted && !upiString ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      <p className="text-[10px] text-stone-500 leading-tight">
+                        {isValidQr ? 'Verified from QR' : 'Enter manually if QR decoding fails or is incorrect'}
+                      </p>
+                      {submitted && !upiString && (
+                        <p className="text-xs text-red-400">UPI ID is required for redirection.</p>
+                      )}
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" disabled={isSubmittingQr} onClick={() => setOpenQr(false)}>
+                  <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" className="w-full sm:w-auto order-2 sm:order-1" disabled={isSubmittingQr} onClick={() => setOpenQr(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleAddQrCode} disabled={!canSave}>
+                    <Button onClick={handleAddQrCode} className="w-full sm:w-auto order-1 sm:order-2" disabled={!canSave}>
                       {isSubmittingQr ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Save QR Code
                     </Button>
@@ -356,10 +462,10 @@ export default function SettingsPage() {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <CardContent className="px-4 sm:px-6">
+              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {qrCodes?.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg border-white/10">
+                  <div className="col-span-full text-center py-6 sm:py-8 text-muted-foreground border-2 border-dashed rounded-lg border-white/10">
                     No QR codes found. Add your first payment QR code above.
                   </div>
                 )}
@@ -397,6 +503,7 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </GlassCard>
+        )}
 
         {isAdminRole && currentUserId && (
           <CollabManagement currentUserId={currentUserId} />

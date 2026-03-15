@@ -8,10 +8,12 @@ export async function getQrCodes() {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    
     const adminId = getWorkspaceId(session.user);
+    const role = session.user.role;
 
     const qrCodes = await prisma.qrCode.findMany({
-      where: { adminId },
+      where: role === 'superadmin' ? {} : { adminId },
       orderBy: { name: 'asc' },
     });
     return { success: true, data: qrCodes };
@@ -21,7 +23,7 @@ export async function getQrCodes() {
   }
 }
 
-export async function addQrCode(data: { name: string; url: string }) {
+export async function addQrCode(data: { name: string; url: string; upiString?: string }) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
@@ -30,6 +32,7 @@ export async function addQrCode(data: { name: string; url: string }) {
       data: {
         name: data.name,
         url: data.url,
+        upiString: data.upiString,
         adminId,
       },
     });

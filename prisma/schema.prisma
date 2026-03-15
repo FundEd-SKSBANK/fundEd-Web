@@ -141,6 +141,7 @@ model QrCode {
   id        String   @id @default(cuid())
   name      String
   url       String
+  upiString String?
   adminId   String?
   admin     User?    @relation("AdminQrCodes", fields: [adminId], references: [id])
 

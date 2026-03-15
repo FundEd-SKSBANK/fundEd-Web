@@ -134,7 +134,7 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
           Add Collab User
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         {isLoading ? (
           <div className="flex justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -197,7 +197,7 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-[425px] w-full mx-auto sm:rounded-2xl border-white/10 p-5 sm:p-6 !max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{editingUser ? 'Edit Collab User' : 'Add Collab User'}</DialogTitle>
