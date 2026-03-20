@@ -185,8 +185,20 @@ const NotificationItem = ({ transaction }: { transaction: Transaction }) => {
     return (
         <DropdownMenuItem asChild>
             <Link href={`/dashboard/events/${transaction.eventId}/payments`}>
-                <div className="flex flex-col">
-                    <p className="text-sm font-medium">{transaction.studentName}</p>
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between w-full">
+                        <p className="text-sm font-medium">{transaction.studentName}</p>
+                        <span className="text-[10px] text-stone-500">
+                            {new Date(transaction.paymentDate).toLocaleString('en-GB', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: '2-digit',
+                                hour: '2-digit', 
+                                minute: '2-digit', 
+                                hour12: true 
+                            }).toUpperCase()}
+                        </span>
+                    </div>
                     <p className="text-xs text-muted-foreground">{transaction.eventName} - ₹{transaction.amount}</p>
                 </div>
                 <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
@@ -281,18 +293,20 @@ export default function DashboardClientLayout({
                         <SidebarContent className="px-3 py-4 gap-2">
                             <MainNav user={adminUser} events={recentEvents} />
                         </SidebarContent>
-                        <SidebarFooter className="p-4 md:p-6 border-t border-white/5">
-                            <SidebarMenu>
-                                <SidebarMenuItem>
-                                    <Link href="/dashboard/settings">
-                                        <SidebarMenuButton tooltip="Settings" isActive={pathname === '/dashboard/settings'}>
-                                            <Settings />
-                                            <span>Settings</span>
-                                        </SidebarMenuButton>
-                                    </Link>
-                                </SidebarMenuItem>
-                            </SidebarMenu>
-                        </SidebarFooter>
+                        {!isSuperUser && (
+                            <SidebarFooter className="p-4 md:p-6 border-t border-white/5">
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <Link href="/dashboard/settings">
+                                            <SidebarMenuButton tooltip="Settings" isActive={pathname === '/dashboard/settings'}>
+                                                <Settings />
+                                                <span>Settings</span>
+                                            </SidebarMenuButton>
+                                        </Link>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarFooter>
+                        )}
                     </Sidebar>
 
                     <div className="flex flex-col flex-1 min-w-0">
@@ -335,7 +349,16 @@ export default function DashboardClientLayout({
                                                     <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/5 transition-colors">
                                                         <div className="flex items-center justify-between w-full">
                                                             <span className="text-sm font-semibold text-white">{n.title}</span>
-                                                            <span className="text-[10px] text-stone-500">{new Date(n.date).toLocaleDateString('en-GB')}</span>
+                                                            <span className="text-[10px] text-stone-500">
+                                                                {new Date(n.date).toLocaleString('en-GB', { 
+                                                                    day: '2-digit', 
+                                                                    month: '2-digit', 
+                                                                    year: '2-digit',
+                                                                    hour: '2-digit', 
+                                                                    minute: '2-digit', 
+                                                                    hour12: true 
+                                                                }).toUpperCase()}
+                                                            </span>
                                                         </div>
                                                         <p className="text-xs text-stone-400 leading-relaxed">{n.description}</p>
                                                     </DropdownMenuItem>
@@ -370,13 +393,17 @@ export default function DashboardClientLayout({
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-white/10" />
-                                    <DropdownMenuItem asChild className="hover:bg-white/10">
-                                        <Link href="/dashboard/settings">
-                                            <Settings className="mr-2 h-4 w-4" />
-                                            <span>Settings</span>
-                                        </Link>
-                                    </DropdownMenuItem>
+                                    {!isSuperUser && (
+                                        <>
+                                            <DropdownMenuSeparator className="bg-white/10" />
+                                            <DropdownMenuItem asChild className="hover:bg-white/10">
+                                                <Link href="/dashboard/settings">
+                                                    <Settings className="mr-2 h-4 w-4" />
+                                                    <span>Settings</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                     <DropdownMenuSeparator className="bg-white/10" />
                                     <DropdownMenuItem onClick={handleLogout} className="hover:bg-white/10 text-red-400">
                                         <LogOut className="mr-2 h-4 w-4" />

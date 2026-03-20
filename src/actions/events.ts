@@ -12,9 +12,9 @@ export async function getEvents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const workspaceId = getWorkspaceId(session.user);
-    const whereClause: any = {
-        createdById: workspaceId
-    };
+    const whereClause: any = session.user.role === 'superadmin' 
+        ? {} 
+        : { createdById: workspaceId };
 
     const events = await prisma.event.findMany({
       where: whereClause,

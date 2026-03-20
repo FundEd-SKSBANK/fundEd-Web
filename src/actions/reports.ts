@@ -48,7 +48,10 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
       'Roll Number': p.student.rollNo,
       'Email': p.student.email,
       'Amount': p.amount,
-      'Payment Date': new Date(p.paymentDate).toLocaleDateString('en-GB'),
+      'Payment Date': new Date(p.paymentDate).toLocaleString('en-GB', { 
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true 
+      }).toUpperCase(),
       'Payment Method': p.paymentMethod,
       'Status': p.status,
       'Transaction ID': p.transactionId || 'N/A',
@@ -130,7 +133,10 @@ export async function generateTransactionReport(filters: ReportFilters) {
       'Email': t.student.email,
       'Event Name': t.event.name,
       'Amount': t.amount,
-      'Payment Date': new Date(t.paymentDate).toLocaleDateString('en-GB'),
+      'Payment Date': new Date(t.paymentDate).toLocaleString('en-GB', { 
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true 
+      }).toUpperCase(),
       'Payment Method': t.paymentMethod,
       'Status': t.status,
       'Transaction Reference': t.transactionId || 'N/A',
@@ -189,7 +195,10 @@ export async function generateStudentReport(studentId: string) {
     const reportData = student.payments.map(p => ({
       'Event Name': p.event.name,
       'Amount': p.amount,
-      'Payment Date': new Date(p.paymentDate).toLocaleDateString('en-GB'),
+      'Payment Date': new Date(p.paymentDate).toLocaleString('en-GB', { 
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true 
+      }).toUpperCase(),
       'Payment Method': p.paymentMethod,
       'Status': p.status,
       'Transaction ID': p.transactionId || 'N/A',

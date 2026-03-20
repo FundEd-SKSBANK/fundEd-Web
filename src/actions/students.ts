@@ -137,9 +137,9 @@ export async function getStudents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const workspaceId = getWorkspaceId(session.user);
-    const whereClause: any = {
-        createdById: workspaceId
-    };
+    const whereClause: any = session.user.role === 'superadmin' 
+        ? {} 
+        : { createdById: workspaceId };
 
     const students = await prisma.student.findMany({
       where: whereClause,
