@@ -2,15 +2,17 @@
 
 import prisma from '@/lib/db';
 import { getSession, getWorkspaceId } from '@/lib/auth';
+import { getUserRole } from '@/actions/auth';
 
 export async function getDashboardData() {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
+    const role = await getUserRole();
     const workspaceId = getWorkspaceId(session.user);
-    const eventWhere: any = { createdById: workspaceId };
-    const paymentWhere: any = { event: { createdById: workspaceId } };
+    const eventWhere: any = role === 'superadmin' ? {} : { createdById: workspaceId };
+    const paymentWhere: any = role === 'superadmin' ? {} : { event: { createdById: workspaceId } };
 
     const events = await prisma.event.findMany({ where: eventWhere });
     const transactions = await prisma.payment.findMany({ 

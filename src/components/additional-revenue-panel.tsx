@@ -64,7 +64,7 @@ interface AdditionalRevenuePanelProps {
     onUpdate: () => void;
 }
 
-const REVENUE_SOURCES = ['Tutors', 'Sponsors', 'Donations', 'College Fund', 'Class Fund', 'Other'];
+const INCOME_SOURCES = ['Tutors', 'Sponsors', 'Donations', 'College Fund', 'Class Fund', 'Other'];
 
 export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: AdditionalRevenuePanelProps) {
     const { toast } = useToast();
@@ -105,12 +105,12 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
         });
 
         if (res.success) {
-            toast({ title: 'Success', description: 'Revenue added successfully' });
+            toast({ title: 'Success', description: 'Income added successfully' });
             setIsAddOpen(false);
             resetForm();
             onUpdate();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to add revenue' });
+            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to add income' });
         }
         setIsSubmitting(false);
     };
@@ -139,12 +139,12 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
         });
 
         if (res.success) {
-            toast({ title: 'Success', description: 'Revenue updated successfully' });
+            toast({ title: 'Success', description: 'Income updated successfully' });
             setIsEditOpen(false);
             resetForm();
             onUpdate();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to update revenue' });
+            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to update income' });
         }
         setIsSubmitting(false);
     };
@@ -152,10 +152,10 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
     const handleDeleteRevenue = async (id: string) => {
         const res = await deleteAdditionalRevenue(id, eventId);
         if (res.success) {
-            toast({ title: 'Success', description: 'Revenue deleted successfully' });
+            toast({ title: 'Success', description: 'Income deleted successfully' });
             onUpdate();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to delete revenue' });
+            toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to delete income' });
         }
     };
 
@@ -164,17 +164,17 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h3 className="text-lg font-medium flex items-center gap-2">
                     <HandCoins className="h-5 w-5 text-emerald-500 shrink-0" />
-                    <span>Additional Revenue Sources</span>
+                    <span>Additional Income Sources</span>
                 </h3>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
-                            <Plus className="mr-2 h-4 w-4" /> Add Revenue
+                            <Plus className="mr-2 h-4 w-4" /> Add Income
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Add Additional Revenue</DialogTitle>
+                            <DialogTitle>Add Additional Income</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleAddRevenue} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -189,7 +189,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                 <label className="text-sm font-medium">Source</label>
                                 <Select value={source} onValueChange={setSource}>
                                     <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{REVENUE_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
@@ -219,7 +219,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                             <DialogFooter>
                                 <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Add Revenue
+                                    Add Income
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -229,7 +229,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                     <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Edit Revenue Entry</DialogTitle>
+                            <DialogTitle>Edit Income Entry</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleUpdateRevenue} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -244,7 +244,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                 <label className="text-sm font-medium">Source</label>
                                 <Select value={source} onValueChange={setSource}>
                                     <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{REVENUE_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
@@ -286,7 +286,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                 <div className="md:hidden divide-y divide-white/5">
                     {revenues.length === 0 ? (
                         <div className="h-24 flex items-center justify-center text-stone-500 text-sm">
-                            No additional revenue recorded yet.
+                            No additional income recorded yet.
                         </div>
                     ) : (
                         revenues.map((rev) => (
@@ -294,7 +294,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
                                         <p className="font-medium text-stone-200 truncate">{rev.title}</p>
-                                        <p className="text-xs text-stone-500 mt-0.5">{format(new Date(rev.date), 'MMM dd, yyyy')}</p>
+                                        <p className="text-xs text-stone-500 mt-0.5">{format(new Date(rev.date), 'dd/MM/yy hh:mm a').toUpperCase()}</p>
                                     </div>
                                     <span className="font-semibold text-emerald-400 shrink-0 text-sm">+₹{rev.amount.toLocaleString('en-IN')}</span>
                                 </div>
@@ -320,9 +320,9 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                         </AlertDialogTrigger>
                                         <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete Revenue Entry?</AlertDialogTitle>
+                                                <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Are you sure you want to delete this revenue entry? This cannot be undone.
+                                                    Are you sure you want to delete this income entry? This cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -356,14 +356,14 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                             {revenues.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-24 text-center text-stone-500">
-                                        No additional revenue recorded yet.
+                                        No additional income recorded yet.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 revenues.map((rev) => (
                                     <TableRow key={rev.id} className="border-white/10 hover:bg-white/5">
                                         <TableCell className="text-stone-400">
-                                            {format(new Date(rev.date), 'MMM dd, yyyy')}
+                                            {format(new Date(rev.date), 'dd/MM/yy hh:mm a').toUpperCase()}
                                         </TableCell>
                                         <TableCell className="font-medium text-stone-200">
                                             {rev.title}
@@ -396,9 +396,9 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
                                                         <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Revenue Entry?</AlertDialogTitle>
+                                                            <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                Are you sure you want to delete this revenue entry?
+                                                                Are you sure you want to delete this income entry?
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>

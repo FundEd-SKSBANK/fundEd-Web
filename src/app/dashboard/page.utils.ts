@@ -7,7 +7,14 @@ export const formatDate = (date: string | Date): string => {
   if (!date) return 'N/A';
   const d = new Date(date);
   if (isNaN(d.getTime())) return 'N/A';
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  return d.toLocaleString('en-GB', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).toUpperCase();
 };
 
 /**

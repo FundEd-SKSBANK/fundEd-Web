@@ -4,8 +4,17 @@ import type { Student, PrintDistribution, Payment } from '@/lib/types';
  * Format a date to DD/MM/YY format
  */
 export const formatDate = (date: string | Date): string => {
+  if (!date) return 'N/A';
   const d = new Date(date);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  if (isNaN(d.getTime())) return 'N/A';
+  return d.toLocaleString('en-GB', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).toUpperCase();
 };
 
 /**

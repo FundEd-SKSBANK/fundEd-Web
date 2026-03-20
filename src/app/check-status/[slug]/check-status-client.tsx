@@ -188,6 +188,21 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                                                             {summary.pendingAmount > 0 ? `₹${summary.pendingAmount.toLocaleString('en-IN')} Due` : 'Settled'}
                                                         </span>
                                                     </div>
+                                                    {summary.lastPaymentDate && (
+                                                        <div className="flex justify-between items-center text-[10px] text-stone-500">
+                                                            <span>Last Paid:</span>
+                                                            <span className="font-mono">
+                                                                {new Date(summary.lastPaymentDate).toLocaleString('en-GB', { 
+                                                                    day: '2-digit', 
+                                                                    month: '2-digit', 
+                                                                    year: '2-digit',
+                                                                    hour: '2-digit', 
+                                                                    minute: '2-digit', 
+                                                                    hour12: true 
+                                                                }).toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-1000 bg-emerald-500" style={{ width: `${Math.min(progress, 100)}%` }} />
                                                     </div>
