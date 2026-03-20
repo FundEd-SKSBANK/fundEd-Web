@@ -16,7 +16,8 @@ export async function getSuperuserStats() {
             studentCount,
             eventCount,
             payments,
-            expenses
+            expenses,
+            additionalRevenueRecords
         ] = await Promise.all([
             prisma.user.count({ where: { role: 'admin' } }),
             prisma.student.count(),
@@ -27,10 +28,15 @@ export async function getSuperuserStats() {
             }),
             prisma.expense.aggregate({
                 _sum: { amount: true }
+            }),
+            prisma.additionalRevenue.aggregate({
+                _sum: { amount: true }
             })
         ]);
 
-        const totalRevenue = payments._sum.amount || 0;
+        const studentRevenue = payments._sum.amount || 0;
+        const extraRevenue = additionalRevenueRecords._sum.amount || 0;
+        const totalRevenue = studentRevenue + extraRevenue;
         const totalExpenses = expenses._sum.amount || 0;
         const netBalance = totalRevenue - totalExpenses;
 
@@ -71,7 +77,7 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                 const dayEnd = new Date(dayStart);
                 dayEnd.setDate(dayEnd.getDate() + 1);
 
-                const [dailyPayments, dailyExpenses] = await Promise.all([
+                const [dailyPayments, dailyExpenses, dailyExtra] = await Promise.all([
                     prisma.payment.aggregate({
                         where: {
                            paymentDate: { gte: dayStart, lt: dayEnd },
@@ -84,12 +90,18 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                             date: { gte: dayStart, lt: dayEnd }
                         },
                         _sum: { amount: true }
+                    }),
+                    prisma.additionalRevenue.aggregate({
+                        where: {
+                            date: { gte: dayStart, lt: dayEnd }
+                        },
+                        _sum: { amount: true }
                     })
                 ]);
 
                 dataPoints.push({
                     date: format(date, 'MMM dd'),
-                    revenue: dailyPayments._sum.amount || 0,
+                    revenue: (dailyPayments._sum.amount || 0) + (dailyExtra._sum.amount || 0),
                     expenses: dailyExpenses._sum.amount || 0
                 });
             }
@@ -101,7 +113,7 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                  const weekEnd = new Date(weekStart);
                  weekEnd.setDate(weekEnd.getDate() + 7);
 
-                 const [weeklyPayments, weeklyExpenses] = await Promise.all([
+                 const [weeklyPayments, weeklyExpenses, weeklyExtra] = await Promise.all([
                      prisma.payment.aggregate({
                          where: { paymentDate: { gte: weekStart, lt: weekEnd }, status: 'Paid' },
                          _sum: { amount: true }
@@ -109,12 +121,16 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                      prisma.expense.aggregate({
                          where: { date: { gte: weekStart, lt: weekEnd } },
                          _sum: { amount: true }
+                     }),
+                     prisma.additionalRevenue.aggregate({
+                         where: { date: { gte: weekStart, lt: weekEnd } },
+                         _sum: { amount: true }
                      })
                  ]);
                  
                  dataPoints.push({
                      date: `Week ${format(weekStart, 'MMM dd')}`,
-                     revenue: weeklyPayments._sum.amount || 0,
+                     revenue: (weeklyPayments._sum.amount || 0) + (weeklyExtra._sum.amount || 0),
                      expenses: weeklyExpenses._sum.amount || 0
                  });
              }
@@ -127,7 +143,7 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                 const monthEnd = new Date(monthStart);
                 monthEnd.setMonth(monthEnd.getMonth() + 1);
                 
-                const [monthlyPayments, monthlyExpenses] = await Promise.all([
+                const [monthlyPayments, monthlyExpenses, monthlyExtra] = await Promise.all([
                      prisma.payment.aggregate({
                          where: { paymentDate: { gte: monthStart, lt: monthEnd }, status: 'Paid' },
                          _sum: { amount: true }
@@ -135,12 +151,16 @@ export async function getGlobalFinancialsOverTime(period: 'day' | 'week' | 'mont
                      prisma.expense.aggregate({
                          where: { date: { gte: monthStart, lt: monthEnd } },
                          _sum: { amount: true }
+                     }),
+                     prisma.additionalRevenue.aggregate({
+                         where: { date: { gte: monthStart, lt: monthEnd } },
+                         _sum: { amount: true }
                      })
                  ]);
 
                  dataPoints.push({
                      date: format(date, 'MMM yyyy'),
-                     revenue: monthlyPayments._sum.amount || 0,
+                     revenue: (monthlyPayments._sum.amount || 0) + (monthlyExtra._sum.amount || 0),
                      expenses: monthlyExpenses._sum.amount || 0
                  });
             }
@@ -191,13 +211,16 @@ export async function getGlobalEventFinancials() {
             include: {
                 createdBy: { select: { name: true, email: true } },
                 payments: { where: { status: 'Paid' } },
-                expenses: true
+                expenses: true,
+                additionalRevenues: true
             },
             orderBy: { createdAt: 'desc' }
         });
 
         const data = events.map(event => {
-            const totalCollected = event.payments.reduce((sum, p) => sum + p.amount, 0);
+            const studentCollected = event.payments.reduce((sum, p) => sum + p.amount, 0);
+            const additionalCollected = event.additionalRevenues.reduce((sum, r) => sum + r.amount, 0);
+            const totalCollected = studentCollected + additionalCollected;
             const totalExpenses = event.expenses.reduce((sum, e) => sum + e.amount, 0);
             return {
                 id: event.id,
