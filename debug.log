@@ -1,0 +1,6 @@
+2026-03-18T19:22:54.291Z - getUserRole: User "super@funded.com" role is "superadmin"
+2026-03-18T19:33:57.344Z - layout.tsx LOADED
+2026-03-18T19:33:57.480Z - layout.getUser: Returning user "super@funded.com" with role "superadmin"
+2026-03-18T19:33:57.486Z - getUserRole: User "super@funded.com" role is "superadmin"
+2026-03-18T19:34:57.464Z - layout.tsx LOADED
+2026-03-18T19:34:57.539Z - layout.getUser: Returning user "super@funded.com" with role "superadmin"

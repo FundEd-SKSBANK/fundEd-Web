@@ -156,8 +156,8 @@ export async function getEventBalance(eventId: string) {
             }
         };
     } catch (error) {
-         console.error("Failed to fetch balance:", error);
-        return { success: false, error: "Failed to fetch balance" };
+        console.error(`Error fetching event balance for ID ${eventId}:`, error);
+        return { success: false, error: "Failed to load event data" };
     }
 }
 
@@ -302,8 +302,8 @@ export async function getAdditionalRevenues(eventId: string) {
 
         return { success: true, data: revenues };
     } catch (error) {
-        console.error("Failed to fetch additional revenues:", error);
-        return { success: false, error: "Failed to fetch additional revenues" };
+        console.error("Failed to fetch additional income:", error);
+        return { success: false, error: "Failed to fetch additional income" };
     }
 }
 
@@ -334,8 +334,8 @@ export async function createAdditionalRevenue(data: {
         revalidatePath(`/dashboard/events/${data.eventId}/expenses`);
         return { success: true, data: revenue };
     } catch (error) {
-        console.error("Failed to create additional revenue:", error);
-        return { success: false, error: "Failed to create additional revenue" };
+        console.error("Failed to create additional income:", error);
+        return { success: false, error: "Failed to create additional income" };
     }
 }
 
@@ -364,8 +364,8 @@ export async function updateAdditionalRevenue(id: string, eventId: string, data:
         revalidatePath(`/dashboard/events/${eventId}/expenses`);
         return { success: true, data: revenue };
     } catch (error) {
-        console.error("Failed to update additional revenue:", error);
-        return { success: false, error: "Failed to update additional revenue" };
+        console.error("Failed to update additional income:", error);
+        return { success: false, error: "Failed to update additional income" };
     }
 }
 
@@ -381,7 +381,7 @@ export async function deleteAdditionalRevenue(id: string, eventId: string) {
         revalidatePath(`/dashboard/events/${eventId}/expenses`);
         return { success: true };
     } catch (error) {
-        console.error("Failed to delete additional revenue:", error);
-        return { success: false, error: "Failed to delete additional revenue" };
+        console.error("Failed to delete additional income:", error);
+        return { success: false, error: "Failed to delete additional income" };
     }
 }

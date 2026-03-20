@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import {
   CardContent,
@@ -67,6 +68,7 @@ function decodeQrFromDataUrl(dataUrl: string): Promise<string | null> {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [qrCodes, setQrCodes] = useState<QrCode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,7 +113,11 @@ export default function SettingsPage() {
       const adminRes = await getCurrentAdmin();
       if (adminRes.success && adminRes.data) {
         const data = adminRes.data as any;
-        setIsAdminRole(data.role === 'admin' || data.role === 'superadmin');
+        if (data.role === 'superadmin') {
+          router.replace('/dashboard/super');
+          return;
+        }
+        setIsAdminRole(data.role === 'admin');
         const s = data.slug || '';
         setCurrentSlug(s || null);
         setSlug(s || '');

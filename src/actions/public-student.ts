@@ -56,9 +56,17 @@ export async function getStudentPublicStatus(query: string, slug: string) {
             eventName: t.event.name,
             eventCost: t.event.cost,
             totalPaid: 0,
-            status: 'Unpaid'
+            status: 'Unpaid',
+            lastPaymentDate: null
           };
           current.totalPaid += t.amount;
+          
+          // Track the most recent payment date
+          const pDate = new Date(t.paymentDate);
+          if (!current.lastPaymentDate || pDate > new Date(current.lastPaymentDate)) {
+            current.lastPaymentDate = t.paymentDate;
+          }
+          
           eventMap.set(t.eventId, current);
         }
       });

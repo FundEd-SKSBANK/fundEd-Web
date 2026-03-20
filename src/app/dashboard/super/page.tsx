@@ -7,6 +7,8 @@ import { RevenueTrendChart, ExpenseBreakdownChart } from '@/components/super-ana
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SuperFinancialsTable } from '@/components/super-financials-table';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SuperDashboardPage() {
     const role = await getUserRole();
     if (role !== 'superadmin') {

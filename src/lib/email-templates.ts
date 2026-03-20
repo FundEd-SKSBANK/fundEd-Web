@@ -137,9 +137,10 @@ export async function sendNewEventEmail(input: SendNewEventEmailInput): Promise<
 // Flow for sending simple payment receipt
 export async function sendPaymentReceiptEmail(input: PaymentReceiptEmailInput): Promise<SendEmailOutput> {
     const isFullPayment = input.balanceDue <= 0;
-    const formattedDate = new Date(input.paymentDate).toLocaleDateString(undefined, {
-        year: 'numeric', month: 'long', day: 'numeric'
-    });
+    const formattedDate = new Date(input.paymentDate).toLocaleString('en-GB', { 
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+    }).toUpperCase();
     
     const content = `
         <h2>Payment Received</h2>

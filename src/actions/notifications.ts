@@ -13,9 +13,11 @@ export async function getPendingTransactions() {
     const transactions = await prisma.payment.findMany({
       where: { 
         status: 'Verification Pending',
-        event: {
-          createdById: session.user.id
-        }
+        ...(session.user.role !== 'superadmin' && {
+          event: {
+            createdById: session.user.id
+          }
+        })
       },
       include: {
         student: true,

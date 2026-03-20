@@ -24,10 +24,23 @@ export async function login(prevState: any, formData: FormData) {
     return { error: 'Invalid credentials' };
   }
 
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role, adminId: (user as any).adminId }, expires });
+  // Auto-upgrade special superadmin email if it's currently just 'admin'
+  if (user.email === 'super@funded.com' && user.role === 'admin') {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: 'superadmin' }
+    });
+    user.role = 'superadmin';
+  }
 
-  (await cookies()).set('session', session, { expires, httpOnly: true });
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role, adminId: (user as any).adminId }, expires }); // Save the session in a cookie
+  (await cookies()).set('session', session, { expires, httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
+  
+  // Directly redirect superadmins to their dashboard
+  if (user.role === 'superadmin') {
+      redirect('/dashboard/super');
+  }
   
   redirect('/dashboard');
 }
@@ -185,13 +198,25 @@ export async function logout() {
 
 export async function getUserRole() {
   const session = await getSession();
+  
   if (!session || !session.user) return null;
   
-  // Fetch fresh role from DB
+  // Fetch fresh user data from DB
   const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true }
+      select: { id: true, email: true, role: true }
   });
+
+  if (!user) return null;
+
+  // Auto-upgrade special superadmin email if it's currently just 'admin'
+  if (user.email === 'super@funded.com' && user.role === 'admin') {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: 'superadmin' }
+    });
+    return 'superadmin';
+  }
   
-  return user?.role;
+  return user.role;
 }

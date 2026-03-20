@@ -5,6 +5,8 @@ import { DashboardClient } from './dashboard-client';
 import { PageLoader } from '@/components/ui/page-loader';
 import type { Event, Transaction } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
     // 1. Server-side Role Check & Redirect
     const role = await getUserRole();

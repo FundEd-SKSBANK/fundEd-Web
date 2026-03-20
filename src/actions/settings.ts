@@ -49,9 +49,18 @@ export async function deleteQrCode(id: string) {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
     const adminId = getWorkspaceId(session.user);
-    // Ensure the QR belongs to this admin
+    
+    // Ensure the QR belongs to this admin using a separate check or deleteMany
+    const qrCode = await prisma.qrCode.findUnique({ where: { id } });
+    if (!qrCode) return { success: false, error: 'QR Code not found' };
+    
+    // Superadmins can delete any QR, admins only their own
+    if (session.user.role !== 'superadmin' && qrCode.adminId !== adminId) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
     await prisma.qrCode.delete({
-      where: { id, adminId },
+      where: { id },
     });
     revalidatePath('/dashboard/settings');
     return { success: true };
