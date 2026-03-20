@@ -59,7 +59,9 @@ export function SuperFinancialsTable() {
 
     const totalPlatformCollected = data.reduce((sum, item) => sum + item.totalCollected, 0);
     const totalPlatformExpenses = data.reduce((sum, item) => sum + item.totalExpenses, 0);
-    const totalPlatformBalance = totalPlatformCollected - totalPlatformExpenses;
+    // User requested that negative balances (deficits) should not be considered as balance.
+    // So we sum up the individual net balances, clamping each to at least 0.
+    const totalPlatformBalance = data.reduce((sum, item) => sum + Math.max(0, item.netBalance), 0);
 
     return (
         <div className="space-y-4">
@@ -144,8 +146,8 @@ export function SuperFinancialsTable() {
                                     <TableCell className="text-right text-red-400/90 font-medium">
                                         {item.totalExpenses.toLocaleString('en-IN')}
                                     </TableCell>
-                                    <TableCell className={`text-right font-bold ${item.netBalance >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-                                        {item.netBalance.toLocaleString('en-IN')}
+                                    <TableCell className={`text-right font-bold ${item.netBalance >= 0 ? 'text-blue-400' : 'text-stone-500'}`}>
+                                        {Math.max(0, item.netBalance).toLocaleString('en-IN')}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={`
