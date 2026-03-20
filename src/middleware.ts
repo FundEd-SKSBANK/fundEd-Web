@@ -11,6 +11,10 @@ export async function middleware(request: NextRequest) {
   }
   
   if (parsed && request.nextUrl.pathname === '/login') {
+    const role = (parsed as any).user?.role;
+    if (role === 'superadmin') {
+      return NextResponse.redirect(new URL('/dashboard/super', request.url));
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

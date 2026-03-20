@@ -126,7 +126,7 @@ export default function EventExpensesPage() {
 
             const summaryData = [
                 ['Student Collections', `Rs. ${stats.studentCollected.toLocaleString('en-IN')}`],
-                ['Additional Revenue', `Rs. ${stats.totalAdditionalRevenue.toLocaleString('en-IN')}`],
+                ['Additional Income', `Rs. ${stats.totalAdditionalRevenue.toLocaleString('en-IN')}`],
                 ['Total Collected', `Rs. ${stats.totalCollected.toLocaleString('en-IN')}`],
                 ['Total Expenses', `Rs. ${stats.totalExpenses.toLocaleString('en-IN')}`],
                 ['Net Balance', `Rs. ${stats.netBalance.toLocaleString('en-IN')}`]
@@ -143,27 +143,27 @@ export default function EventExpensesPage() {
 
             let currentY = (doc as any).lastAutoTable.finalY + 15;
 
-            // Additional Revenues Table
+            // Additional Income Table
             if (additionalRevenues.length > 0) {
-                 doc.setFontSize(14);
-                 doc.text('Additional Revenue Sources', 14, currentY);
-                 
-                 const revenueData = additionalRevenues.map(rev => [
-                     format(new Date(rev.date), 'MMM dd, yyyy'),
-                     rev.title,
-                     rev.source,
-                     `Rs. ${rev.amount.toLocaleString('en-IN')}`
-                 ]);
+                doc.setFontSize(14);
+                doc.text('Additional Income Sources', 14, currentY);
 
-                 autoTable(doc, {
-                     startY: currentY + 5,
-                     head: [['Date', 'Title', 'Source', 'Amount']],
-                     body: revenueData,
-                     theme: 'striped',
-                     headStyles: { fillColor: [5, 150, 105] }, // Emerald 600
-                     didDrawPage: addWatermarks,
-                 });
-                 currentY = (doc as any).lastAutoTable.finalY + 15;
+                const revenueData = additionalRevenues.map(rev => [
+                    format(new Date(rev.date), 'MMM dd, yyyy'),
+                    rev.title,
+                    rev.source,
+                    `Rs. ${rev.amount.toLocaleString('en-IN')}`
+                ]);
+
+                autoTable(doc, {
+                    startY: currentY + 5,
+                    head: [['Date', 'Title', 'Source', 'Amount']],
+                    body: revenueData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [5, 150, 105] }, // Emerald 600
+                    didDrawPage: addWatermarks,
+                });
+                currentY = (doc as any).lastAutoTable.finalY + 15;
             }
 
             // Expenses Table
@@ -290,7 +290,7 @@ export default function EventExpensesPage() {
             </div>
 
             <div className="grid gap-6 grid-cols-1">
-                <AdditionalRevenuePanel 
+                <AdditionalRevenuePanel
                     revenues={additionalRevenues}
                     eventId={eventId}
                     onUpdate={() => fetchData()}
@@ -307,7 +307,7 @@ export default function EventExpensesPage() {
             <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 <Card className="bg-white/5 border-white/10 h-full">
                     <CardHeader>
-                        <CardTitle>Revenue vs Expenses (Last 7 Days)</CardTitle>
+                        <CardTitle>Income vs Expenses (Last 7 Days)</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px]">
