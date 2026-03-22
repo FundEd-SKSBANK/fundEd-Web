@@ -99,4 +99,3 @@ if (process.env.NODE_ENV !== 'production' && !globalThis.prisma) {
   // In development, we might want to pre-initialize or just leave it to the proxy
   // but we don't want to overwrite it if it's already there (HMR)
 }
-```
