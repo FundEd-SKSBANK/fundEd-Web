@@ -220,6 +220,19 @@ export default function MajorEventAnalyticsPage() {
     }, [eventId]);
 
     useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
+    
+    // Auto-refresh logic
+    useEffect(() => {
+        const refreshMs = process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS 
+            ? parseInt(process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS) 
+            : 60000; // Default to 60 seconds
+        
+        const interval = setInterval(() => {
+            fetchAnalytics();
+        }, refreshMs);
+
+        return () => clearInterval(interval);
+    }, [fetchAnalytics]);
 
     const handleExport = async () => {
         setExportLoading(true);
