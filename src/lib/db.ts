@@ -1,4 +1,5 @@
-// import 'dotenv/config';
+// c:\Users\ASUS\CODING THINGS\fundEd-Web\src\lib\db.ts
+console.log('🔥 [Prisma] db.ts module loaded');
 import { PrismaClient } from '@prisma/client';
 import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
 import { PrismaNeon } from '@prisma/adapter-neon';
@@ -49,8 +50,10 @@ const prismaClientSingleton = () => {
       const pool = new NeonPool({ connectionString });
       const adapter = new PrismaNeon(pool as any);
       
+      // @ts-ignore - Explicitly pass URL when using adapter for metadata/resilience
       return new PrismaClient({ 
         adapter,
+        datasources: { db: { url: connectionString } },
         log: isDev ? ['query', 'error', 'warn'] : ['error']
       });
     }
@@ -68,8 +71,10 @@ const prismaClientSingleton = () => {
     });
     const adapter = new PrismaPg(pool as any);
     
+    // @ts-ignore - Explicitly pass URL when using adapter for metadata/resilience
     return new PrismaClient({ 
       adapter,
+      datasources: { db: { url: connectionString } },
       log: isDev ? ['query', 'error', 'warn'] : ['error']
     });
   } catch (err) {
