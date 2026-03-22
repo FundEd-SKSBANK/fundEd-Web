@@ -27,8 +27,8 @@ const prismaClientSingleton = () => {
     const pool = new PgPool({ 
       connectionString,
       max: 5,
-      idleTimeoutMillis: 150000,     // 2.5 min — retire before Neon closes at ~5 min
-      connectionTimeoutMillis: 10000, // 10s timeout when acquiring a connection
+      idleTimeoutMillis: 150000,
+      connectionTimeoutMillis: 10000,
     });
     const adapter = new PrismaPg(pool as any);
     return new PrismaClient({ 
@@ -50,8 +50,19 @@ declare global {
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton();
+// Lazy initialization using a Proxy
+const prismaProxy = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
+  get: (target, prop, receiver) => {
+    if (!globalThis.prisma) {
+      globalThis.prisma = prismaClientSingleton();
+    }
+    return Reflect.get(globalThis.prisma, prop, receiver);
+  }
+});
 
-export default prisma;
+export default prismaProxy;
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
+if (process.env.NODE_ENV !== 'production' && !globalThis.prisma) {
+  // In development, we might want to pre-initialize or just leave it to the proxy
+  // but we don't want to overwrite it if it's already there (HMR)
+}
