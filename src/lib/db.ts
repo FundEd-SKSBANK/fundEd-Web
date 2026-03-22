@@ -50,10 +50,11 @@ const prismaClientSingleton = () => {
       const pool = new NeonPool({ connectionString });
       const adapter = new PrismaNeon(pool as any);
       
-      // @ts-ignore - Explicitly pass URL when using adapter for metadata/resilience
+      // Assign to process.env so Prisma can find it internally without constructor validation errors
+      process.env.DATABASE_URL = connectionString;
+      
       return new PrismaClient({ 
         adapter,
-        datasources: { db: { url: connectionString } },
         log: isDev ? ['query', 'error', 'warn'] : ['error']
       });
     }
@@ -71,10 +72,11 @@ const prismaClientSingleton = () => {
     });
     const adapter = new PrismaPg(pool as any);
     
-    // @ts-ignore - Explicitly pass URL when using adapter for metadata/resilience
+    // Assign to process.env for standard PG adapter as well
+    process.env.DATABASE_URL = connectionString;
+
     return new PrismaClient({ 
       adapter,
-      datasources: { db: { url: connectionString } },
       log: isDev ? ['query', 'error', 'warn'] : ['error']
     });
   } catch (err) {
