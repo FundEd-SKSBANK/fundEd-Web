@@ -52,12 +52,11 @@ const prismaClientSingleton = () => {
         }
       }
 
-      const pool = new NeonPool({ connectionString });
+      const pool = new NeonPool(connectionString);
       const adapter = new PrismaNeon(pool as any);
       
       return new PrismaClient({ 
         adapter,
-        datasourceUrl: connectionString,
         log: isDev ? ['query', 'error', 'warn'] : ['error']
       });
     }
@@ -67,17 +66,11 @@ const prismaClientSingleton = () => {
     const { Pool: PgPool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
 
-    const pool = new PgPool({ 
-      connectionString,
-      max: 5,
-      idleTimeoutMillis: 150000,
-      connectionTimeoutMillis: 10000,
-    });
+    const pool = new PgPool({ connectionString });
     const adapter = new PrismaPg(pool as any);
     
     return new PrismaClient({ 
       adapter,
-      datasourceUrl: connectionString,
       log: isDev ? ['query', 'error', 'warn'] : ['error']
     });
   } catch (err) {
