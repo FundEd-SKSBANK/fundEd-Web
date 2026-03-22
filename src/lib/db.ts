@@ -17,9 +17,16 @@ const prismaClientSingleton = () => {
   
   const connectionString = (dbUrl || directUrl)?.trim();
 
+  // Enhanced logging for troubleshooting
+  if (isDev) {
+    console.log('🔍 [Prisma] Environment check:');
+    console.log(`   - DATABASE_URL present: ${!!dbUrl} (length: ${dbUrl?.length || 0})`);
+    console.log(`   - DIRECT_URL present: ${!!directUrl} (length: ${directUrl?.length || 0})`);
+    console.log(`   - Final connectionString derived: ${!!connectionString} (length: ${connectionString?.length || 0})`);
+  }
+
   if (!connectionString || connectionString.length < 10) {
     console.error('❌ [Prisma] FATAL: Neither DATABASE_URL nor DIRECT_URL is defined or valid.');
-    console.log('📝 [Prisma] Environment keys found:', Object.keys(process.env).filter(k => k.includes('URL') || k.includes('DATABASE')));
     throw new Error('Database connection string is missing. Please check your Netlify environment variables.');
   }
 
