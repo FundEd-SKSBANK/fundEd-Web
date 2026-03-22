@@ -57,6 +57,7 @@ const prismaClientSingleton = () => {
       
       return new PrismaClient({ 
         adapter,
+        datasourceUrl: connectionString,
         log: isDev ? ['query', 'error', 'warn'] : ['error']
       });
     }
@@ -76,6 +77,7 @@ const prismaClientSingleton = () => {
     
     return new PrismaClient({ 
       adapter,
+      datasourceUrl: connectionString,
       log: isDev ? ['query', 'error', 'warn'] : ['error']
     });
   } catch (err) {
