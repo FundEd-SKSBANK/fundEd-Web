@@ -1,8 +1,9 @@
-
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { z } from 'zod';
 import { createHash } from 'crypto';
+
+export const dynamic = 'force-dynamic';
 
 const orderSchema = z.object({
   amount: z.number().positive(),

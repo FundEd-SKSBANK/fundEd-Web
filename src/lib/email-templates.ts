@@ -297,3 +297,215 @@ export async function sendResetPasswordEmail(input: ResetPasswordEmailInput): Pr
         ? { success: true, message: `Reset email sent to ${input.email}` }
         : { success: false, message: result.message || 'Failed to send reset email' };
 }
+
+// ─── Major Event Connection Emails ──────────────────────────────────────────
+
+export async function sendConnectionRequestEmail(input: {
+    adminEmail: string;
+    adminName: string;
+    majorEventName: string;
+    subEventName: string;
+    requesterName: string;
+    manageUrl: string;
+}): Promise<SendEmailOutput> {
+    const content = `
+        <h2>New Connection Request</h2>
+        <p>Hi <strong>${input.adminName}</strong>,</p>
+        <p><strong>${input.requesterName}</strong> has requested to connect their event to your Major Event.</p>
+        <div class="details-box">
+            <table class="details-table">
+                <tr>
+                    <td class="label">Major Event</td>
+                    <td class="value">${input.majorEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Requesting Event</td>
+                    <td class="value">${input.subEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Requested By</td>
+                    <td class="value">${input.requesterName}</td>
+                </tr>
+            </table>
+        </div>
+        <p>Visit your Manage Connections page to approve or reject this request.</p>
+    `;
+    const emailHtml = generateEmailLayout(
+        `Connection Request: ${input.subEventName}`,
+        content,
+        { text: 'Manage Connections', url: input.manageUrl }
+    );
+    const result = await sendEmail({
+        to: input.adminEmail,
+        subject: `Connection Request: "${input.subEventName}" wants to join "${input.majorEventName}"`,
+        html: emailHtml,
+    });
+    return result.success
+        ? { success: true, message: `Request email sent to ${input.adminEmail}` }
+        : { success: false, message: result.message || 'Failed to send email' };
+}
+
+export async function sendConnectionApprovedEmail(input: {
+    adminEmail: string;
+    adminName: string;
+    subEventName: string;
+    majorEventName: string;
+    dashboardUrl: string;
+}): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Connection Approved! 🎉</h2>
+        <p>Hi <strong>${input.adminName}</strong>,</p>
+        <p>Great news! Your event has been approved to connect to a Major Event.</p>
+        <div class="details-box">
+            <table class="details-table">
+                <tr>
+                    <td class="label">Your Event</td>
+                    <td class="value">${input.subEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Connected To</td>
+                    <td class="value">${input.majorEventName}</td>
+                </tr>
+            </table>
+        </div>
+        <p>Your event data is now visible in the Major Event analytics dashboard.</p>
+    `;
+    const emailHtml = generateEmailLayout(
+        `Approved: ${input.subEventName}`,
+        content,
+        { text: 'Go to Dashboard', url: input.dashboardUrl }
+    );
+    const result = await sendEmail({
+        to: input.adminEmail,
+        subject: `Connection Approved: "${input.subEventName}" is now part of "${input.majorEventName}"`,
+        html: emailHtml,
+    });
+    return result.success
+        ? { success: true, message: `Approval email sent to ${input.adminEmail}` }
+        : { success: false, message: result.message || 'Failed to send email' };
+}
+
+export async function sendConnectionRejectedEmail(input: {
+    adminEmail: string;
+    adminName: string;
+    subEventName: string;
+    majorEventName: string;
+    dashboardUrl: string;
+}): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Connection Request Rejected</h2>
+        <p>Hi <strong>${input.adminName}</strong>,</p>
+        <p>Your connection request to join a Major Event has been declined.</p>
+        <div class="details-box">
+            <table class="details-table">
+                <tr>
+                    <td class="label">Your Event</td>
+                    <td class="value">${input.subEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Major Event</td>
+                    <td class="value">${input.majorEventName}</td>
+                </tr>
+            </table>
+        </div>
+        <p>If you believe this was in error, please contact the Major Event administrator for a new connection token.</p>
+    `;
+    const emailHtml = generateEmailLayout(
+        `Connection Declined: ${input.subEventName}`,
+        content,
+        { text: 'Go to Dashboard', url: input.dashboardUrl }
+    );
+    const result = await sendEmail({
+        to: input.adminEmail,
+        subject: `Connection Declined: "${input.subEventName}" was not approved for "${input.majorEventName}"`,
+        html: emailHtml,
+    });
+    return result.success
+        ? { success: true, message: `Rejection email sent to ${input.adminEmail}` }
+        : { success: false, message: result.message || 'Failed to send email' };
+}
+
+export async function sendSubEventDisconnectedEmail(input: {
+    adminEmail: string;
+    adminName: string;
+    subEventName: string;
+    majorEventName: string;
+    subAdminName: string;
+    manageUrl: string;
+}): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Sub-Event Disconnected</h2>
+        <p>Hi <strong>${input.adminName}</strong>,</p>
+        <p><strong>${input.subAdminName}</strong> has disconnected their event from your Major Event.</p>
+        <div class="details-box">
+            <table class="details-table">
+                <tr>
+                    <td class="label">Major Event</td>
+                    <td class="value">${input.majorEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Disconnected Event</td>
+                    <td class="value">${input.subEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Disconnected By</td>
+                    <td class="value">${input.subAdminName}</td>
+                </tr>
+            </table>
+        </div>
+        <p>Their data is no longer included in your analytics.</p>
+    `;
+    const emailHtml = generateEmailLayout(
+        `Disconnected: ${input.subEventName}`,
+        content,
+        { text: 'Manage Connections', url: input.manageUrl }
+    );
+    const result = await sendEmail({
+        to: input.adminEmail,
+        subject: `"${input.subEventName}" has disconnected from "${input.majorEventName}"`,
+        html: emailHtml,
+    });
+    return result.success
+        ? { success: true, message: `Disconnect notification sent to ${input.adminEmail}` }
+        : { success: false, message: result.message || 'Failed to send email' };
+}
+
+export async function sendSubEventRemovedEmail(input: {
+    adminEmail: string;
+    adminName: string;
+    subEventName: string;
+    majorEventName: string;
+    dashboardUrl: string;
+}): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Removed from Major Event</h2>
+        <p>Hi <strong>${input.adminName}</strong>,</p>
+        <p>Your event has been removed from a Major Event by its administrator.</p>
+        <div class="details-box">
+            <table class="details-table">
+                <tr>
+                    <td class="label">Your Event</td>
+                    <td class="value">${input.subEventName}</td>
+                </tr>
+                <tr>
+                    <td class="label">Major Event</td>
+                    <td class="value">${input.majorEventName}</td>
+                </tr>
+            </table>
+        </div>
+        <p>Your event continues to operate normally — it's simply no longer part of the Major Event analytics.</p>
+    `;
+    const emailHtml = generateEmailLayout(
+        `Removed: ${input.subEventName}`,
+        content,
+        { text: 'Go to Dashboard', url: input.dashboardUrl }
+    );
+    const result = await sendEmail({
+        to: input.adminEmail,
+        subject: `"${input.subEventName}" was removed from "${input.majorEventName}"`,
+        html: emailHtml,
+    });
+    return result.success
+        ? { success: true, message: `Removal notification sent to ${input.adminEmail}` }
+        : { success: false, message: result.message || 'Failed to send email' };
+}

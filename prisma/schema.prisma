@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -54,29 +55,66 @@ model Student {
 }
 
 model Event {
-  id                 String              @id @default(cuid())
-  name               String              @default("New Event")
-  description        String              @default("")
-  deadline           DateTime            @default(now())
-  cost               Float               @default(0)
-  paymentOptions     String              @default("[\"Razorpay\"]")
+  id                 String               @id @default(cuid())
+  name               String               @default("New Event")
+  description        String               @default("")
+  deadline           DateTime             @default(now())
+  cost               Float                @default(0)
+  paymentOptions     String               @default("[\"Razorpay\"]")
   qrCodeUrl          String?
-  category           String              @default("Normal")
-  status             String              @default("PUBLISHED")
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  category           String               @default("Normal")
+  isMajorEvent       Boolean              @default(false)
+  status             String               @default("PUBLISHED")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   createdById        String?
-  slug               String?             @unique
-  createdBy          User?               @relation("CreatedEvents", fields: [createdById], references: [id])
+  slug               String?              @unique
+  createdBy          User?                @relation("CreatedEvents", fields: [createdById], references: [id])
   expenses           Expense[]
   payments           Payment[]
   additionalRevenues AdditionalRevenue[]
   printDistributions PrintDistribution[]
-  participants       Student[]           @relation("EventToStudent")
+  participants       Student[]            @relation("EventToStudent")
+  connectionTokens   ConnectionToken[]
+  subEventConns      SubEventConnection[] @relation("MajorEvent")
+  majorEventConn     SubEventConnection[] @relation("SubEvent")
 
   @@index([deadline])
   @@index([category])
   @@index([createdAt])
+}
+
+model ConnectionToken {
+  id          String               @id @default(cuid())
+  token       String               @unique
+  label       String?
+  expiresAt   DateTime
+  eventId     String
+  createdAt   DateTime             @default(now())
+  event       Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  connections SubEventConnection[]
+
+  @@index([token])
+  @@index([eventId])
+}
+
+model SubEventConnection {
+  id             String    @id @default(cuid())
+  tokenId        String
+  majorEventId   String
+  subEventId     String
+  status         String    @default("PENDING")
+  disconnectedAt DateTime?
+  disconnectedBy String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  token          ConnectionToken @relation(fields: [tokenId], references: [id])
+  majorEvent     Event     @relation("MajorEvent", fields: [majorEventId], references: [id], onDelete: Cascade)
+  subEvent       Event     @relation("SubEvent", fields: [subEventId], references: [id], onDelete: Cascade)
+
+  @@index([majorEventId])
+  @@index([subEventId])
+  @@index([status])
 }
 
 model Payment {
