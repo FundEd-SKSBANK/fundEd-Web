@@ -35,17 +35,18 @@ const prismaClientSingleton = () => {
 
   try {
     // Determine which adapter to use
-    const isNeon = connectionString.includes('neon.tech') || connectionString.includes('pooler');
+    const isNeon = connectionString.includes('neon.tech') || connectionString.includes('pooler') || connectionString.includes('neondb');
+    console.log(`🔌 [Prisma] Adapter selection: isNeon=${isNeon}`);
 
     if (isNeon) {
-      if (isDev) console.log('🔌 [Prisma] Initializing Neon adapter...');
+      console.log('🔌 [Prisma] Initializing Neon adapter...');
       
       // Load optional dependency 'ws' if WebSocket is not globally available
       if (typeof window === 'undefined' && !globalThis.WebSocket) {
         try {
           const ws = require('ws');
           neonConfig.webSocketConstructor = ws;
-          if (isDev) console.log('🌐 [Prisma] node-ws loaded.');
+          console.log('🌐 [Prisma] node-ws loaded.');
         } catch (wsErr) {
           console.error('⚠️ [Prisma] Failed to load optional "ws" dependency:', wsErr);
         }
@@ -61,7 +62,7 @@ const prismaClientSingleton = () => {
     }
 
     // Standard Postgres (local or other provider)
-    if (isDev) console.log('🔌 [Prisma] Initializing PG adapter...');
+    console.log('🔌 [Prisma] Initializing PG adapter...');
     const { Pool: PgPool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
 
