@@ -1,14 +1,12 @@
 import { PrismaClient } from '@prisma/client';
-import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
-import { PrismaNeon } from '@prisma/adapter-neon';
-// import { Pool as PgPool } from 'pg';
-// import { PrismaPg } from '@prisma/adapter-pg';
-// import ws from 'ws';
 
-// Use standard TCP for local development to avoid ECONNRESET issues with WebSockets.
-// We use @prisma/adapter-pg locally to satisfy the driverAdapters requirement in schema.prisma.
+const prismaClientSingleton = () => {
+  const isDev = process.env.NODE_ENV === 'development';
+  const connectionString = (process.env.DATABASE_URL || process.env.DIRECT_URL || '').trim();
 
-// Initialized inside prismaClientSingleton to be more resilient
+  if (!connectionString || connectionString.length < 10) {
+    throw new Error('Database connection string is missing or invalid.');
+  }
 
   try {
     // Universal adapter for both Neon and local Postgres
@@ -38,7 +36,7 @@ declare global {
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
-// Lazy initialization using a Proxy
+// Lazy initialization using a Proxy to handle Next.js environment correctly
 const prismaProxy = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
   get: (target, prop, receiver) => {
     if (!(globalThis as any).prisma) {
@@ -49,8 +47,3 @@ const prismaProxy = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
 });
 
 export default prismaProxy;
-
-if (process.env.NODE_ENV !== 'production' && !globalThis.prisma) {
-  // In development, we might want to pre-initialize or just leave it to the proxy
-  // but we don't want to overwrite it if it's already there (HMR)
-}
