@@ -1,5 +1,3 @@
-// c:\Users\ASUS\CODING THINGS\fundEd-Web\src\lib\db.ts
-console.log('🔥 [Prisma] db.ts module loaded');
 import { PrismaClient } from '@prisma/client';
 import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
 import { PrismaNeon } from '@prisma/adapter-neon';
@@ -50,9 +48,6 @@ const prismaClientSingleton = () => {
       const pool = new NeonPool({ connectionString });
       const adapter = new PrismaNeon(pool as any);
       
-      // Assign to process.env so Prisma can find it internally without constructor validation errors
-      process.env.DATABASE_URL = connectionString;
-      
       return new PrismaClient({ 
         adapter,
         log: isDev ? ['query', 'error', 'warn'] : ['error']
@@ -72,9 +67,6 @@ const prismaClientSingleton = () => {
     });
     const adapter = new PrismaPg(pool as any);
     
-    // Assign to process.env for standard PG adapter as well
-    process.env.DATABASE_URL = connectionString;
-
     return new PrismaClient({ 
       adapter,
       log: isDev ? ['query', 'error', 'warn'] : ['error']
