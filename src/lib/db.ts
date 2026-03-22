@@ -17,12 +17,11 @@ const prismaClientSingleton = () => {
   
   const connectionString = (dbUrl || directUrl)?.trim();
 
-  // Enhanced logging for troubleshooting
-  if (isDev) {
-    console.log('🔍 [Prisma] Environment check:');
-    console.log(`   - DATABASE_URL present: ${!!dbUrl} (length: ${dbUrl?.length || 0})`);
-    console.log(`   - DIRECT_URL present: ${!!directUrl} (length: ${directUrl?.length || 0})`);
-    console.log(`   - Final connectionString derived: ${!!connectionString} (length: ${connectionString?.length || 0})`);
+  // Logging for troubleshooting in all environments for now
+  console.log(`🔌 [Prisma] Debug: DATABASE_URL=${!!dbUrl}, DIRECT_URL=${!!directUrl}, final=${!!connectionString}`);
+  if (connectionString) {
+    const masked = connectionString.replace(/:[^:@]+@/, ':****@');
+    console.log(`🔌 [Prisma] Using connection string: ${masked.substring(0, 20)}...`);
   }
 
   if (!connectionString || connectionString.length < 10) {
