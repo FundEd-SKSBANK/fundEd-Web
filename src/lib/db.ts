@@ -51,23 +51,23 @@ const prismaClientSingleton = () => {
           console.error('⚠️ [Prisma] Failed to load optional "ws" dependency:', wsErr);
         }
       }
-
-      const pool = new NeonPool(connectionString);
-      const adapter = new PrismaNeon(pool as any);
-      
-      return new PrismaClient({ 
-        adapter,
-        log: isDev ? ['query', 'error', 'warn'] : ['error']
-      });
     }
 
-    // Standard Postgres (local or other provider)
-    console.log('🔌 [Prisma] Initializing PG adapter...');
+    // Universal adapter for both Neon and local Postgres
+    console.log('🔌 [Prisma] Initializing Universal PG adapter...');
+    
     const { Pool: PgPool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
 
-    const pool = new PgPool({ connectionString });
-    const adapter = new PrismaPg(pool as any);
+    const pool = new PgPool({ 
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    });
+    
+    const adapter = new PrismaPg(pool);
+    console.log('🔌 [Prisma] Adapter initialized successfully.');
     
     return new PrismaClient({ 
       adapter,
@@ -86,10 +86,10 @@ declare global {
 // Lazy initialization using a Proxy
 const prismaProxy = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
   get: (target, prop, receiver) => {
-    if (!globalThis.prisma) {
-      globalThis.prisma = prismaClientSingleton();
+    if (!(globalThis as any).prisma) {
+      (globalThis as any).prisma = prismaClientSingleton();
     }
-    return Reflect.get(globalThis.prisma, prop, receiver);
+    return Reflect.get((globalThis as any).prisma, prop, receiver);
   }
 });
 
@@ -99,3 +99,4 @@ if (process.env.NODE_ENV !== 'production' && !globalThis.prisma) {
   // In development, we might want to pre-initialize or just leave it to the proxy
   // but we don't want to overwrite it if it's already there (HMR)
 }
+```
