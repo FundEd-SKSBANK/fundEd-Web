@@ -10,52 +10,8 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 
 // Initialized inside prismaClientSingleton to be more resilient
 
-const prismaClientSingleton = () => {
-  const isDev = process.env.NODE_ENV === 'development';
-  const dbUrl = process.env.DATABASE_URL;
-  const directUrl = process.env.DIRECT_URL;
-  
-  const connectionString = (dbUrl || directUrl)?.trim();
-
-  // Logging for troubleshooting in all environments for now
-  console.log(`🔌 [Prisma] Debug: DATABASE_URL=${!!dbUrl}, DIRECT_URL=${!!directUrl}, final=${!!connectionString}`);
-  if (connectionString) {
-    const masked = connectionString.replace(/:[^:@]+@/, ':****@');
-    console.log(`🔌 [Prisma] Using connection string: ${masked.substring(0, 20)}...`);
-  }
-
-  if (!connectionString || connectionString.length < 10) {
-    console.error('❌ [Prisma] FATAL: Neither DATABASE_URL nor DIRECT_URL is defined or valid.');
-    throw new Error('Database connection string is missing. Please check your Netlify environment variables.');
-  }
-
-  // Masked URL for logging
-  const maskedUrl = connectionString.replace(/:[^:@]+@/, ':****@');
-  if (isDev) console.log(`🔌 [Prisma] Initializing client with: ${maskedUrl}`);
-
   try {
-    // Determine which adapter to use
-    const isNeon = connectionString.includes('neon.tech') || connectionString.includes('pooler') || connectionString.includes('neondb');
-    console.log(`🔌 [Prisma] Adapter selection: isNeon=${isNeon}`);
-
-    if (isNeon) {
-      console.log('🔌 [Prisma] Initializing Neon adapter...');
-      
-      // Load optional dependency 'ws' if WebSocket is not globally available
-      if (typeof window === 'undefined' && !globalThis.WebSocket) {
-        try {
-          const ws = require('ws');
-          neonConfig.webSocketConstructor = ws;
-          console.log('🌐 [Prisma] node-ws loaded.');
-        } catch (wsErr) {
-          console.error('⚠️ [Prisma] Failed to load optional "ws" dependency:', wsErr);
-        }
-      }
-    }
-
     // Universal adapter for both Neon and local Postgres
-    console.log('🔌 [Prisma] Initializing Universal PG adapter...');
-    
     const { Pool: PgPool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
 
@@ -67,7 +23,6 @@ const prismaClientSingleton = () => {
     });
     
     const adapter = new PrismaPg(pool);
-    console.log('🔌 [Prisma] Adapter initialized successfully.');
     
     return new PrismaClient({ 
       adapter,
