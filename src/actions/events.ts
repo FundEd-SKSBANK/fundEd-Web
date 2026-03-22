@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { sendNewEventEmail } from '@/lib/email-templates';
 import { getSession, getWorkspaceId } from '@/lib/auth';
 
+
 export async function getEvents() {
   try {
     const session = await getSession();
@@ -30,12 +31,41 @@ export async function getEvents() {
           }
         },
         _count: {
-          select: { participants: true }
+          select: { 
+            participants: true,
+            subEventConns: {
+              where: { status: 'APPROVED', disconnectedAt: null }
+            }
+          }
+        },
+        subEventConns: {
+          where: { status: 'APPROVED', disconnectedAt: null },
+          include: {
+            subEvent: {
+              select: {
+                id: true,
+                cost: true,
+                _count: { select: { participants: true } },
+                participants: { select: { id: true } }, // Keep for fullPaidCount logic for now, but count is faster
+                payments: { select: { amount: true, status: true, studentId: true } }
+              }
+            }
+          }
         },
         participants: {
           select: { id: true }
-        }
-      }
+        },
+        majorEventConn: {
+          where: {
+            status: { in: ['PENDING', 'APPROVED'] },
+            disconnectedAt: null,
+          },
+          include: {
+            majorEvent: { select: { name: true, id: true } },
+          },
+          take: 1,
+        },
+      } as any,
     });
 
     const globalTotalStudents = await prisma.student.count();
@@ -48,49 +78,90 @@ export async function getEvents() {
     // Calculate totals
     const eventsWithStats = events.map(event => {
 
-      // Ensure participant count is consistent with the IDs we use for filtering
-      const participantCount = event.participants.length;
+      let participantCount = 0;
+      let finalPaidCount = 0;
+      let totalCollected = 0;
+      let totalPending = 0;
 
-      const participantIds = new Set(event.participants.map(p => p.id));
-      const studentPayments = new Map<string, number>();
+      const isMajor = (event as any).isMajorEvent || false;
 
-      event.payments.forEach(p => {
-          if (p.status === 'Paid' && participantIds.has(p.studentId)) {
-              const current = studentPayments.get(p.studentId) || 0;
-              studentPayments.set(p.studentId, current + p.amount);
-          }
-      });
+      if (isMajor) {
+          const conns = (event as any).subEventConns || [];
+          conns.forEach((c: any) => {
+              const subEvent = c.subEvent;
+              if (!subEvent) return;
+              
+              const sCount = subEvent.participants.length;
+              const sIds = new Set(subEvent.participants.map((p: any) => p.id));
+              const sPayments = new Map<string, number>();
 
-      let fullPaidCount = 0;
-      studentPayments.forEach((totalAmount) => {
-          // Use a small epsilon for float comparison to handle potential precision issues
-          if (totalAmount >= event.cost - 0.01) {
-              fullPaidCount++;
-          }
-      });
+              (subEvent.payments || []).forEach((p: any) => {
+                  if (p.status === 'Paid' && sIds.has(p.studentId)) {
+                      sPayments.set(p.studentId, (sPayments.get(p.studentId) || 0) + p.amount);
+                  }
+              });
 
-      // Cap paid count at participant count to ensure UI consistency
-      const finalPaidCount = Math.min(fullPaidCount, participantCount);
+              let sPaidCount = 0;
+              sPayments.forEach((amt) => {
+                  if (amt >= subEvent.cost - 0.01) sPaidCount++;
+              });
+              
+              const sCollected = (subEvent.payments || [])
+                  .filter((p: any) => p.status === 'Paid')
+                  .reduce((acc: number, p: any) => acc + p.amount, 0);
 
-      const totalCollected = event.payments
-        .filter(p => p.status === 'Paid')
-        .reduce((acc, p) => acc + p.amount, 0);
+              totalCollected += sCollected;
+              totalPending += Math.max(0, (subEvent.cost * sCount) - sCollected);
+              participantCount += sCount;
+              finalPaidCount += Math.min(sPaidCount, sCount);
+          });
+      } else {
+          participantCount = (event as any).participants.length;
+          const participantIds = new Set((event as any).participants.map((p: any) => p.id));
+          const studentPayments = new Map<string, number>();
 
-      const expectedCollection = event.cost * participantCount;
-      const totalPending = Math.max(0, expectedCollection - totalCollected);
+          const payments = (event as any).payments || [];
+          payments.forEach((p: any) => {
+              if (p.status === 'Paid' && participantIds.has(p.studentId)) {
+                  studentPayments.set(p.studentId, (studentPayments.get(p.studentId) || 0) + p.amount);
+              }
+          });
+
+          let fullPaidCount = 0;
+          studentPayments.forEach((totalAmount) => {
+              if (totalAmount >= event.cost - 0.01) fullPaidCount++;
+          });
+
+          finalPaidCount = Math.min(fullPaidCount, participantCount);
+          totalCollected = payments
+            .filter((p: any) => p.status === 'Paid')
+            .reduce((acc: number, p: any) => acc + p.amount, 0);
+          totalPending = Math.max(0, (event.cost * participantCount) - totalCollected);
+      }
         
+      const connRecord = (event as any).majorEventConn?.[0] || null;
+      const activeConnection = connRecord ? {
+        id: connRecord.id,
+        status: connRecord.status,
+        majorEventName: connRecord.majorEvent?.name || '',
+        majorEventId: connRecord.majorEvent?.id || '',
+      } : null;
+
       return {
         ...event,
+        isMajorEvent: isMajor,
         totalCollected,
         totalPending,
         participantCount,
         paidCount: finalPaidCount,
         pendingCount: Math.max(0, participantCount - finalPaidCount),
+        subEventCount: (event as any)._count?.subEventConns || 0,
         deadline: event.deadline.toISOString(),
         createdAt: event.createdAt.toISOString(),
         updatedAt: event.updatedAt.toISOString(),
         paymentOptions: JSON.parse(event.paymentOptions),
-        participantIds: event.participants.map(p => p.id), 
+        participantIds: event.participants.map(p => p.id),
+        activeConnection,
       };
 
     });
@@ -111,6 +182,7 @@ export async function createEvent(data: {
   qrCodeUrl?: string;
   category: string;
   selectedStudents: string[];
+  isMajorEvent?: boolean;
 }) {
   try {
     const session = await getSession();
@@ -122,10 +194,6 @@ export async function createEvent(data: {
 
     // Generate slug
     let slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    // Ensure uniqueness (simple append if exists - though collisions on create are rare for distinct events, we can append random chars or check)
-    // For now, let's just append a short random string if it's very common, or just trust the name + ID suffix strategy if we wanted to be robust. 
-    // But user wants "eventname". Let's try name first, and if error, we might fail or handle it. 
-    // Ideally, we check for existence.
     const existingSlug = await prisma.event.findUnique({ where: { slug } });
     if (existingSlug) {
         slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`;
@@ -136,14 +204,15 @@ export async function createEvent(data: {
         name: data.name,
         slug,
         description: data.description,
-        cost: data.cost,
+        cost: data.isMajorEvent ? 0 : data.cost,
         deadline: new Date(data.deadline),
-        paymentOptions: JSON.stringify(data.paymentOptions),
-        qrCodeUrl: data.qrCodeUrl,
+        paymentOptions: data.isMajorEvent ? JSON.stringify([]) : JSON.stringify(data.paymentOptions),
+        qrCodeUrl: data.isMajorEvent ? null : data.qrCodeUrl,
         category: data.category,
+        isMajorEvent: data.isMajorEvent || false,
         status: 'PUBLISHED',
         createdById: getWorkspaceId(session.user),
-        participants: { 
+        participants: data.isMajorEvent ? undefined : {
              connect: data.selectedStudents.map(id => ({ id }))
         }
       } as any,
@@ -183,7 +252,7 @@ export async function createEvent(data: {
     revalidatePath('/dashboard/events');
     return { success: true, data: event };
   } catch (error) {
-    console.error('Error creating event:', error);
+    console.error('>>> createEvent ERROR:', error);
     return { success: false, error: 'Failed to create event' };
   }
 }
@@ -294,6 +363,7 @@ export async function updateEvent(id: string, data: {
   qrCodeUrl?: string;
   category: string;
   selectedStudents: string[];
+  isMajorEvent?: boolean;
 }) {
   try {
     const session = await getSession();
@@ -322,22 +392,24 @@ export async function updateEvent(id: string, data: {
         }
     }
 
+    const isMajorEvent = data.isMajorEvent ?? (existing as any).isMajorEvent ?? false;
     const event = await prisma.event.update({
       where: { id },
       data: {
         name: data.name,
-        ...(slug && { slug }), // Only update if new slug generated
+        ...(slug && { slug }),
         description: data.description,
-        cost: data.cost,
+        cost: isMajorEvent ? 0 : data.cost,
         deadline: new Date(data.deadline),
-        paymentOptions: JSON.stringify(data.paymentOptions),
-        qrCodeUrl: data.qrCodeUrl,
+        paymentOptions: isMajorEvent ? JSON.stringify([]) : JSON.stringify(data.paymentOptions),
+        qrCodeUrl: isMajorEvent ? null : data.qrCodeUrl,
         category: data.category,
-        status: 'PUBLISHED', 
-        participants: {
+        isMajorEvent,
+        status: 'PUBLISHED',
+        participants: isMajorEvent ? undefined : {
              set: data.selectedStudents.map(id => ({ id }))
         }
-      },
+      } as any,
     });
     revalidatePath('/dashboard/events');
     return { success: true, data: event };

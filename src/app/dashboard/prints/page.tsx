@@ -46,8 +46,10 @@ import {
 } from '@/components/ui/table';
 import { sendPrintDistributionEmail } from '@/app/actions';
 import { getPrintData, distributePrint, deleteDistribution } from '@/actions/prints';
+import { getCurrentAdmin } from '@/actions/users';
 import { PageLoader } from '@/components/ui/page-loader';
 import { formatDate, getStudentsWhoPaid, filterStudentsBySearch } from './page.utils';
+import { useRouter } from 'next/navigation';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 
 export default function PrintsPage() {
@@ -56,6 +58,7 @@ export default function PrintsPage() {
   const [searchValue, setSearchValue] = useState('');
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -78,6 +81,13 @@ export default function PrintsPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
+
+      const adminRes = await getCurrentAdmin();
+      if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
+        router.replace('/dashboard/super');
+        return;
+      }
+
       const res = await getPrintData();
       if (res.success && res.data) {
         setPrintEvents(res.data.events as unknown as Event[]);

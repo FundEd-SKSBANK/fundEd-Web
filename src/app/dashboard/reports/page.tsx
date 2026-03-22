@@ -25,8 +25,10 @@ import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from '@
 import { Badge } from '@/components/ui/badge';
 import type { Transaction, Event } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import { generateTransactionReport, generateEventReport, exportToCSV, generateTransactionSummary, generateStudentWiseReport } from '@/actions/reports';
 import { getEvents } from '@/actions/events';
+import { getCurrentAdmin } from '@/actions/users';
 import { format } from 'date-fns';
 import { GlassCard } from '@/components/ui/glass-card';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -42,9 +44,17 @@ export default function ReportsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [reportSummary, setReportSummary] = useState<any>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         const fetchEvents = async () => {
+            setIsLoading(true);
+            const adminRes = await getCurrentAdmin();
+            if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
+                router.replace('/dashboard/super');
+                return;
+            }
+
             const res = await getEvents();
             if (res.success && res.data) {
                 setEvents(res.data as unknown as Event[]);

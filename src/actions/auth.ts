@@ -84,13 +84,14 @@ export async function signup(prevState: any, formData: FormData) {
 
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role, adminId: (user as any).adminId }, expires });
-    (await cookies()).set('session', session, { expires, httpOnly: true });
-
-    redirect('/dashboard');
+    (await cookies()).set('session', session, { expires, httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
   } catch (error: any) {
+    if (error.digest?.startsWith('NEXT_REDIRECT')) throw error;
     console.error('Signup error:', error);
     return { error: 'An error occurred during signup. Please try again.' };
   }
+
+  redirect('/dashboard');
 }
 
 export async function forgotPassword(prevState: any, formData: FormData) {
