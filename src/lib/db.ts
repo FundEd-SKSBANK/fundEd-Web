@@ -13,13 +13,20 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 
 const prismaClientSingleton = () => {
   const isDev = process.env.NODE_ENV === 'development';
-  const rawUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  const connectionString = rawUrl?.trim();
+  const dbUrl = process.env.DATABASE_URL;
+  const directUrl = process.env.DIRECT_URL;
+  
+  const connectionString = (dbUrl || directUrl)?.trim();
 
   if (!connectionString || connectionString.length < 10) {
-    if (!isDev) console.error('❌ [Prisma] FATAL: DATABASE_URL is not defined or invalid.');
-    throw new Error('DATABASE_URL environment variable is missing or invalid!');
+    console.error('❌ [Prisma] FATAL: Neither DATABASE_URL nor DIRECT_URL is defined or valid.');
+    console.log('📝 [Prisma] Environment keys found:', Object.keys(process.env).filter(k => k.includes('URL') || k.includes('DATABASE')));
+    throw new Error('Database connection string is missing. Please check your Netlify environment variables.');
   }
+
+  // Masked URL for logging
+  const maskedUrl = connectionString.replace(/:[^:@]+@/, ':****@');
+  if (isDev) console.log(`🔌 [Prisma] Initializing client with: ${maskedUrl}`);
 
   try {
     // Determine which adapter to use
