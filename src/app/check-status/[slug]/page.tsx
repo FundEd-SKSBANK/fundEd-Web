@@ -3,12 +3,13 @@ import prisma from '@/lib/db';
 import { CheckStatusClient } from './check-status-client';
 
 interface Props {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props) {
+    const { slug } = await params;
     const admin = await prisma.user.findUnique({
-        where: { slug: params.slug },
+        where: { slug },
         select: { name: true }
     });
 
@@ -19,8 +20,9 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function CheckStatusSlugPage({ params }: Props) {
+    const { slug } = await params;
     const admin = await prisma.user.findUnique({
-        where: { slug: params.slug },
+        where: { slug },
         select: { id: true, name: true }
     });
 
@@ -28,5 +30,5 @@ export default async function CheckStatusSlugPage({ params }: Props) {
         notFound();
     }
 
-    return <CheckStatusClient slug={params.slug} adminName={admin.name} />;
+    return <CheckStatusClient slug={slug} adminName={admin.name} />;
 }
