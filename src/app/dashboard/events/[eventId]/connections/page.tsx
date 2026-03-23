@@ -264,21 +264,23 @@ export default function ConnectionsPage() {
             {/* ── Connected Sub-Events ── */}
             <GlassCard>
                 <CardHeader className="pb-4">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Network className="h-5 w-5 text-emerald-400" />
-                            Connected Sub-Events
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Network className="h-5 w-5 text-emerald-400" />
+                                Connected Sub-Events
+                            </CardTitle>
                             {approvedConns.length > 0 && (
-                                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 ml-1">
+                                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                                     {approvedConns.length}
                                 </Badge>
                             )}
-                        </CardTitle>
+                        </div>
                         <Link href={`/dashboard/events/${eventId}/analytics`}>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 gap-2 text-xs border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all font-medium"
+                                className="h-8 gap-2 text-xs border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all font-medium w-full sm:w-auto"
                             >
                                 <BarChart2 className="h-3.5 w-3.5" />
                                 View Analytics
