@@ -60,6 +60,7 @@ import {
     ArrowLeft,
     Clock,
     ChevronRight,
+    BarChart2,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -263,7 +264,7 @@ export default function ConnectionsPage() {
             {/* ── Connected Sub-Events ── */}
             <GlassCard>
                 <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Network className="h-5 w-5 text-emerald-400" />
                             Connected Sub-Events
@@ -273,6 +274,16 @@ export default function ConnectionsPage() {
                                 </Badge>
                             )}
                         </CardTitle>
+                        <Link href={`/dashboard/events/${eventId}/analytics`}>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-2 text-xs border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all font-medium"
+                            >
+                                <BarChart2 className="h-3.5 w-3.5" />
+                                View Analytics
+                            </Button>
+                        </Link>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -347,20 +358,6 @@ export default function ConnectionsPage() {
                                                 </div>
                                             </>
                                         )}
-                                    </div>
-
-                                    {/* View Details Button */}
-                                    <div className="px-4 pb-4">
-                                        <Link href={`/dashboard/events/${conn.subEventId}/analytics`}>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="w-full h-8 gap-2 text-xs border-white/10 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-300 transition-all"
-                                            >
-                                                View Details
-                                                <ChevronRight className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </Link>
                                     </div>
                                 </div>
                             ))}
