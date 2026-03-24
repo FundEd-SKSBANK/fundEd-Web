@@ -17,6 +17,26 @@ export async function getStudentPayments(studentId: string) {
 
     if (!student) return { success: false, error: 'Student not found' };
 
+    // Fetch Major Event connections for participating events
+    const eventIds = student.participatingEvents.map(e => e.id);
+    const majorEventConns = eventIds.length > 0
+      ? await (prisma as any).subEventConnection.findMany({
+          where: {
+            subEventId: { in: eventIds },
+            status: 'APPROVED',
+            disconnectedAt: null,
+          },
+          include: {
+            majorEvent: { select: { name: true, id: true } },
+          },
+        })
+      : [];
+
+    const majorEventMap = new Map<string, string>();
+    majorEventConns.forEach((c: any) => {
+      majorEventMap.set(c.subEventId, c.majorEvent.name);
+    });
+
     // Calculate Summary per Event
     const eventMap = new Map();
 
@@ -26,7 +46,8 @@ export async function getStudentPayments(studentId: string) {
         eventName: event.name,
         eventCost: event.cost,
         totalPaid: 0,
-        status: 'Unpaid'
+        status: 'Unpaid',
+        majorEventName: majorEventMap.get(event.id) || null,
       });
     });
 
@@ -37,7 +58,8 @@ export async function getStudentPayments(studentId: string) {
           eventName: t.event.name,
           eventCost: t.event.cost,
           totalPaid: 0,
-          status: 'Unpaid'
+          status: 'Unpaid',
+          majorEventName: majorEventMap.get(t.eventId) || null,
         };
         current.totalPaid += t.amount;
         eventMap.set(t.eventId, current);
@@ -79,3 +101,4 @@ export async function getStudentPayments(studentId: string) {
     return { success: false, error: 'Failed to fetch payments' };
   }
 }
+

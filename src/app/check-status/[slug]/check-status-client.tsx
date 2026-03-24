@@ -171,10 +171,17 @@ export function CheckStatusClient({ slug, adminName }: CheckStatusClientProps) {
                                                         <h3 className="font-semibold text-stone-200 truncate group-hover/card:text-emerald-200 transition-colors" title={summary.eventName}>
                                                             {summary.eventName}
                                                         </h3>
-                                                        <Badge variant={isPaid ? 'paid' : summary.status === 'Partially Paid' ? 'pending' : 'destructive'}
-                                                            className={`mt-2 text-[10px] px-2 h-5 tracking-wide ${isPaid ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : ''}`}>
-                                                            {summary.status}
-                                                        </Badge>
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            <Badge variant={isPaid ? 'paid' : summary.status === 'Partially Paid' ? 'pending' : 'destructive'}
+                                                                className={`text-[10px] px-2 h-5 tracking-wide ${isPaid ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : ''}`}>
+                                                                {summary.status}
+                                                            </Badge>
+                                                            {summary.majorEventName && (
+                                                                <Badge variant="outline" className="text-[10px] px-2 h-5 tracking-wide border-violet-500/40 text-violet-300 bg-violet-500/10">
+                                                                    🌐 {summary.majorEventName}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div className="text-right whitespace-nowrap shrink-0">
                                                         <p className="text-[10px] text-stone-500 uppercase tracking-wider mb-0.5">Total</p>

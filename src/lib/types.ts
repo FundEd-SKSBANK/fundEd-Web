@@ -32,7 +32,8 @@ export type Event = {
   totalPending: number;
   paymentOptions: ('Razorpay' | 'QR' | 'Cash')[];
   qrCodeUrl?: string;
-  category: 'Normal' | 'Print';
+  category: 'Normal' | 'Print' | 'MajorEvent';
+  isMajorEvent?: boolean;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   payments?: Payment[];
@@ -40,9 +41,73 @@ export type Event = {
   participantCount?: number;
   paidCount?: number;
   pendingCount?: number;
-  status?: string; // Added status field
+  subEventCount?: number;
+  status?: string;
   slug?: string | null;
   adminSlug?: string | null;
+  // Connection status for sub-events
+  activeConnection?: {
+    id: string;
+    status: 'PENDING' | 'APPROVED';
+    majorEventName: string;
+    majorEventId: string;
+  } | null;
+};
+
+export type ConnectionToken = {
+  id: string;
+  token: string;
+  label?: string | null;
+  expiresAt: string;
+  eventId: string;
+  createdAt: string;
+  status: 'active' | 'expired';
+};
+
+export type SubEventConnection = {
+  id: string;
+  tokenId: string;
+  majorEventId: string;
+  subEventId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  disconnectedAt?: string | null;
+  disconnectedBy?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Joined fields
+  subEventName?: string;
+  subEventAdminName?: string;
+  subEventAdminEmail?: string;
+  tokenLabel?: string | null;
+  subEventTotalCollected?: number;
+  subEventTotalCost?: number;
+  subEventParticipantCount?: number;
+  subEventPendingCount?: number;
+  subEventAdditionalRevenue?: number;
+  subEventPrintDistributed?: number;
+  subEventPrintTotal?: number;
+  subEventCategory?: string;
+  subEventPendingStudents?: {
+    id: string;
+    name: string;
+    rollNo: string;
+    amountDue: number;
+  }[];
+};
+
+export type MajorEventAnalytics = {
+  totalCollected: number;
+  totalPending: number;
+  totalAdditionalRevenue: number;
+  grandTotal: number;
+  totalStudents: number;
+  connectedSubEventsCount: number;
+  fundBreakdown: {
+    studentCollections: number;
+    additionalRevenue: number;
+    grandTotal: number;
+  };
+  subEvents: SubEventConnection[];
 };
 
 export type Student = {
