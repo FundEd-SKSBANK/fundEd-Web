@@ -604,9 +604,9 @@ export async function getMajorEventAnalytics(eventId: string) {
         totalStudents,
         connectedSubEventsCount: connections.length,
         fundBreakdown: {
-          studentCollections: totalCollected,
+          studentCollections: totalCollected + totalPending,
           additionalRevenue: totalAdditionalRevenue,
-          grandTotal,
+          grandTotal: totalCollected + totalPending + totalAdditionalRevenue,
         },
         subEvents,
       },
