@@ -16,33 +16,61 @@ export async function login(prevState: any, formData: FormData) {
     return { error: 'Please provide both email and password' };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return { error: 'Invalid credentials' };
-  }
-
-  // Auto-upgrade special superadmin email if it's currently just 'admin'
-  if (user.email === 'super@funded.com' && user.role === 'admin') {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { role: 'superadmin' }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
-    user.role = 'superadmin';
-  }
 
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role, adminId: (user as any).adminId }, expires }); // Save the session in a cookie
-  (await cookies()).set('session', session, { expires, httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
-  
-  // Directly redirect superadmins to their dashboard
-  if (user.role === 'superadmin') {
-      redirect('/dashboard/super');
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return { error: 'Invalid credentials' };
+    }
+
+    // Auto-upgrade special superadmin email if it's currently just 'admin'
+    if (user.email === 'super@funded.com' && user.role === 'admin') {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'superadmin' }
+      });
+      user.role = 'superadmin';
+    }
+
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const sessionToken = await encrypt({ 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        name: user.name, 
+        role: user.role, 
+        adminId: (user as any).adminId 
+      }, 
+      expires 
+    });
+
+    (await cookies()).set('session', sessionToken, { 
+      expires, 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      path: '/' 
+    });
+    
+    // Directly redirect superadmins to their dashboard
+    if (user.role === 'superadmin') {
+        redirect('/dashboard/super');
+    }
+    
+    redirect('/dashboard');
+  } catch (error: any) {
+    if (error.digest?.startsWith('NEXT_REDIRECT')) throw error;
+    console.error('❌ [AuthAction] Login error:', error);
+    
+    // Check for specific Prisma errors
+    if (error.message?.includes('Prisma') || error.message?.includes('database')) {
+      return { error: 'Database connection failed. Please try again in a moment.' };
+    }
+    
+    return { error: 'An unexpected error occurred during login. Please try again.' };
   }
-  
-  redirect('/dashboard');
 }
 
 export async function signup(prevState: any, formData: FormData) {
@@ -83,12 +111,34 @@ export async function signup(prevState: any, formData: FormData) {
     });
 
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const session = await encrypt({ user: { id: user.id, email: user.email, name: user.name, role: user.role, adminId: (user as any).adminId }, expires });
-    (await cookies()).set('session', session, { expires, httpOnly: true });
-
+    const sessionToken = await encrypt({ 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        name: user.name, 
+        role: user.role, 
+        adminId: (user as any).adminId 
+      }, 
+      expires 
+    });
+    
+    (await cookies()).set('session', sessionToken, { 
+      expires, 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      path: '/' 
+    });
+    
     redirect('/dashboard');
   } catch (error: any) {
-    console.error('Signup error:', error);
+    if (error.digest?.startsWith('NEXT_REDIRECT')) throw error;
+    console.error('❌ [AuthAction] Signup error:', error);
+    
+    if (error.message?.includes('Prisma') || error.message?.includes('database')) {
+      return { error: 'Database connection failed. Please try again.' };
+    }
+    
     return { error: 'An error occurred during signup. Please try again.' };
   }
 }
@@ -107,8 +157,6 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     });
 
     if (!user) {
-      // For security, don't reveal if user exists. 
-      // But for this app's context, a friendly message is fine or just success.
       return { success: 'If an account exists with that email, we have sent a reset link.' };
     }
 
@@ -141,8 +189,11 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     }
     
     return { success: 'If an account exists with that email, we have sent a reset link to your registered email address.' };
-  } catch (error) {
-    console.error('Forgot password error:', error);
+  } catch (error: any) {
+    console.error('❌ [AuthAction] Forgot password error:', error);
+    if (error.message?.includes('Prisma') || error.message?.includes('database')) {
+      return { error: 'Database connection failed. Please try again.' };
+    }
     return { error: 'An error occurred. Please try again.' };
   }
 }
@@ -185,8 +236,11 @@ export async function resetPassword(prevState: any, formData: FormData) {
     });
 
     return { success: 'Password reset successfully. You can now login.' };
-  } catch (error) {
-    console.error('Reset password error:', error);
+  } catch (error: any) {
+    console.error('❌ [AuthAction] Reset password error:', error);
+    if (error.message?.includes('Prisma') || error.message?.includes('database')) {
+      return { error: 'Database connection failed. Please try again.' };
+    }
     return { error: 'An error occurred. Please try again.' };
   }
 }

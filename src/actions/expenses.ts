@@ -4,6 +4,7 @@ import prisma from '@/lib/db';
 import { getSession, getWorkspaceId } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { startOfDay, startOfWeek, subDays, subWeeks, subMonths, format, startOfMonth } from 'date-fns';
+import { getMajorEventAnalytics } from './major-events';
 
 export async function getEventExpenses(eventId: string) {
     try {
@@ -127,22 +128,30 @@ export async function getEventBalance(eventId: string) {
             }
         });
         
+        if (!event) return { success: false, error: "Event not found" };
+
+        let studentCollected = 0;
+        let totalAdditionalRevenue = 0;
+
+        if ((event as any).isMajorEvent) {
+             const analyticsRes = await getMajorEventAnalytics(eventId);
+             if (analyticsRes.success && analyticsRes.data) {
+                 studentCollected = analyticsRes.data.totalCollected;
+                 totalAdditionalRevenue = analyticsRes.data.totalAdditionalRevenue;
+             }
+        } else {
+             studentCollected = event.payments.reduce((sum: number, p) => sum + p.amount, 0);
+             const additionalRevenues = await prisma.additionalRevenue.findMany({
+                 where: { eventId }
+             });
+             totalAdditionalRevenue = additionalRevenues.reduce((sum: number, r: { amount: number }) => sum + r.amount, 0);
+        }
+
         const expenses = await prisma.expense.findMany({
             where: { eventId }
         });
-
-        const additionalRevenues = await prisma.additionalRevenue.findMany({
-            where: { eventId }
-        });
-
-        if (!event) return { success: false, error: "Event not found" };
-
-        const studentCollected = event.payments.reduce((sum: number, p) => sum + p.amount, 0);
-        const totalAdditionalRevenue = additionalRevenues.reduce((sum: number, r: { amount: number }) => sum + r.amount, 0);
-        
-        const totalCollected = studentCollected + totalAdditionalRevenue;
         const totalExpenses = expenses.reduce((sum: number, e) => sum + e.amount, 0);
-
+        const totalCollectedAmount = studentCollected + totalAdditionalRevenue;
 
         return {
             success: true,
@@ -150,9 +159,9 @@ export async function getEventBalance(eventId: string) {
                 eventName: event.name,
                 studentCollected,
                 totalAdditionalRevenue,
-                totalCollected,
+                totalCollected: totalCollectedAmount,
                 totalExpenses,
-                netBalance: totalCollected - totalExpenses
+                netBalance: totalCollectedAmount - totalExpenses
             }
         };
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     Card,
     CardContent,
@@ -40,6 +41,7 @@ import {
     GraduationCap,
     Share2,
     Pencil,
+    Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStudents, deleteStudent, uploadStudentsCsv } from '@/actions/students';
@@ -53,6 +55,7 @@ import Papa from 'papaparse';
 
 import { PageLoader } from '@/components/ui/page-loader';
 import { getInitials, filterStudents, copyPublicPortalLink } from './page.utils';
+import { getCurrentAdmin } from '@/actions/users';
 
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
@@ -64,9 +67,35 @@ export default function StudentsPage() {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
+    // ── Initial data load (runs once on mount with a full-screen loader) ──
     useEffect(() => {
-        fetchData();
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+
+            const adminRes = await getCurrentAdmin();
+            if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
+                router.replace('/dashboard/super');
+                return;
+            }
+
+            const [studentsRes, eventsRes] = await Promise.all([
+                getStudents(),
+                getEvents()
+            ]);
+
+            if (studentsRes.success && studentsRes.students) {
+                setStudents(studentsRes.students as unknown as Student[]);
+            }
+
+            if (eventsRes.success && eventsRes.data) {
+                setEvents(eventsRes.data as unknown as Event[]);
+            }
+
+            setIsLoading(false);
+        };
+        fetchInitialData();
     }, []);
 
     const fetchData = async () => {
