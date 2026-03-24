@@ -67,14 +67,9 @@ model Event {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   createdById        String?
-<<<<<<< HEAD
   slug               String?              @unique
-  createdBy          User?                @relation("CreatedEvents", fields: [createdById], references: [id])
-=======
-  slug               String?             @unique
   additionalRevenues AdditionalRevenue[]
-  createdBy          User?               @relation("CreatedEvents", fields: [createdById], references: [id])
->>>>>>> myfork/main
+  createdBy          User?                @relation("CreatedEvents", fields: [createdById], references: [id])
   expenses           Expense[]
   payments           Payment[]
   printDistributions PrintDistribution[]
