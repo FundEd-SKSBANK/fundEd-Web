@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -166,6 +166,9 @@ function MobileNav({ user, events }: { user?: any; events?: { id: string; name: 
             <SheetContent side="left" className="flex flex-col p-0 bg-black/95 border-white/10 backdrop-blur-xl">
                 <SheetHeader className="p-4 border-b border-white/10">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    <SheetDescription className="sr-only">
+                        Access dashboard navigation links and settings.
+                    </SheetDescription>
                     <Link href="/" className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-emerald-500/10">
                             <GraduationCap className="h-5 w-5 text-emerald-400" />
