@@ -22,6 +22,10 @@ function generateTokenString(): string {
 
 function getExpiryDate(expiryHours: number | string): Date {
   const d = new Date();
+  if (expiryHours === 999999 || expiryHours === '999999') {
+    // Return a date in the far future (year 2100)
+    return new Date('2100-01-01T00:00:00Z');
+  }
   if (typeof expiryHours === 'string') {
     // If it's a valid number string, treat as hours
     const parsed = parseInt(expiryHours);
@@ -117,6 +121,40 @@ export async function listTokens(eventId: string) {
   } catch (error) {
     console.error('Error listing tokens:', error);
     return { success: false, error: 'Failed to list tokens' };
+  }
+}
+
+// ─── Delete a connection token ───────────────────────────────────────────────
+
+export async function deleteToken(tokenId: string) {
+  try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+
+    const token = await (prisma as any).connectionToken.findUnique({
+      where: { id: tokenId },
+      include: { event: true, connections: { take: 1 } },
+    });
+
+    if (!token) return { success: false, error: 'Token not found' };
+
+    const workspaceId = getWorkspaceId(session.user);
+    if (session.user.role !== 'superadmin' && token.event.createdById !== workspaceId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Check if used
+    if (token.connections.length > 0) {
+      return { success: false, error: 'Cannot delete a token that is currently in use by connected sub-events.' };
+    }
+
+    await (prisma as any).connectionToken.delete({ where: { id: tokenId } });
+
+    revalidatePath(`/dashboard/events/${token.eventId}/connections`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting token:', error);
+    return { success: false, error: 'Failed to delete token' };
   }
 }
 

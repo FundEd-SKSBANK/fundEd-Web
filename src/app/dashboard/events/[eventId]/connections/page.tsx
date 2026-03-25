@@ -44,6 +44,7 @@ import {
     approveConnection,
     rejectConnection,
     removeMajorConnection,
+    deleteToken,
 } from '@/actions/major-events';
 import type { ConnectionToken, SubEventConnection } from '@/lib/types';
 import {
@@ -72,6 +73,12 @@ function TokenCountdown({ expiresAt }: { expiresAt: string }) {
         return () => clearInterval(id);
     }, []);
     const expiry = new Date(expiresAt);
+    const isNever = expiry.getFullYear() >= 2100;
+    
+    if (isNever) {
+        return <span className="text-xs font-mono text-emerald-400">Never Expires</span>;
+    }
+
     const expired = now >= expiry;
     const underDay = !expired && (expiry.getTime() - now.getTime()) < 86400000;
     return (
@@ -160,6 +167,16 @@ export default function ConnectionsPage() {
         }
     };
 
+    const handleDeleteToken = async (tokenId: string) => {
+        const result = await deleteToken(tokenId);
+        if (result.success) {
+            toast({ title: 'Token Deleted', description: 'The connection token has been removed.' });
+            setTokens(prev => prev.filter(t => t.id !== tokenId));
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+    };
+
     const pendingConns = connections.filter(c => c.status === 'PENDING' && !c.disconnectedAt);
     const approvedConns = connections.filter(c => c.status === 'APPROVED' && !c.disconnectedAt);
     const rejectedConns = connections.filter(c => c.status === 'REJECTED');
@@ -208,9 +225,20 @@ export default function ConnectionsPage() {
                                     <p className="font-mono text-xs truncate">{token.token}</p>
                                     <TokenCountdown expiresAt={token.expiresAt} />
                                 </div>
-                                <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={() => handleCopy(token)}>
-                                    {copiedId === token.id ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                                </Button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCopy(token)}>
+                                        {copiedId === token.id ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                                    </Button>
+                                    {/* Delete Button */}
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
+                                        onClick={() => handleDeleteToken(token.id)}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
                             </div>
                         ))
                     )}
@@ -437,6 +465,7 @@ export default function ConnectionsPage() {
                                     <SelectItem value="24">1 day</SelectItem>
                                     <SelectItem value="72">3 days</SelectItem>
                                     <SelectItem value="168">7 days</SelectItem>
+                                    <SelectItem value="999999">Never</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
