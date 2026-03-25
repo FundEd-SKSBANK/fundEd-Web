@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -213,6 +214,9 @@ export function AdminManagementTable() {
                     <DialogContent className="sm:max-w-[425px] bg-black/95 border-white/10 backdrop-blur-xl">
                         <DialogHeader>
                             <DialogTitle>Add New Admin</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Create a new administrator account.
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleAddAdmin} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -258,6 +262,9 @@ export function AdminManagementTable() {
                     <DialogContent className="sm:max-w-[425px] bg-black/95 border-white/10 backdrop-blur-xl">
                         <DialogHeader>
                             <DialogTitle>Edit Admin</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Modify administrator account details.
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleUpdateAdmin} className="space-y-4 py-4">
                             <div className="space-y-2">
