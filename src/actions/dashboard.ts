@@ -4,27 +4,39 @@ import prisma from '@/lib/db';
 import { getSession, getWorkspaceId } from '@/lib/auth';
 import { getUserRole } from '@/actions/auth';
 
-export async function getDashboardData() {
+export async function getDashboardData(passedRole?: string | null) {
   try {
+    console.time('⏱️ [DashboardData] Total');
+    
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const role = await getUserRole();
+    let role = passedRole;
+    if (!role) {
+      console.time('⏱️ [DashboardData] GetRole');
+      role = await getUserRole();
+      console.timeEnd('⏱️ [DashboardData] GetRole');
+    }
+
     const workspaceId = getWorkspaceId(session.user);
     const eventWhere: any = role === 'superadmin' ? {} : { createdById: workspaceId };
     const paymentWhere: any = role === 'superadmin' ? {} : { event: { createdById: workspaceId } };
 
-    const events = await prisma.event.findMany({ where: eventWhere });
-    const transactions = await prisma.payment.findMany({ 
+    console.time('⏱️ [DashboardData] PrismaParallel');
+    const [events, transactions, recentTransactions] = await Promise.all([
+      prisma.event.findMany({ where: eventWhere }),
+      prisma.payment.findMany({ 
+          where: paymentWhere,
+          include: { student: true, event: true } 
+      }),
+      prisma.payment.findMany({
         where: paymentWhere,
-        include: { student: true, event: true } 
-    });
-    const recentTransactions = await prisma.payment.findMany({
-      where: paymentWhere,
-      take: 5,
-      orderBy: { paymentDate: 'desc' },
-      include: { student: true, event: true }
-    });
+        take: 5,
+        orderBy: { paymentDate: 'desc' },
+        include: { student: true, event: true }
+      })
+    ]);
+    console.timeEnd('⏱️ [DashboardData] PrismaParallel');
 
     const mapTransaction = (t: any) => ({
       ...t,
@@ -33,6 +45,8 @@ export async function getDashboardData() {
       eventCost: t.event?.cost || 0,
       paymentDate: t.paymentDate.toISOString(),
     });
+
+    console.timeEnd('⏱️ [DashboardData] Total');
 
     return {
       success: true,
