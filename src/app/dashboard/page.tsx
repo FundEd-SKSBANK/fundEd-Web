@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     }
 
     // 2. Server-side Data Fetching
-    const res = await getDashboardData();
+    const res = await getDashboardData(role);
 
     // Handle loading/error states if needed, though for a Server Component 
     // simply returning the UI is standard.
