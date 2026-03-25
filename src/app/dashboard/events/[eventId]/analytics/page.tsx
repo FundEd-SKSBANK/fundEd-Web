@@ -96,7 +96,7 @@ function ReadOnlyPaymentsModal({ subEventId, majorEventId, subEventName, pending
                 </DialogHeader>
 
                 <Tabs defaultValue="payments" className="flex-1 flex flex-col min-h-0">
-                    <div className="px-6 border-b border-white/5 overflow-x-auto no-scrollbar">
+                    <div className="px-6 border-b border-white/5 overflow-x-auto no-scrollbar shrink-0">
                         <TabsList className="bg-transparent border-0 p-0 h-11 w-max justify-start gap-6">
                             <TabsTrigger value="payments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-emerald-400 px-1 font-medium transition-all whitespace-nowrap">
                                 Paid Payments ({payments.length})
@@ -119,40 +119,69 @@ function ReadOnlyPaymentsModal({ subEventId, majorEventId, subEventName, pending
                                     <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="text-xs text-muted-foreground border-b border-white/10">
-                                                <th className="text-left font-medium py-3 pr-3">Student</th>
-                                                <th className="text-left font-medium py-3 pr-3">Amount</th>
-                                                <th className="text-left font-medium py-3 pr-3 hidden sm:table-cell">Method</th>
-                                                <th className="text-left font-medium py-3 pr-3">Status</th>
-                                                <th className="text-left font-medium py-3 hidden md:table-cell">Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-white/5">
-                                            {payments.map(p => (
-                                                <tr key={p.id} className="group hover:bg-white/[0.02]">
-                                                    <td className="py-3 pr-3">
-                                                        <p className="font-semibold">{p.studentName}</p>
-                                                        <p className="text-[10px] text-muted-foreground tracking-tight">{p.studentRoll}</p>
-                                                    </td>
-                                                    <td className="py-3 pr-3 font-bold text-emerald-400">₹{p.amount.toLocaleString('en-IN')}</td>
-                                                    <td className="py-3 pr-3 text-muted-foreground text-xs hidden sm:table-cell">{p.paymentMethod}</td>
-                                                    <td className="py-3 pr-3">
-                                                        <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-bold border',
-                                                            p.status === 'Paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                                                p.status === 'Verification Pending' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
-                                                                    'bg-white/5 border-white/10 text-muted-foreground'
-                                                        )}>
-                                                            {p.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3 text-xs text-muted-foreground hidden md:table-cell">{format(new Date(p.paymentDate), 'dd MMM, HH:mm')}</td>
+                                <div className="space-y-4">
+                                    {/* Desktop Table View */}
+                                    <div className="hidden sm:block overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-xs text-muted-foreground border-b border-white/10">
+                                                    <th className="text-left font-medium py-3 pr-3 min-w-[140px]">Student</th>
+                                                    <th className="text-left font-medium py-3 pr-3">Amount</th>
+                                                    <th className="text-left font-medium py-3 pr-3 hidden sm:table-cell">Method</th>
+                                                    <th className="text-left font-medium py-3 pr-3">Status</th>
+                                                    <th className="text-left font-medium py-3 hidden md:table-cell">Date</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody className="divide-y divide-white/5">
+                                                {payments.map(p => (
+                                                    <tr key={p.id} className="group hover:bg-white/[0.02]">
+                                                        <td className="py-3 pr-3">
+                                                            <p className="font-semibold">{p.studentName}</p>
+                                                            <p className="text-[10px] text-muted-foreground tracking-tight">{p.studentRoll}</p>
+                                                        </td>
+                                                        <td className="py-3 pr-3 font-bold text-emerald-400">₹{p.amount.toLocaleString('en-IN')}</td>
+                                                        <td className="py-3 pr-3 text-muted-foreground text-xs hidden sm:table-cell">{p.paymentMethod}</td>
+                                                        <td className="py-3 pr-3">
+                                                            <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap',
+                                                                p.status === 'Paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                                                    p.status === 'Verification Pending' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                                                                        'bg-white/5 border-white/10 text-muted-foreground'
+                                                            )}>
+                                                                {p.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-3 text-xs text-muted-foreground hidden md:table-cell">{format(new Date(p.paymentDate), 'dd MMM, HH:mm')}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Mobile Card View */}
+                                    <div className="grid grid-cols-1 gap-3 sm:hidden">
+                                        {payments.map(p => (
+                                            <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 transition-all border-emerald-500/10">
+                                                <div className="flex items-start gap-3 min-w-0 flex-1">
+                                                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center mt-0.5 shrink-0", 
+                                                        p.status === 'Paid' ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
+                                                        <Users className={cn("h-4 w-4", p.status === 'Paid' ? 'text-emerald-400' : 'text-amber-400')} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold text-sm leading-tight truncate">{p.studentName}</p>
+                                                        <p className="text-[10px] text-muted-foreground truncate">{p.studentRoll}</p>
+                                                        <p className="text-[9px] text-muted-foreground mt-0.5">{p.paymentMethod}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <p className={cn("text-xs font-bold leading-none mb-1", p.status === 'Paid' ? 'text-emerald-400' : 'text-amber-400')}>
+                                                        {p.status === 'Verification Pending' ? 'Pending' : p.status}
+                                                    </p>
+                                                    <p className="text-[11px] font-black text-white/90">₹{p.amount.toLocaleString('en-IN')}</p>
+                                                    <p className="text-[8px] text-muted-foreground tracking-tighter mt-0.5">{format(new Date(p.paymentDate), 'dd MMM, HH:mm')}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </TabsContent>
@@ -172,13 +201,13 @@ function ReadOnlyPaymentsModal({ subEventId, majorEventId, subEventName, pending
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {pendingStudents.map(s => (
                                         <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 group hover:border-amber-500/30 transition-all">
-                                            <div className="flex items-start gap-3">
-                                                <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center mt-0.5">
+                                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                                                <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center mt-0.5 shrink-0">
                                                     <Users className="h-4 w-4 text-amber-500" />
                                                 </div>
-                                                <div>
-                                                    <p className="font-semibold text-sm leading-tight">{s.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{s.rollNo}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-sm leading-tight truncate">{s.name}</p>
+                                                    <p className="text-[10px] text-muted-foreground truncate">{s.rollNo}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
