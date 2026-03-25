@@ -93,41 +93,46 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
                             </span>
                         </div>
 
-                        {/* Vertical Bar Chart */}
-                        <div className="flex items-stretch justify-between gap-2 h-48 px-2">
-                            {data.map((item, index) => {
-                                const value = metric === 'collections' ? Number(item.collections) : Number(item.transactions);
-                                const heightPercent = (value / maxValue) * 100;
+                        {/* Vertical Bar Chart with Horizontal Scroll on Mobile */}
+                        <div className="overflow-x-auto pb-4 -mx-2 px-2 no-scrollbar">
+                            <div className="flex items-stretch justify-between gap-2 h-48 min-w-[max-content] md:min-w-min">
+                                {data.map((item, index) => {
+                                    const value = metric === 'collections' ? Number(item.collections) : Number(item.transactions);
+                                    const heightPercent = (value / maxValue) * 100;
 
-                                return (
-                                    <div key={index} className="flex-1 flex flex-col items-center justify-end gap-2 group h-full">
-                                        {/* Value on hover */}
-                                        <div className="h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span className="text-xs font-medium text-emerald-600">
-                                                {metric === 'collections' ? `₹${value.toLocaleString('en-IN')}` : value}
-                                            </span>
-                                        </div>
+                                    return (
+                                        <div key={index} className="flex-1 min-w-[50px] sm:min-w-[60px] md:min-w-0 flex flex-col items-center justify-end gap-2 group h-full transition-all">
+                                            {/* Value on hover */}
+                                            <div className="h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span className="text-[10px] font-bold text-emerald-500 whitespace-nowrap">
+                                                    {metric === 'collections' ? `₹${(value / 1000).toFixed(1)}k` : value}
+                                                </span>
+                                            </div>
 
-                                        {/* Bar */}
-                                        <div className="w-full flex-1 flex items-end">
-                                            <div
-                                                className="w-full rounded-t-md bg-gradient-to-t from-emerald-600 to-teal-500 transition-all duration-500 hover:from-emerald-500 hover:to-teal-400 cursor-pointer relative group"
-                                                style={{ height: `${heightPercent}%`, minHeight: value > 0 ? '4px' : '0' }}
-                                            >
-                                                {/* Tooltip */}
-                                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                    {metric === 'collections' ? `₹${value.toLocaleString('en-IN')}` : `${value} txns`}
+                                            {/* Bar */}
+                                            <div className="w-full flex-1 flex items-end px-0.5">
+                                                <div
+                                                    className="w-full rounded-t-md bg-gradient-to-t from-emerald-600/80 to-teal-500/80 transition-all duration-500 hover:from-emerald-500 hover:to-teal-400 cursor-pointer relative group"
+                                                    style={{ height: `${heightPercent}%`, minHeight: value > 0 ? '4px' : '0' }}
+                                                >
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-zinc-900 border border-white/10 text-white text-[10px] font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 backdrop-blur-md">
+                                                        <p className="text-emerald-400">
+                                                            {metric === 'collections' ? `₹${value.toLocaleString('en-IN')}` : `${value} txns`}
+                                                        </p>
+                                                        <p className="text-[8px] text-muted-foreground mt-0.5">{item.date}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Label */}
-                                        <span className="text-xs text-muted-foreground text-center line-clamp-1 w-full">
-                                            {item.date}
-                                        </span>
-                                    </div>
-                                );
-                            })}
+                                            {/* Label */}
+                                            <span className="text-[10px] text-muted-foreground font-medium text-center line-clamp-1 w-full px-1">
+                                                {item.date}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 )}
