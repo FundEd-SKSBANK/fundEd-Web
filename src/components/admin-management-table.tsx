@@ -192,12 +192,12 @@ export function AdminManagementTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="relative w-72">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div className="relative flex-1 sm:max-w-72">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search admins..."
-                        className="pl-8 bg-white/5 border-white/10"
+                        className="pl-8 bg-white/5 border-white/10 w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -205,10 +205,11 @@ export function AdminManagementTable() {
 
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" /> Add Admin
                         </Button>
                     </DialogTrigger>
+                    {/* ... (DialogContent remains same) ... */}
                     <DialogContent className="sm:max-w-[425px] bg-black/95 border-white/10 backdrop-blur-xl">
                         <DialogHeader>
                             <DialogTitle>Add New Admin</DialogTitle>
@@ -299,7 +300,77 @@ export function AdminManagementTable() {
                 </Dialog>
             </div>
 
-            <div className="rounded-md border border-white/10 bg-white/5">
+            {/* Mobile View - Cards */}
+            <div className="grid gap-3 md:hidden">
+                {loading ? (
+                    <div className="h-24 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg">
+                        <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                    </div>
+                ) : filteredAdmins.length === 0 ? (
+                    <div className="h-24 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg text-stone-500 text-sm">
+                        No admins found.
+                    </div>
+                ) : (
+                    filteredAdmins.map((admin) => (
+                        <div key={admin.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <Avatar className="h-10 w-10 ring-1 ring-emerald-500/20 shrink-0">
+                                        {admin.image ? (
+                                            <AvatarImage src={admin.image} />
+                                        ) : null}
+                                        <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-sm font-semibold">
+                                            {getInitials(admin.email, admin.name)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-stone-200 font-bold truncate text-sm">{admin.name || 'Unnamed Admin'}</span>
+                                        <span className="text-[10px] text-stone-500 truncate">{admin.email}</span>
+                                    </div>
+                                </div>
+                                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0 text-[10px]">
+                                    {admin.role}
+                                </Badge>
+                            </div>
+                            
+                            <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                                <div className="text-[10px] text-stone-500">
+                                    Joined: {new Date(admin.createdAt).toLocaleDateString('en-GB')}
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(admin)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl max-w-[90vw] rounded-2xl">
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the admin account.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteAdmin(admin.id)} className="bg-red-600 hover:bg-red-700">
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block rounded-md border border-white/10 bg-white/5">
                 <Table>
                     <TableHeader>
                         <TableRow className="border-white/10 hover:bg-white/5">
@@ -313,7 +384,7 @@ export function AdminManagementTable() {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-500" />
                                 </TableCell>
                             </TableRow>
                         ) : filteredAdmins.length === 0 ? (
@@ -336,7 +407,7 @@ export function AdminManagementTable() {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="text-stone-200">{admin.name}</span>
+                                                <span className="text-stone-200 font-medium">{admin.name || 'Unnamed Admin'}</span>
                                                 <span className="text-xs text-stone-500">{admin.email}</span>
                                             </div>
                                         </div>

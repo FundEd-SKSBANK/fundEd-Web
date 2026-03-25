@@ -49,12 +49,12 @@ export default async function SuperDashboardPage() {
                 <TabsContent value="overview" className="space-y-4">
                     <SuperStatsCards stats={stats} />
 
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                        <div className="col-span-4 bg-white/5 border border-white/10 rounded-xl p-6 min-h-[300px]">
+                    <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+                        <div className="col-span-full lg:col-span-4 bg-white/5 border border-white/10 rounded-xl p-6 min-h-[300px]">
                             <h3 className="text-lg font-medium text-stone-200 mb-4">Revenue vs Expenses (Last 7 Days)</h3>
                             <RevenueTrendChart data={financialData} />
                         </div>
-                        <div className="col-span-3 bg-white/5 border border-white/10 rounded-xl p-6 min-h-[300px]">
+                        <div className="col-span-full lg:col-span-3 bg-white/5 border border-white/10 rounded-xl p-6 min-h-[300px]">
                             <h3 className="text-lg font-medium text-stone-200 mb-4">Expense Breakdown</h3>
                             {expenseData.length > 0 ? (
                                 <ExpenseBreakdownChart data={expenseData} />

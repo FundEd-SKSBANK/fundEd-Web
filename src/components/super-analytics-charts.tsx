@@ -99,8 +99,8 @@ export function ExpenseBreakdownChart({ data }: ExpenseBreakdownProps) {
                         data={data}
                         cx="50%"
                         cy="45%"
-                        innerRadius={60}
-                        outerRadius={80}
+                        innerRadius="50%"
+                        outerRadius="75%"
                         paddingAngle={5}
                         dataKey="value"
                     >

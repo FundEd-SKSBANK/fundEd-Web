@@ -89,24 +89,77 @@ export function SuperFinancialsTable() {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between mb-2">
-                <div className="relative w-72">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-4">
+                <div className="relative flex-1 sm:max-w-72">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search events or admins..."
-                        className="pl-8 bg-white/5 border-white/10 text-stone-200"
+                        className="pl-8 bg-white/5 border-white/10 text-stone-200 w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                {/* Future: Export Global report button */}
-                <Button variant="outline" size="sm" className="border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white" onClick={() => toast({ title: "Coming Soon", description: "Global report export is being developed." })}>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-white/10 bg-white/5 text-stone-300 hover:bg-white/10 hover:text-white w-full sm:w-auto" 
+                    onClick={() => toast({ title: "Coming Soon", description: "Global report export is being developed." })}
+                >
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                 </Button>
             </div>
 
-            <div className="rounded-md border border-white/10 bg-white/5 overflow-hidden">
+            {/* Mobile View - Cards */}
+            <div className="grid gap-3 md:hidden">
+                {loading ? (
+                    <div className="h-24 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg">
+                        <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                    </div>
+                ) : filteredData.length === 0 ? (
+                    <div className="h-24 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg text-stone-500 text-sm">
+                        No financial records found.
+                    </div>
+                ) : (
+                    filteredData.map((item) => (
+                        <div key={item.id} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 overflow-hidden">
+                            <div className="flex justify-between items-start gap-2">
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="font-bold text-stone-200 truncate text-sm">{item.name}</h4>
+                                    <p className="text-[10px] text-stone-400 mt-0.5 truncate">{item.creator}</p>
+                                </div>
+                                <Badge variant="outline" className={`shrink-0 text-[9px] px-1.5 py-0 h-5
+                                    ${item.status === 'PUBLISHED' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' :
+                                        item.status === 'COMPLETED' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' :
+                                            'border-stone-500/30 text-stone-400 bg-stone-500/5'}
+                                `}>
+                                    {item.status}
+                                </Badge>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-white/10 gap-2">
+                                <div className="min-w-0">
+                                    <p className="text-[9px] text-stone-500 uppercase tracking-wider mb-0.5">Collected</p>
+                                    <p className="text-xs font-semibold text-emerald-400/90 truncate">₹{item.totalCollected.toLocaleString('en-IN')}</p>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[9px] text-stone-500 uppercase tracking-wider mb-0.5">Expenses</p>
+                                    <p className="text-xs font-semibold text-red-400/90 truncate">₹{item.totalExpenses.toLocaleString('en-IN')}</p>
+                                </div>
+                                <div className="text-right min-w-0">
+                                    <p className="text-[9px] text-stone-500 uppercase tracking-wider mb-0.5">Balance</p>
+                                    <p className={`text-xs font-bold truncate ${item.netBalance >= 0 ? 'text-blue-400' : 'text-stone-500'}`}>
+                                        ₹{Math.max(0, item.netBalance).toLocaleString('en-IN')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block rounded-md border border-white/10 bg-white/5 overflow-hidden">
                 <Table>
                     <TableHeader>
                         <TableRow className="border-white/10 hover:bg-white/10">
