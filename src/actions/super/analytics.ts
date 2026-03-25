@@ -212,16 +212,44 @@ export async function getGlobalEventFinancials() {
                 createdBy: { select: { name: true, email: true } },
                 payments: { where: { status: 'Paid' } },
                 expenses: true,
-                additionalRevenues: true
+                additionalRevenues: true,
+                subEventConns: {
+                    where: { status: 'APPROVED', disconnectedAt: null },
+                    include: {
+                        subEvent: {
+                            include: {
+                                payments: { where: { status: 'Paid' } },
+                                additionalRevenues: true,
+                                expenses: true
+                            }
+                        }
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         });
 
         const data = events.map(event => {
-            const studentCollected = event.payments.reduce((sum, p) => sum + p.amount, 0);
-            const additionalCollected = event.additionalRevenues.reduce((sum, r) => sum + r.amount, 0);
-            const totalCollected = studentCollected + additionalCollected;
-            const totalExpenses = event.expenses.reduce((sum, e) => sum + e.amount, 0);
+            let totalCollected = event.payments.reduce((sum, p) => sum + p.amount, 0) +
+                event.additionalRevenues.reduce((sum, r) => sum + r.amount, 0);
+            
+            let totalExpenses = event.expenses.reduce((sum, e) => sum + e.amount, 0);
+
+            // Aggregate from sub-events if it's a major event
+            if (event.isMajorEvent && event.subEventConns) {
+                event.subEventConns.forEach(conn => {
+                    const subEvent = conn.subEvent;
+                    if (subEvent) {
+                        const subCollected = subEvent.payments.reduce((sum, p) => sum + p.amount, 0) +
+                            subEvent.additionalRevenues.reduce((sum, r) => sum + r.amount, 0);
+                        const subExpenses = subEvent.expenses.reduce((sum, e) => sum + e.amount, 0);
+                        
+                        totalCollected += subCollected;
+                        totalExpenses += subExpenses;
+                    }
+                });
+            }
+
             return {
                 id: event.id,
                 name: event.name,
