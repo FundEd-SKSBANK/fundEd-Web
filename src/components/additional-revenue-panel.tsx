@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -175,6 +176,9 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                     <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Add Additional Income</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Form to add a new additional income source.
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleAddRevenue} className="space-y-4 py-4">
                             <div className="space-y-2">
@@ -230,6 +234,9 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                     <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Edit Income Entry</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                Form to edit an existing income entry.
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleUpdateRevenue} className="space-y-4 py-4">
                             <div className="space-y-2">
