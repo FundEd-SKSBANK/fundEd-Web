@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Card,
@@ -56,6 +56,8 @@ const getStatusBadgeVariant = (status: Transaction['status']) => {
 export default function EventPaymentsPage() {
   const { eventId } = useParams();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status') || 'all';
   const eventIdStr = eventId as string;
 
   const [event, setEvent] = useState<Event | null>(null);
@@ -63,7 +65,14 @@ export default function EventPaymentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, pendingCount: 0, paidCount: 0 });
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>(initialStatus);
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setFilterStatus(status);
+    }
+  }, [searchParams]);
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
   const confirmDelete = async () => {

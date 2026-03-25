@@ -184,11 +184,14 @@ function MobileNav({ user, events }: { user?: any; events?: { id: string; name: 
 const NotificationItem = ({ transaction }: { transaction: Transaction }) => {
     return (
         <DropdownMenuItem asChild>
-            <Link href={`/dashboard/events/${transaction.eventId}/payments`}>
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between w-full">
-                        <p className="text-sm font-medium">{transaction.studentName}</p>
-                        <span className="text-[10px] text-stone-500">
+            <Link 
+                href={`/dashboard/events/${transaction.eventId}/payments?status=Verification+Pending`}
+                className="flex items-center gap-4 w-full cursor-pointer hover:bg-white/5 transition-colors p-3"
+            >
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <div className="flex items-center justify-between w-full gap-3">
+                        <p className="text-sm font-medium truncate flex-1">{transaction.studentName}</p>
+                        <span className="text-[10px] text-stone-500 shrink-0">
                             {new Date(transaction.paymentDate).toLocaleString('en-GB', { 
                                 day: '2-digit', 
                                 month: '2-digit', 
@@ -199,9 +202,9 @@ const NotificationItem = ({ transaction }: { transaction: Transaction }) => {
                             }).toUpperCase()}
                         </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{transaction.eventName} - ₹{transaction.amount}</p>
+                    <p className="text-xs text-muted-foreground truncate">{transaction.eventName} - ₹{transaction.amount}</p>
                 </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                <ArrowRight className="shrink-0 h-4 w-4 text-muted-foreground" />
             </Link>
         </DropdownMenuItem>
     );
