@@ -11,14 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
 import {
   Dialog,
   DialogContent,
@@ -123,75 +116,67 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
   };
 
   return (
-    <GlassCard>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <CardTitle>Collab Users (Team)</CardTitle>
-          <CardDescription>Create assistant accounts to help manage your data.</CardDescription>
+    <GlassCard className="min-w-0">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6 min-w-0">
+        <div className="space-y-1.5 min-w-0">
+          <CardTitle className="text-lg sm:text-xl break-words">Collab Users (Team)</CardTitle>
+          <CardDescription className="text-xs sm:text-sm break-words">Create assistant accounts to help manage your data.</CardDescription>
         </div>
-        <Button onClick={handleOpenCreate} className="w-full sm:w-auto">
+        <Button onClick={handleOpenCreate} className="w-full sm:w-auto shrink-0">
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Collab User
         </Button>
       </CardHeader>
-      <CardContent className="px-4 sm:px-6">
+      <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6 relative w-full overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : collabUsers.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg border-white/10">
+          <div className="text-center py-8 px-4 text-muted-foreground border-2 border-dashed rounded-lg border-white/10 text-sm">
             No collab users found. Add your first assistant above.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-stone-400">Name</TableHead>
-                  <TableHead className="text-stone-400">Email</TableHead>
-                  <TableHead className="text-stone-400">Created</TableHead>
-                  <TableHead className="text-right text-stone-400">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {collabUsers.map((user) => (
-                  <TableRow key={user.id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenEdit(user)}
-                          className="hover:bg-white/10"
-                        >
-                          <Edit className="h-4 w-4" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {collabUsers.map((user) => (
+              <div key={user.id} className="bg-black/20 border border-white/10 rounded-xl p-4 flex flex-col gap-4 relative group transition-colors hover:bg-white/[0.02]">
+                <div className="flex flex-col min-w-0 space-y-1">
+                  <h4 className="font-semibold text-white text-base truncate">{user.name}</h4>
+                  <p className="text-sm text-emerald-400/80 truncate font-medium" title={user.email}>{user.email}</p>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-auto">
+                  <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">
+                    Added {new Date(user.createdAt).toLocaleDateString()}
+                  </p>
+                  <div className="flex gap-1 -mr-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenEdit(user)}
+                      className="h-8 w-8 text-stone-400 hover:text-white hover:bg-white/10"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <DeleteConfirmationDialog
+                      title="Delete Collab User?"
+                      description={
+                        <span>
+                          Are you sure you want to delete <strong>{user.name}</strong>? They will lose access immediately.
+                        </span>
+                      }
+                      confirmationString={user.name}
+                      isDeleting={deletingUserId === user.id}
+                      onConfirm={() => handleDelete(user.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/80 hover:text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                        <DeleteConfirmationDialog
-                          title="Delete Collab User?"
-                          description={
-                            <span>
-                              Are you sure you want to delete <strong>{user.name}</strong>? They will lose access immediately.
-                            </span>
-                          }
-                          confirmationString={user.name}
-                          isDeleting={deletingUserId === user.id}
-                          onConfirm={() => handleDelete(user.id)}
-                          trigger={
-                            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
