@@ -5,24 +5,25 @@ import { getSession, getWorkspaceId } from '@/lib/auth';
 import { getUserRole } from '@/actions/auth';
 
 export async function getDashboardData(passedRole?: string | null) {
+  const callId = Date.now();
   try {
-    console.time('⏱️ [DashboardData] Total');
+    console.time(`⏱️ [DashboardData] Total-${callId}`);
     
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     let role = passedRole;
     if (!role) {
-      console.time('⏱️ [DashboardData] GetRole');
+      console.time(`⏱️ [DashboardData] GetRole-${callId}`);
       role = await getUserRole();
-      console.timeEnd('⏱️ [DashboardData] GetRole');
+      console.timeEnd(`⏱️ [DashboardData] GetRole-${callId}`);
     }
 
     const workspaceId = getWorkspaceId(session.user);
     const eventWhere: any = role === 'superadmin' ? {} : { createdById: workspaceId };
     const paymentWhere: any = role === 'superadmin' ? {} : { event: { createdById: workspaceId } };
 
-    console.time('⏱️ [DashboardData] PrismaParallel');
+    console.time(`⏱️ [DashboardData] PrismaParallel-${callId}`);
     const [events, transactions, recentTransactions] = await Promise.all([
       prisma.event.findMany({ where: eventWhere }),
       prisma.payment.findMany({ 
@@ -36,7 +37,7 @@ export async function getDashboardData(passedRole?: string | null) {
         include: { student: true, event: true }
       })
     ]);
-    console.timeEnd('⏱️ [DashboardData] PrismaParallel');
+    console.timeEnd(`⏱️ [DashboardData] PrismaParallel-${callId}`);
 
     const mapTransaction = (t: any) => ({
       ...t,
@@ -46,7 +47,7 @@ export async function getDashboardData(passedRole?: string | null) {
       paymentDate: t.paymentDate.toISOString(),
     });
 
-    console.timeEnd('⏱️ [DashboardData] Total');
+    console.timeEnd(`⏱️ [DashboardData] Total-${callId}`);
 
     return {
       success: true,
@@ -61,3 +62,4 @@ export async function getDashboardData(passedRole?: string | null) {
     return { success: false, error: 'Failed to fetch dashboard data' };
   }
 }
+
