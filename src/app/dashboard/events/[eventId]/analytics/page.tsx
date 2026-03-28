@@ -331,7 +331,7 @@ export default function MajorEventAnalyticsPage() {
                         s.subEventAdminName || '',
                         s.subEventParticipantCount?.toString() || '0',
                         `Rs. ${(s.subEventTotalCollected || 0).toLocaleString('en-IN')}`,
-                        `Rs. ${(s.subEventPendingCount || 0)}`,
+                        `Rs. ${(s.subEventPendingAmount || 0).toLocaleString('en-IN')}`,
                         `Rs. ${(s.subEventAdditionalRevenue || 0).toLocaleString('en-IN')}`,
                     ];
                     if (hasPrintEvent) {
@@ -607,7 +607,10 @@ export default function MajorEventAnalyticsPage() {
                                             </div>
                                             <div className="space-y-0.5 text-right">
                                                 <p className="text-[10px] sm:text-xs text-muted-foreground uppercase font-bold tracking-tight">Pending</p>
-                                                <p className="font-bold text-amber-500 text-sm sm:text-base lg:text-lg">{(conn.subEventPendingCount || 0)}/{(conn.subEventParticipantCount || 0)}</p>
+                                                <div className="flex flex-col items-end">
+                                                    <p className="font-bold text-amber-500 text-sm sm:text-base lg:text-lg">₹{(conn.subEventPendingAmount || 0).toLocaleString('en-IN')}</p>
+                                                    <p className="text-[9px] text-muted-foreground leading-none">{(conn.subEventPendingCount || 0)}/{(conn.subEventParticipantCount || 0)} students</p>
+                                                </div>
                                             </div>
                                         </div>
 
