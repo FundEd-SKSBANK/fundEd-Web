@@ -257,31 +257,31 @@ export default function SettingsPage() {
   const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
 
   return (
-    <div className="grid gap-6 sm:gap-8">
-      <GlassCard>
-        <CardHeader>
-          <CardTitle>Settings</CardTitle>
-          <CardDescription>Manage your payment QR codes & Collabration</CardDescription>
+    <div className="grid gap-6 sm:gap-8 w-full max-w-full overflow-hidden min-w-0">
+      <GlassCard className="min-w-0">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4 space-y-1.5 focus:outline-none">
+          <CardTitle className="text-xl sm:text-2xl break-words">Settings</CardTitle>
+          <CardDescription className="text-xs sm:text-sm break-words">Manage your payment QR codes & Collaboration</CardDescription>
         </CardHeader>
       </GlassCard>
 
-      <div className="grid gap-4 sm:gap-6">
+      <div className="grid gap-4 sm:gap-6 min-w-0">
         {/* Student Portal Card */}
         {isAdminRole && (
-          <GlassCard>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Link2 className="h-5 w-5 text-emerald-400" />
-                Student Portal Link
-              </CardTitle>
-              <CardDescription>
-                Set a unique URL slug so students can check their payment status. Share this link with them.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <GlassCard className="min-w-0">
+          <CardHeader className="p-4 sm:p-6 space-y-1.5">
+            <CardTitle className="flex items-start sm:items-center gap-2 text-lg sm:text-xl break-words whitespace-normal leading-tight">
+              <Link2 className="h-5 w-5 text-emerald-400 mt-0.5 sm:mt-0 shrink-0" />
+              Student Portal Link
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm break-words">
+              Set a unique URL slug so students can check their payment status.
+            </CardDescription>
+          </CardHeader>
+            <CardContent className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
               <div className="space-y-2">
-                <Label htmlFor="slug-input">Your Unique Slug</Label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <Label htmlFor="slug-input" className="text-sm">Your Unique Slug</Label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full min-w-0">
                   <div className={`flex items-center w-full sm:max-w-[320px] bg-white/5 border rounded-md overflow-hidden transition-colors ${slugAvailability === 'available' ? 'border-emerald-500/50' :
                     slugAvailability === 'taken' || slugAvailability === 'invalid' ? 'border-red-500/40' :
                       'border-white/10'
@@ -294,7 +294,7 @@ export default function SettingsPage() {
                         setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
                         setSlugError('');
                       }}
-                      className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ring-0 ring-offset-0 shadow-none flex-1 h-9 text-sm px-3"
+                      className="border-none bg-transparent focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ring-0 ring-offset-0 shadow-none flex-1 h-9 text-sm px-3 min-w-0"
                     />
                     {/* Availability indicator */}
                     <div className="pr-3 shrink-0">
@@ -307,7 +307,7 @@ export default function SettingsPage() {
                     onClick={handleSaveSlug}
                     disabled={!canSaveSlug}
                     size="sm"
-                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all h-10 sm:h-9"
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all h-10 sm:h-9 shrink-0"
                   >
                     {isSavingSlug ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Save Slug
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                   </p>
                 )}
                 {slugAvailability === 'invalid' && (
-                  <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <p className="text-[10px] sm:text-xs text-red-400 flex items-center gap-1.5 mt-1">
                     <XCircle className="h-3.5 w-3.5 shrink-0" /> Only lowercase letters, numbers, and hyphens.
                   </p>
                 )}
@@ -333,12 +333,12 @@ export default function SettingsPage() {
 
               {/* Preview & Copy */}
               {(slugPreview || currentSlug) && (
-                <div className="flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-2.5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-wider text-emerald-500/60 font-semibold mb-0.5 sm:hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-3 py-3 sm:px-4 w-full min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-emerald-500/60 font-semibold sm:hidden">
                       Student Portal Link
                     </p>
-                    <p className="text-sm text-stone-300 font-mono truncate">
+                    <p className="text-sm text-stone-300 font-mono break-all sm:truncate">
                       <span className="text-stone-600 hidden sm:inline">…/check-status/</span>
                       <span className="text-emerald-300 font-medium">{slugPreview || currentSlug}</span>
                     </p>
@@ -346,11 +346,12 @@ export default function SettingsPage() {
                   {currentSlug && (
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={handleCopySlugLink}
-                      className="shrink-0 h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20"
+                      className="shrink-0 h-9 w-full sm:w-auto text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center gap-2 px-3 leading-tight"
                     >
-                      {slugCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {slugCopied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+                      <span className="sm:hidden text-xs font-medium whitespace-nowrap">Copy Link</span>
                     </Button>
                   )}
                 </div>
@@ -360,18 +361,18 @@ export default function SettingsPage() {
         )}
 
         {isAdminRole && (
-          <GlassCard>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle>Manage QR Codes</CardTitle>
-                <CardDescription>Add or remove your payment QR codes.</CardDescription>
+          <GlassCard className="min-w-0">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6">
+              <div className="space-y-1.5 min-w-0">
+                <CardTitle className="text-lg sm:text-xl break-words">Manage QR Codes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm break-words">Add or remove your payment QR codes.</CardDescription>
               </div>
               <Dialog
                 open={openQr}
                 onOpenChange={(open) => { setOpenQr(open); if (!open) resetDialog(); }}
               >
                 <DialogTrigger asChild>
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto h-11 sm:h-10 text-[13px] sm:text-sm font-semibold">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add New QR
                   </Button>
@@ -468,20 +469,20 @@ export default function SettingsPage() {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <CardContent className="px-3.5 sm:px-6 w-full min-w-0">
+              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full min-w-0">
                 {qrCodes?.length === 0 && (
                   <div className="col-span-full text-center py-6 sm:py-8 text-muted-foreground border-2 border-dashed rounded-lg border-white/10">
                     No QR codes found. Add your first payment QR code above.
                   </div>
                 )}
                 {qrCodes?.map((qr) => (
-                  <GlassCard key={qr.id} variant="bordered" className="bg-black/20 overflow-hidden flex flex-col h-full">
-                    <CardContent className="p-6 pt-10 flex flex-col items-center gap-4 flex-1">
-                      <div className="relative w-40 h-40 bg-white rounded-xl p-2 flex items-center justify-center shadow-inner overflow-hidden">
+                  <GlassCard key={qr.id} variant="bordered" className="bg-black/20 overflow-hidden flex flex-col h-full min-w-0">
+                    <CardContent className="p-4 sm:p-6 pt-8 sm:pt-10 flex flex-col items-center gap-4 flex-1 w-full min-w-0">
+                      <div className="relative w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-xl p-2 flex items-center justify-center shadow-inner overflow-hidden shrink-0">
                         <Image src={qr.url} alt={qr.name} fill className="object-contain p-2" />
                       </div>
-                      <p className="font-medium text-center text-sm mt-2">{qr.name}</p>
+                      <p className="font-medium text-center text-sm mt-1 sm:mt-2 w-full break-words line-clamp-2 px-2">{qr.name}</p>
                     </CardContent>
                     <CardFooter className="p-0 border-t border-white/10">
                       <DeleteConfirmationDialog
