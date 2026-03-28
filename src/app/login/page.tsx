@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useActionState, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GraduationCap, Loader2, Lock, Mail, Eye, EyeOff, User, UserPlus, ArrowLeft, Send } from 'lucide-react';
-import { login, signup, forgotPassword } from '@/actions/auth';
+import { GraduationCap, Loader2, Lock, Mail, Eye, EyeOff, ArrowLeft, Send } from 'lucide-react';
+import { login, forgotPassword } from '@/actions/auth';
 import { Label } from '@/components/ui/label';
 import { useFormStatus } from 'react-dom';
 import { CustomCursor } from '@/components/custom-cursor';
@@ -17,7 +17,7 @@ const initialState: any = {
   success: '',
 };
 
-type AuthView = 'login' | 'signup' | 'forgot-password';
+type AuthView = 'login' | 'forgot-password';
 
 function SubmitButton({ icon: Icon, text, pendingText }: { icon: any, text: string, pendingText: string }) {
   const { pending } = useFormStatus();
@@ -43,20 +43,17 @@ export default function UnifiedLoginPage() {
 
   // Login form state
   const [loginState, loginAction] = useActionState(login, initialState);
-  // Signup form state
-  const [signupState, signupAction] = useActionState(signup, initialState);
   // Forgot password state
   const [forgotState, forgotAction] = useActionState(forgotPassword, initialState);
 
   // Reset errors when switching views
   useEffect(() => {
     loginState.error = '';
-    signupState.error = '';
     forgotState.error = '';
     forgotState.success = '';
   }, [view]);
 
-  const activeState = view === 'login' ? loginState : view === 'signup' ? signupState : forgotState;
+  const activeState = view === 'login' ? loginState : forgotState;
 
   return (
     <div className="min-h-screen bg-black text-stone-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-100 overflow-x-hidden relative cursor-none flex flex-col items-center justify-center">
@@ -112,13 +109,6 @@ export default function UnifiedLoginPage() {
               </div>
               <div className={cn(
                 "transition-all duration-300 transform",
-                view === 'signup' ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 hidden"
-              )}>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Create Account</h1>
-                <p className="text-stone-400 text-sm sm:text-base">Join the FundEd community today</p>
-              </div>
-              <div className={cn(
-                "transition-all duration-300 transform",
                 view === 'forgot-password' ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 hidden"
               )}>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Reset Password</h1>
@@ -148,22 +138,14 @@ export default function UnifiedLoginPage() {
                 </div>
                 {loginState?.error && <AuthError error={loginState.error} />}
                 <SubmitButton icon={Lock} text="Access Dashboard" pendingText="Signing in..." />
-                <AuthFooter text="Don't have an account?" linkText="Sign Up" onClick={() => setView('signup')} />
-              </form>
-            )}
-
-            {/* Signup View */}
-            {view === 'signup' && (
-              <form action={signupAction} className="space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                <AuthInput icon={User} label="Full Name" id="name" name="name" type="text" placeholder="John Doe" />
-                <AuthInput icon={Mail} label="Email Address" id="email" name="email" type="email" placeholder="john@example.com" />
-                <AuthInput icon={Lock} label="Password" id="password" name="password" type="password" placeholder="••••••••" required minLength={6} />
-                <AuthInput icon={Lock} label="Confirm Password" id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required />
-                {signupState?.error && <AuthError error={signupState.error} />}
-                <div className="pt-2">
-                  <SubmitButton icon={UserPlus} text="Create Account" pendingText="Creating..." />
+                <div className="mt-4 sm:mt-6 text-center">
+                  <p className="text-sm text-stone-400">
+                    Don&apos;t have an account?{' '}
+                    <Link href="/signup" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                      Sign Up
+                    </Link>
+                  </p>
                 </div>
-                <AuthFooter text="Already have an account?" linkText="Sign In" onClick={() => setView('login')} />
               </form>
             )}
 

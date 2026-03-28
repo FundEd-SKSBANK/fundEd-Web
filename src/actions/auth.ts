@@ -4,8 +4,98 @@ import { cookies, headers } from 'next/headers';
 import prisma from '@/lib/db';
 import { encrypt, getSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
-import { sendResetPasswordEmail } from '@/lib/email-templates';
+import { sendResetPasswordEmail, sendVerificationOTPEmail } from '@/lib/email-templates';
 import { redirect } from 'next/navigation';
+
+export async function sendSignupOTP(prevState: any, formData: FormData) {
+  const email = formData.get('email') as string;
+  const name = formData.get('name') as string;
+
+  if (!email) {
+    return { error: 'Please provide an email address' };
+  }
+
+  try {
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return { error: 'An account with this email already exists' };
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store OTP in database (email is @unique so upsert is valid)
+    await (prisma as any).verificationOTP.upsert({
+      where: { email },
+      update: {
+        otp,
+        expiresAt,
+        verified: false,
+      },
+      create: {
+        email,
+        otp,
+        expiresAt,
+      },
+    });
+
+
+    // Send email
+    const result = await sendVerificationOTPEmail({
+      email,
+      otp,
+      name: name || undefined,
+    });
+
+    if (!result.success) {
+      return { error: result.message || 'Failed to send verification email' };
+    }
+
+    return { success: 'Verification code sent to your email' };
+  } catch (error: any) {
+    console.error('❌ [AuthAction] sendSignupOTP error:', error);
+    return { error: 'An error occurred. Please try again.' };
+  }
+}
+
+export async function verifySignupOTP(prevState: any, formData: FormData) {
+  const email = formData.get('email') as string;
+  const otp = formData.get('otp') as string;
+
+  if (!email || !otp) {
+    return { error: 'Please provide both email and OTP' };
+  }
+
+  try {
+    const record = await (prisma as any).verificationOTP.findFirst({
+      where: {
+        email,
+        otp,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!record) {
+      return { error: 'Invalid or expired verification code' };
+    }
+
+    await (prisma as any).verificationOTP.update({
+      where: { id: record.id },
+      data: { verified: true },
+    });
+
+    return { success: 'Email verified successfully' };
+  } catch (error: any) {
+    console.error('❌ [AuthAction] verifySignupOTP error:', error);
+    return { error: 'An error occurred. Please try again.' };
+  }
+}
+
 
 
 export async function login(prevState: any, formData: FormData) {
@@ -114,6 +204,21 @@ export async function signup(prevState: any, formData: FormData) {
       return { error: 'A user with this email already exists' };
     }
 
+    // Check if email is verified
+    const verification = await (prisma as any).verificationOTP.findUnique({
+      where: { email },
+    });
+
+    if (!verification || !verification.verified) {
+      return { error: 'Please verify your email address first' };
+    }
+
+    // Optional: Check if verification is too old (e.g., > 1 hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (verification.updatedAt < oneHourAgo) {
+        return { error: 'Verification expired. Please verify again.' };
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     console.time('⏱️ [AuthAction] Signup: CreateUser');
     const user = await prisma.user.create({
@@ -121,10 +226,16 @@ export async function signup(prevState: any, formData: FormData) {
         email,
         password: hashedPassword,
         name,
-        role: 'admin', // Default to admin for now as per current schema logic
+        role: 'admin',
       },
     });
     console.timeEnd('⏱️ [AuthAction] Signup: CreateUser');
+
+    // Clean up verification record
+    await (prisma as any).verificationOTP.delete({
+        where: { email }
+    });
+
 
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const sessionToken = await encrypt({ 
