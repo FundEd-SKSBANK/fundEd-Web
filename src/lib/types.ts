@@ -83,6 +83,7 @@ export type SubEventConnection = {
   subEventTotalCost?: number;
   subEventParticipantCount?: number;
   subEventPendingCount?: number;
+  subEventPendingAmount?: number;
   subEventAdditionalRevenue?: number;
   subEventPrintDistributed?: number;
   subEventPrintTotal?: number;
