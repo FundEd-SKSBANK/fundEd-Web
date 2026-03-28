@@ -202,3 +202,19 @@ model AdditionalRevenue {
 
   @@index([eventId])
 }
+
+model VerificationOTP {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+
+
+
