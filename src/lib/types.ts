@@ -198,3 +198,11 @@ export const ResetPasswordEmailInputSchema = z.object({
   name: z.string().optional(),
 });
 export type ResetPasswordEmailInput = z.infer<typeof ResetPasswordEmailInputSchema>;
+
+export const VerificationOTPEmailInputSchema = z.object({
+  email: z.string().email(),
+  otp: z.string(),
+  name: z.string().optional(),
+});
+export type VerificationOTPEmailInput = z.infer<typeof VerificationOTPEmailInputSchema>;
+

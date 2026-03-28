@@ -7,8 +7,10 @@ import {
     type PaymentReceiptEmailInput,
     type SendEmailOutput,
     type SendEmailInput,
-    type ResetPasswordEmailInput
+    type ResetPasswordEmailInput,
+    type VerificationOTPEmailInput
 } from '@/lib/types';
+
 
 
 // --- Email Template Helper ---
@@ -509,3 +511,34 @@ export async function sendSubEventRemovedEmail(input: {
         ? { success: true, message: `Removal notification sent to ${input.adminEmail}` }
         : { success: false, message: result.message || 'Failed to send email' };
 }
+
+// Flow for sending verification OTP email
+export async function sendVerificationOTPEmail(input: VerificationOTPEmailInput): Promise<SendEmailOutput> {
+    const content = `
+        <h2>Verify Your Email</h2>
+        <p>Hi ${input.name || 'there'},</p>
+        <p>Thank you for choosing FundEd. Use the following 6-digit verification code to complete your sign-up process. This code will expire in 10 minutes.</p>
+        
+        <div class="details-box" style="text-align: center; background-color: #f0fdf4; border: 2px solid #059669;">
+            <h1 style="margin: 0; font-size: 32px; letter-spacing: 12px; color: #059669; font-family: monospace;">${input.otp}</h1>
+        </div>
+        
+        <p style="font-size: 14px; color: #64748b; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
+    `;
+
+    const emailHtml = generateEmailLayout(
+        'Verify Your FundEd Account',
+        content
+    );
+
+    const result = await sendEmail({
+        to: input.email,
+        subject: `${input.otp} is your FundEd verification code`,
+        html: emailHtml,
+    });
+
+    return result.success
+        ? { success: true, message: `Verification OTP sent to ${input.email}` }
+        : { success: false, message: result.message || 'Failed to send verification email' };
+}
+
