@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { sendNewEventEmail } from '@/lib/email-templates';
 import { getSession, getWorkspaceId } from '@/lib/auth';
+import { getMyVisibleEventIds } from '@/actions/users';
 
 
 export async function getEvents() {
@@ -13,9 +14,17 @@ export async function getEvents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const workspaceId = getWorkspaceId(session.user);
-    const whereClause: any = session.user.role === 'superadmin' 
-        ? {} 
-        : { createdById: workspaceId };
+
+    let whereClause: any;
+    if (session.user.role === 'superadmin') {
+      whereClause = {};
+    } else if (session.user.role === 'collab') {
+      // Collab users only see explicitly granted events
+      const { eventIds } = await getMyVisibleEventIds();
+      whereClause = { createdById: workspaceId, id: { in: eventIds } };
+    } else {
+      whereClause = { createdById: workspaceId };
+    }
 
     const events = await prisma.event.findMany({
       where: whereClause,

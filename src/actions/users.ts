@@ -307,3 +307,91 @@ export async function checkSlugAvailability(slug: string) {
         return { available: null }; // silent fail — save button will still validate
     }
 }
+
+// ─── Collab Event Visibility ──────────────────────────────────────────────────
+
+export async function getCollabVisibleEvents(collabId: string) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: 'Unauthorized' };
+        if (session.user.role !== 'admin' && session.user.role !== 'superadmin') {
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        const grants = await (prisma as any).collabEventVisibility.findMany({
+            where: { collabId },
+            select: { eventId: true, grantType: true, grantedAt: true },
+        });
+
+        return { success: true, data: grants };
+    } catch (error) {
+        console.error('Failed to get collab visible events:', error);
+        return { success: false, error: 'Failed to fetch event access' };
+    }
+}
+
+export async function updateCollabVisibleEvents(
+    collabId: string,
+    grants: { eventId: string; grantType: 'full' | 'view_only' }[]
+) {
+    try {
+        const session = await getSession();
+        if (!session?.user) return { success: false, error: 'Unauthorized' };
+
+        const isAdmin = session.user.role === 'admin';
+        const isSuperAdmin = session.user.role === 'superadmin';
+        if (!isAdmin && !isSuperAdmin) return { success: false, error: 'Unauthorized' };
+
+        // Verify the collab user belongs to this admin
+        if (isAdmin) {
+            const collab = await prisma.user.findUnique({
+                where: { id: collabId },
+                select: { adminId: true, role: true },
+            });
+            if (!collab || collab.role !== 'collab' || (collab as any).adminId !== session.user.id) {
+                return { success: false, error: 'Collab user not found or not yours' };
+            }
+        }
+
+        // Replace all grants for this collab user atomically
+        await prisma.$transaction(async (tx: any) => {
+            await tx.collabEventVisibility.deleteMany({ where: { collabId } });
+            if (grants.length > 0) {
+                await tx.collabEventVisibility.createMany({
+                    data: grants.map(g => ({
+                        collabId,
+                        eventId: g.eventId,
+                        grantType: g.grantType,
+                    })),
+                });
+            }
+        });
+
+        revalidatePath('/dashboard/settings');
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update collab visible events:', error);
+        return { success: false, error: 'Failed to update event access' };
+    }
+}
+
+// Called by collab users to get their own granted event IDs
+export async function getMyVisibleEventIds(): Promise<{ eventIds: string[]; grantMap: Record<string, 'full' | 'view_only'> }> {
+    try {
+        const session = await getSession();
+        if (!session?.user || session.user.role !== 'collab') return { eventIds: [], grantMap: {} };
+
+        const grants = await (prisma as any).collabEventVisibility.findMany({
+            where: { collabId: session.user.id },
+            select: { eventId: true, grantType: true },
+        });
+
+        const eventIds = grants.map((g: any) => g.eventId);
+        const grantMap: Record<string, 'full' | 'view_only'> = {};
+        grants.forEach((g: any) => { grantMap[g.eventId] = g.grantType; });
+
+        return { eventIds, grantMap };
+    } catch {
+        return { eventIds: [], grantMap: {} };
+    }
+}
