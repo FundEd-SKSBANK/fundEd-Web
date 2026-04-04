@@ -59,7 +59,7 @@ function CollabVisibilityModal({
     if (!open) return;
     setLoading(true);
     Promise.all([getEvents(), getCollabVisibleEvents(collabId)]).then(([evRes, grRes]) => {
-      if (evRes.success) setEvents((evRes as any).events ?? []);
+      if (evRes.success) setEvents(evRes.data ?? []);
       if (grRes.success && grRes.data) setGrants(grRes.data as Grant[]);
       setLoading(false);
     });

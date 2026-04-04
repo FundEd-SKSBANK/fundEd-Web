@@ -64,6 +64,7 @@ import {
     RefreshCw,
     CheckCircle2,
     Zap,
+    Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -567,12 +568,12 @@ export default function EventsPage() {
     if (isLoading) return <PageLoader message="Loading events..." />;
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in text-white">
             {/* Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Events</h2>
-                    <p className="text-muted-foreground mt-0.5 md:mt-1 text-sm md:text-base">
+                    <p className="text-stone-400 mt-0.5 md:mt-1 text-sm md:text-base">
                         Manage fund collection events and track payments
                     </p>
                 </div>
@@ -582,8 +583,8 @@ export default function EventsPage() {
                         variant="ghost"
                         onClick={handleSharePortal}
                         className={cn(
-                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity h-10",
-                            !adminSlug ? "opacity-40 hover:bg-white/5" : "hover:bg-white/10"
+                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity h-10 hover:bg-white/10",
+                            !adminSlug && "opacity-40"
                         )}
                     >
                         <Share2 className="h-4 w-4 shrink-0" />
@@ -591,232 +592,150 @@ export default function EventsPage() {
                         <span className="sm:hidden">Share</span>
                     </Button>
 
-                    <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                        if (!open) fetchData(true);
-                        else fetchStudents();
-                        setIsDialogOpen(open);
-                    }}>
-                        <DialogTrigger asChild>
-                            <Button onClick={resetForm} className="gap-2 gradient-success w-full md:w-auto border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300">
-                                <Plus className="h-4 w-4" />
-                                Create Event
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <form onSubmit={handleSubmit}>
-                                <DialogHeader>
-                                    <DialogTitle>{editingEvent ? 'Edit Event' : 'Create New Event'}</DialogTitle>
-                                    <DialogDescription>
-                                        {editingEvent ? 'Update event details' : 'Create a new fund collection event'}
+                    {userRole !== 'collab' && (
+                        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                            if (!open) fetchData(true);
+                            else fetchStudents();
+                            setIsDialogOpen(open);
+                        }}>
+                            <DialogTrigger asChild>
+                                <Button onClick={resetForm} className="gap-2 gradient-success w-full md:w-auto border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300 h-10 px-4">
+                                    <Plus className="h-4 w-4" />
+                                    <span>Create Event</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl">
+                                <DialogHeader className="p-6 pb-0">
+                                    <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-br from-white to-stone-400 bg-clip-text text-transparent">
+                                        {editingEvent ? 'Edit Event' : 'Create New Event'}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-stone-400">
+                                        {editingEvent ? 'Update event details' : 'Fill in the details for your new fund collection event'}
                                     </DialogDescription>
                                 </DialogHeader>
-
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="name">Event Name *</Label>
-                                        <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Annual Day Fund" required />
+                                <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-4 max-h-[80vh] overflow-y-auto">
+                                    <div className="grid gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="name" className="text-stone-300 flex items-center gap-1">Event Name <span className="text-red-500">*</span></Label>
+                                            <Input id="name" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Annual Day Fund" className="bg-white/5 border-white/10 h-10 focus:border-emerald-500/50 transition-colors" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="description" className="text-stone-300 flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
+                                            <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[80px] focus:border-emerald-500/50 transition-colors" />
+                                        </div>
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="description">Description *</Label>
-                                        <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the event..." rows={3} required />
-                                    </div>
+                                    <div className="mx-4 h-px bg-white/5 my-2" />
 
-                                    {/* Category */}
-                                    <div className="grid gap-2">
-                                        <Label>Category</Label>
-                                        <div className="flex flex-wrap gap-4">
-                                            {[
-                                                { value: 'Normal', label: 'Normal' },
-                                                { value: 'Print', label: 'Print' },
-                                                { value: 'MajorEvent', label: 'Major Event' },
-                                            ].map(opt => (
-                                                <div key={opt.value} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={`cat-${opt.value}`}
-                                                        checked={category === opt.value}
-                                                        onCheckedChange={() => setCategory(opt.value as any)}
-                                                        className="rounded-sm"
-                                                    />
-                                                    <label htmlFor={`cat-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
-                                                </div>
-                                            ))}
+                                    <div className="space-y-3">
+                                        <Label className="text-stone-300">Category</Label>
+                                        <div className="flex gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Normal
+                                            </button>
+                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Print
+                                            </button>
+                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Major Event
+                                            </button>
                                         </div>
                                         {isMajorEvent && (
-                                            <div className="text-xs text-emerald-400/80 bg-emerald-500/10 rounded-md px-3 py-2 border border-emerald-500/20 space-y-1">
-                                                <p>Events aggregate payment data from connected sub-events. No direct student payments.</p>
-                                                <p className="font-medium text-emerald-300">After publishing, go to "Manage Connections" to generate tokens for sub-events.</p>
+                                            <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fade-in text-[10px] leading-relaxed">
+                                                <p className="text-emerald-400/80 font-medium mb-1">Events aggregate payment data from connected sub-events. No direct student payments.</p>
+                                                <p className="text-stone-500">After publishing, go to "Manage Connections" to generate tokens for sub-events.</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label>Deadline *</Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className={cn('justify-start text-left font-normal', !deadline && 'text-muted-foreground')}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {deadline ? format(deadline, 'PPP') : <span>Pick a date</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={deadline}
-                                                    onSelect={setDeadline}
-                                                    disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                    {!isMajorEvent && (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cost" className="text-stone-300 flex items-center gap-1">Cost per student (₹) <span className="text-red-500">*</span></Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 font-medium">₹</span>
+                                                <Input id="cost" type="number" value={cost} onChange={e => setCost(e.target.value)} required min="1" placeholder="500" className="bg-white/5 border-white/10 h-10 pl-7 focus:border-emerald-500/50" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label className="text-stone-300 flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-10 hover:bg-white/10", !deadline && "text-muted-foreground")}>
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0 border-white/10" align="start">
+                                                    <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-zinc-950 text-white" />
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
+
+                                        {category === 'Print' && (
+                                            <div className="grid gap-2">
+                                                <Label className="text-stone-300">QR Code for Payment</Label>
+                                                <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
+                                                    <SelectTrigger className="bg-white/5 border-white/10 h-10">
+                                                        <SelectValue placeholder="Select a QR code" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                                        {qrCodes.map((qr) => (
+                                                            <SelectItem key={qr.id} value={qr.url}>
+                                                                {qr.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Fields hidden for Major Events */}
-                                    {!isMajorEvent && (
-                                        <>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="cost">Cost (₹) *</Label>
-                                                <Input id="cost" type="number" step="0.01" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" required />
-                                            </div>
+                                    {isMajorEvent && editingEvent && (
+                                        <div className="pt-2">
+                                            <TokenGeneratorCard eventId={editingEvent.id} />
+                                        </div>
+                                    )}
 
-                                            <div className="grid gap-2">
-                                                <Label>Participants ({selectedStudents.length} selected)</Label>
-                                                <div className="flex items-center justify-between border rounded-md p-3 bg-muted/20">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id="main-select-all"
-                                                            checked={selectedStudents.length === students.length && students.length > 0}
-                                                            onCheckedChange={checked => {
-                                                                if (checked) setSelectedStudents(students.map(s => s.id));
-                                                                else setSelectedStudents([]);
-                                                            }}
-                                                        />
-                                                        <label htmlFor="main-select-all" className="text-sm font-medium cursor-pointer">Select All</label>
-                                                    </div>
-                                                    <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)}>
-                                                        Select Specific
+                                    {!isMajorEvent && (
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-stone-300">Participants ({selectedStudents.length})</Label>
+                                                <div className="flex gap-2">
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
+                                                        Search Students
                                                     </Button>
                                                 </div>
                                             </div>
-
-                                            <Dialog open={isSelectionDialogOpen} onOpenChange={setIsSelectionDialogOpen}>
-                                                <DialogContent className="max-w-md">
-                                                    <DialogHeader>
-                                                        <DialogTitle>Select Participants</DialogTitle>
-                                                        <DialogDescription>Search and select students for this event.</DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className="py-4 space-y-4">
-                                                        <Input placeholder="Search by name, class or roll no..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} autoFocus />
-                                                        <div className="border rounded-md p-3 max-h-[60vh] overflow-y-auto space-y-2">
-                                                            <div className="flex items-center space-x-2 pb-2 border-b mb-2 sticky top-0 bg-background/95 backdrop-blur z-10">
-                                                                <Checkbox
-                                                                    id="modal-select-all"
-                                                                    checked={selectedStudents.length === students.length && students.length > 0}
-                                                                    onCheckedChange={checked => {
-                                                                        if (checked) setSelectedStudents(students.map(s => s.id));
-                                                                        else setSelectedStudents([]);
-                                                                    }}
-                                                                />
-                                                                <label htmlFor="modal-select-all" className="text-sm font-medium cursor-pointer">Select All</label>
-                                                            </div>
-                                                            {isStudentsLoading ? (
-                                                                <div className="flex flex-col items-center justify-center py-8 space-y-2">
-                                                                    <RefreshCw className="h-6 w-6 animate-spin text-emerald-400" />
-                                                                    <p className="text-sm text-muted-foreground">Loading student records...</p>
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    {filteredStudents.map((student) => (
-                                                                        <div key={student.id} className="flex items-center space-x-2">
-                                                                            <Checkbox
-                                                                                id={`student-${student.id}`}
-                                                                                checked={selectedStudents.includes(student.id)}
-                                                                                onCheckedChange={checked => {
-                                                                                    if (checked) setSelectedStudents([...selectedStudents, student.id]);
-                                                                                    else setSelectedStudents(selectedStudents.filter(id => id !== student.id));
-                                                                                }}
-                                                                            />
-                                                                            <label htmlFor={`student-${student.id}`} className="text-sm cursor-pointer flex-1">
-                                                                                {student.name} <span className="text-muted-foreground text-xs">({student.class} - {student.rollNo})</span>
-                                                                            </label>
-                                                                        </div>
-                                                                    ))}
-                                                                    {filteredStudents.length === 0 && (
-                                                                        <p className="text-sm text-muted-foreground text-center py-2">No students match your search.</p>
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <DialogFooter>
-                                                        <Button type="button" onClick={() => setIsSelectionDialogOpen(false)}>Done</Button>
-                                                    </DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-
-                                            <div className="grid gap-2">
-                                                <Label>Payment Options</Label>
-                                                <div className="flex gap-4">
-                                                    {['Razorpay', 'QR', 'Cash'].map(option => (
-                                                        <div key={option} className="flex items-center space-x-2">
-                                                            <Checkbox
-                                                                id={option}
-                                                                checked={paymentOptions.includes(option)}
-                                                                onCheckedChange={checked => {
-                                                                    if (checked) setPaymentOptions([...paymentOptions, option]);
-                                                                    else setPaymentOptions(paymentOptions.filter(o => o !== option));
-                                                                }}
-                                                            />
-                                                            <label htmlFor={option} className="text-sm cursor-pointer">{option}</label>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {paymentOptions.includes('QR') && (
-                                                <div className="grid gap-2 animate-fade-in">
-                                                    <Label>Select Payment QR</Label>
-                                                    <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Choose a QR code" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {qrCodes.length === 0 ? (
-                                                                <div className="p-2 text-sm text-muted-foreground text-center">No QR codes found. Add one in Settings.</div>
-                                                            ) : (
-                                                                qrCodes.map(qr => (
-                                                                    <SelectItem key={qr.id} value={qr.url}>{qr.name}</SelectItem>
-                                                                ))
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            )}
-                                        </>
+                                        </div>
                                     )}
-                                </div>
 
-                                <DialogFooter className="gap-2 sm:gap-0">
-                                    <div className="flex gap-2 w-full justify-end">
-                                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                                        <Button type="submit">
-                                            {editingEvent?.status === 'PUBLISHED' ? 'Update Event' : 'Publish Event'}
-                                        </Button>
-                                    </div>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                                    <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-white/5">
+                                        <div className="flex gap-2 w-full justify-end">
+                                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-stone-400 hover:text-white h-10 px-6">Cancel</Button>
+                                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-10 px-8 shadow-lg shadow-emerald-900/40 font-semibold">
+                                                {editingEvent?.status === 'PUBLISHED' ? 'Update Event' : 'Publish Event'}
+                                            </Button>
+                                        </div>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+
+                    {userRole === 'collab' && (
+                        <Badge variant="outline" className="gap-1.5 py-1.5 px-4 border-white/10 bg-white/5 text-muted-foreground h-10 rounded-lg">
+                            <Lock className="h-4 w-4" /> Read Only Access
+                        </Badge>
+                    )}
                 </div>
             </div>
 
             {/* Events Grid */}
             {events.length === 0 ? (
-                <Card className="py-12">
+                <Card className="py-12 border-white/5 bg-white/[0.02]">
                     <CardContent className="text-center">
                         <Wallet className="h-12 w-12 mx-auto mb-4 opacity-20" />
                         <p className="text-lg font-medium">No Events Yet</p>
@@ -853,7 +772,6 @@ export default function EventsPage() {
                                                 )}
                                             </div>
                                             <CardDescription className="mt-0.5 line-clamp-1 text-xs">{event.description}</CardDescription>
-                                            {/* Connection status badge for sub-events */}
                                             {!isMajor && conn && (
                                                 <div className="mt-2">
                                                     <Badge variant="outline" className={cn(
@@ -875,7 +793,7 @@ export default function EventsPage() {
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
+                                            <DropdownMenuContent align="end" className="bg-zinc-950 border-white/10 text-white">
                                                 {isMajor ? (
                                                     <>
                                                         <DropdownMenuItem asChild>
@@ -884,27 +802,33 @@ export default function EventsPage() {
                                                                 Analytics
                                                             </Link>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem asChild>
-                                                            <Link href={`/dashboard/events/${event.id}/connections`}>
-                                                                <Network className="mr-2 h-4 w-4" />
-                                                                Manage Connections
-                                                            </Link>
-                                                        </DropdownMenuItem>
+                                                        {userRole !== 'collab' && (
+                                                            <DropdownMenuItem asChild>
+                                                                <Link href={`/dashboard/events/${event.id}/connections`}>
+                                                                    <Network className="mr-2 h-4 w-4" />
+                                                                    Manage Connections
+                                                                </Link>
+                                                            </DropdownMenuItem>
+                                                        )}
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/dashboard/events/${event.id}/expenses`}>
                                                                 <Wallet className="mr-2 h-4 w-4" />
                                                                 Manage Expenses
                                                             </Link>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleEdit(event)}>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleDelete(event)} className="text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
+                                                        {userRole !== 'collab' && (
+                                                            <>
+                                                                <DropdownMenuSeparator className="bg-white/5" />
+                                                                <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => handleDelete(event)} className="text-destructive">
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <>
@@ -920,33 +844,38 @@ export default function EventsPage() {
                                                                 Manage Expenses
                                                             </Link>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleEdit(event)}>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleCopyPaymentLink(event)}>
-                                                            <LinkIcon className="mr-2 h-4 w-4" />
-                                                            Copy Payment Link
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        {conn ? (
-                                                            <DropdownMenuItem
-                                                                onClick={() => setDisconnectingConnection({ eventId: event.id, connectionId: conn.id, majorEventName: conn.majorEventName })}
-                                                                className="text-amber-400"
-                                                            >
-                                                                <Unplug className="mr-2 h-4 w-4" />
-                                                                Disconnect from Major Event
-                                                            </DropdownMenuItem>
-                                                        ) : (
-                                                            <DropdownMenuItem onClick={() => setConnectingEvent(event)}>
-                                                                <Plug className="mr-2 h-4 w-4" />
-                                                                Connect to Major Event
-                                                            </DropdownMenuItem>
+                                                        {userRole !== 'collab' && (
+                                                            <>
+                                                                <DropdownMenuSeparator className="bg-white/5" />
+                                                                <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => handleCopyPaymentLink(event)}>
+                                                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                                                    Copy Payment Link
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator className="bg-white/5" />
+                                                                {conn ? (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => setDisconnectingConnection({ eventId: event.id, connectionId: conn.id, majorEventName: conn.majorEventName })}
+                                                                        className="text-amber-400"
+                                                                    >
+                                                                        <Unplug className="mr-2 h-4 w-4" />
+                                                                        Disconnect from Major Event
+                                                                    </DropdownMenuItem>
+                                                                ) : (
+                                                                    <DropdownMenuItem onClick={() => setConnectingEvent(event)}>
+                                                                        <Plug className="mr-2 h-4 w-4" />
+                                                                        Connect to Major Event
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                                <DropdownMenuItem onClick={() => handleDelete(event)} className="text-destructive">
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </>
                                                         )}
-                                                        <DropdownMenuItem onClick={() => handleDelete(event)} className="text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
                                                     </>
                                                 )}
                                             </DropdownMenuContent>
@@ -956,22 +885,21 @@ export default function EventsPage() {
 
                                 <CardContent className="p-4 pt-2 space-y-3">
                                     {isMajor ? (
-                                        // Major event card body
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-2 text-[11px] pb-2 border-b border-white/5">
                                                 <div className="flex flex-col">
-                                                    <span className="text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Deadline</span>
-                                                    <span className="font-semibold">{format(new Date(event.deadline), 'MMM dd, yyyy')}</span>
+                                                    <span className="text-stone-500 flex items-center gap-1"><Clock className="h-3 w-3" /> Deadline</span>
+                                                    <span className="font-semibold text-stone-200">{format(new Date(event.deadline), 'MMM dd, yyyy')}</span>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-muted-foreground flex items-center gap-1 justify-end"><Network className="h-3 w-3" /> Sub-events</span>
+                                                    <span className="text-stone-500 flex items-center gap-1 justify-end"><Network className="h-3 w-3" /> Sub-events</span>
                                                     <span className="font-bold text-emerald-400">{event.subEventCount || 0} Connected</span>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2 bg-emerald-500/5 p-2 rounded-md border border-emerald-500/10">
                                                 <div className="flex items-center justify-between text-[10px]">
-                                                    <span className="text-muted-foreground font-bold uppercase tracking-tight">Progress</span>
+                                                    <span className="text-stone-500 font-bold uppercase tracking-tight">Progress</span>
                                                     <span className="font-bold text-emerald-400">
                                                         {event.participantCount ? ((event.paidCount || 0) / event.participantCount * 100).toFixed(1) : '0'}%
                                                     </span>
@@ -980,18 +908,18 @@ export default function EventsPage() {
 
                                                 <div className="grid grid-cols-2 gap-2 pt-0.5">
                                                     <div className="flex flex-col">
-                                                        <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-tight">Collected</span>
+                                                        <span className="text-stone-500 text-[9px] uppercase font-bold tracking-tight">Collected</span>
                                                         <span className="font-bold text-emerald-400 text-sm">₹{event.totalCollected?.toLocaleString('en-IN') || '0'}</span>
                                                     </div>
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-tight">Paid</span>
+                                                        <span className="text-stone-500 text-[9px] uppercase font-bold tracking-tight">Paid</span>
                                                         <span className="font-bold text-emerald-50 text-sm">{event.paidCount || 0} / {event.participantCount || 0}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center justify-between text-[10px] pt-0.5">
-                                                <span className="text-muted-foreground uppercase font-bold tracking-tight">Category</span>
+                                                <span className="text-stone-500 uppercase font-bold tracking-tight">Category</span>
                                                 <span className="text-emerald-500 font-bold bg-emerald-500/5 px-1.5 py-0.5 rounded border border-emerald-500/10">Analytics Hub</span>
                                             </div>
                                             <div className="flex gap-2 pt-1">
@@ -1000,41 +928,42 @@ export default function EventsPage() {
                                                         <BarChart2 className="h-3.5 w-3.5" /> Analytics
                                                     </Button>
                                                 </Link>
-                                                <Link href={`/dashboard/events/${event.id}/connections`} className="flex-1">
-                                                    <Button className="w-full gap-1.5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-400 h-8 text-xs font-semibold" variant="outline" size="sm">
-                                                        <Network className="h-3.5 w-3.5" /> Connections
-                                                    </Button>
-                                                </Link>
+                                                {userRole !== 'collab' && (
+                                                    <Link href={`/dashboard/events/${event.id}/connections`} className="flex-1">
+                                                        <Button className="w-full gap-1.5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-400 h-8 text-xs font-semibold" variant="outline" size="sm">
+                                                            <Network className="h-3.5 w-3.5" /> Connections
+                                                        </Button>
+                                                    </Link>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
-                                        // Regular event card body (Redesigned to match Major Event style)
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-2 text-[11px] pb-2 border-b border-white/5">
                                                 <div className="flex flex-col">
-                                                    <span className="text-muted-foreground">Cost per student</span>
+                                                    <span className="text-stone-500 text-[10px] uppercase font-bold tracking-tight">Cost per student</span>
                                                     <span className="font-bold text-emerald-400 text-base">₹{event.cost.toLocaleString('en-IN')}</span>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-muted-foreground flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> Deadline</span>
-                                                    <span className="font-semibold text-emerald-100">{format(new Date(event.deadline), 'MMM dd, yyyy')}</span>
+                                                    <span className="text-stone-500 flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> Deadline</span>
+                                                    <span className="font-semibold text-stone-200">{format(new Date(event.deadline), 'MMM dd, yyyy')}</span>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2 bg-emerald-500/5 p-2 rounded-md border border-emerald-500/10">
                                                 <div className="flex items-center justify-between text-[10px]">
-                                                    <span className="text-muted-foreground font-bold uppercase tracking-tight">Progress</span>
+                                                    <span className="text-stone-500 font-bold uppercase tracking-tight">Progress</span>
                                                     <span className="font-bold text-emerald-400">{getCollectionProgress(event, students).toFixed(1)}%</span>
                                                 </div>
                                                 <Progress value={getCollectionProgress(event, students)} className="h-1 bg-white/5" />
 
                                                 <div className="grid grid-cols-2 gap-2 pt-0.5">
                                                     <div className="flex flex-col">
-                                                        <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-tight">Collected</span>
+                                                        <span className="text-stone-500 text-[9px] uppercase font-bold tracking-tight">Collected</span>
                                                         <span className="font-bold text-emerald-400 text-sm">₹{event.totalCollected?.toLocaleString('en-IN') || '0'}</span>
                                                     </div>
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-tight">Paid</span>
+                                                        <span className="text-stone-500 text-[9px] uppercase font-bold tracking-tight">Paid</span>
                                                         <span className="font-bold text-emerald-50 text-sm">{event.paidCount || 0} / {event.participantCount || 0}</span>
                                                     </div>
                                                 </div>
@@ -1056,6 +985,58 @@ export default function EventsPage() {
                 </div>
             )}
 
+            {/* Selection Dialog (Participant search) */}
+            <Dialog open={isSelectionDialogOpen} onOpenChange={setIsSelectionDialogOpen}>
+                <DialogContent className="max-w-md border-white/10 bg-zinc-950 text-white">
+                    <DialogHeader>
+                        <DialogTitle>Select Participants</DialogTitle>
+                        <DialogDescription className="text-stone-400">Search and select students for this event.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <Input placeholder="Search by name, class or roll no..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-white/5 border-white/10" />
+                        <div className="border border-white/10 rounded-md p-3 max-h-[60vh] overflow-y-auto space-y-2">
+                            {isStudentsLoading ? (
+                                <div className="flex flex-col items-center justify-center py-8">
+                                    <RefreshCw className="h-6 w-6 animate-spin text-emerald-400" />
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center space-x-2 pb-2 border-b border-white/5 mb-2 sticky top-0 bg-zinc-950/95 backdrop-blur z-10">
+                                        <Checkbox
+                                            id="modal-select-all"
+                                            checked={selectedStudents.length === students.length && students.length > 0}
+                                            onCheckedChange={checked => {
+                                                if (checked) setSelectedStudents(students.map(s => s.id));
+                                                else setSelectedStudents([]);
+                                            }}
+                                        />
+                                        <label htmlFor="modal-select-all" className="text-sm font-medium cursor-pointer">Select All</label>
+                                    </div>
+                                    {filteredStudents.map((student) => (
+                                        <div key={student.id} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`student-${student.id}`}
+                                                checked={selectedStudents.includes(student.id)}
+                                                onCheckedChange={checked => {
+                                                    if (checked) setSelectedStudents([...selectedStudents, student.id]);
+                                                    else setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                                                }}
+                                            />
+                                            <label htmlFor={`student-${student.id}`} className="text-sm cursor-pointer flex-1">
+                                                {student.name} <span className="text-stone-500 text-xs">({student.class} - {student.rollNo})</span>
+                                            </label>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsSelectionDialogOpen(false)} className="gradient-success border-0 text-white font-semibold shadow-lg shadow-emerald-900/20">Done</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Connect to Major Event Modal */}
             {connectingEvent && (
                 <ConnectModal
@@ -1068,16 +1049,16 @@ export default function EventsPage() {
 
             {/* Disconnect confirmation */}
             <AlertDialog open={!!disconnectingConnection} onOpenChange={open => !open && setDisconnectingConnection(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-zinc-950 border-white/10 text-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Disconnect from Major Event?</AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription className="text-stone-400">
                             This will remove your event from <strong>{disconnectingConnection?.majorEventName}</strong>. The Major Event admin will be notified. Your event continues to function normally.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDisconnect} className="bg-amber-600 hover:bg-amber-700 text-white">
+                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDisconnect} className="bg-amber-600 hover:bg-amber-700 text-white border-0">
                             Disconnect
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -1096,7 +1077,7 @@ export default function EventsPage() {
                 onOpenChange={open => !open && setDeletingEvent(null)}
                 title={`Delete ${deletingEvent?.name}?`}
                 description={
-                    <span>
+                    <span className="text-stone-400">
                         This action cannot be undone. This will permanently delete the event <strong>{deletingEvent?.name}</strong> and all associated payments and records.
                     </span>
                 }
