@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState, useEffect } from 'react';
+import { useActionState, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ function SubmitButton({ icon: Icon, text, pendingText }: { icon: any, text: stri
   );
 }
 
-export default function UnifiedLoginPage() {
+function LoginContent() {
   const [view, setView] = useState<AuthView>('login');
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
@@ -194,6 +194,19 @@ export default function UnifiedLoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function UnifiedLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
+        <p className="text-stone-400 animate-pulse">Initializing secure access...</p>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
 
