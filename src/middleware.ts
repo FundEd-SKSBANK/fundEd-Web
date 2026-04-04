@@ -2,7 +2,43 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { decrypt } from '@/lib/auth-edge';
 
+// Rate limiter state (In-memory, per isolate)
+const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
+
 export async function middleware(request: NextRequest) {
+  // 1. Rate Limiting Check
+  // In Next.js 14+, request.ip is deprecated or missing from types, so we use headers
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  
+  if (ip) {
+    const windowMs = 60 * 1000; // 1 min window
+    const maxRequests = 60; // Max 60 requests per window
+    const now = Date.now();
+    
+    // Prevent Edge isolate memory leak
+    if (rateLimitMap.size > 1000) {
+      rateLimitMap.clear();
+    }
+
+    const userData = rateLimitMap.get(ip);
+
+    if (!userData) {
+      rateLimitMap.set(ip, { count: 1, timestamp: now });
+    } else {
+      if (now - userData.timestamp > windowMs) {
+        // Reset window
+        userData.count = 1;
+        userData.timestamp = now;
+      } else {
+        if (userData.count >= maxRequests) {
+          return new NextResponse('Too Many Requests - Rate Limit Exceeded', { status: 429 });
+        }
+        userData.count += 1;
+      }
+    }
+  }
+
+  // 2. Auth Logic
   try {
     const session = request.cookies.get('session')?.value;
     const parsed = session ? await decrypt(session) : null;
