@@ -63,11 +63,12 @@ interface AdditionalRevenuePanelProps {
     revenues: AdditionalRevenue[];
     eventId: string;
     onUpdate: () => void;
+    readOnly?: boolean;
 }
 
 const INCOME_SOURCES = ['Tutors', 'Sponsors', 'Donations', 'College Fund', 'Class Fund', 'Other'];
 
-export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: AdditionalRevenuePanelProps) {
+export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }: AdditionalRevenuePanelProps) {
     const { toast } = useToast();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -167,125 +168,129 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                     <HandCoins className="h-5 w-5 text-emerald-500 shrink-0" />
                     <span>Additional Income Sources</span>
                 </h3>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
-                            <Plus className="mr-2 h-4 w-4" /> Add Income
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Add Additional Income</DialogTitle>
-                            <DialogDescription className="sr-only">
-                                Form to add a new additional income source.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleAddRevenue} className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Title</label>
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Class fund or other" required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Amount (₹)</label>
-                                <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Source</label>
-                                <Select value={source} onValueChange={setSource}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
-                                <textarea
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Any extra details..."
-                                    rows={2}
-                                    className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
-                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Add Income
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {!readOnly && (
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
+                                <Plus className="mr-2 h-4 w-4" /> Add Income
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Add Additional Income</DialogTitle>
+                                <DialogDescription className="sr-only">
+                                    Form to add a new additional income source.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleAddRevenue} className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Title</label>
+                                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Class fund or other" required className="bg-white/5 border-white/10" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Amount (₹)</label>
+                                    <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required className="bg-white/5 border-white/10" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Source</label>
+                                    <Select value={source} onValueChange={setSource}>
+                                        <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Date</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
+                                    <textarea
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        placeholder="Any extra details..."
+                                        rows={2}
+                                        className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Add Income
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
 
-                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Edit Income Entry</DialogTitle>
-                            <DialogDescription className="sr-only">
-                                Form to edit an existing income entry.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleUpdateRevenue} className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Title</label>
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Amount (₹)</label>
-                                <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Source</label>
-                                <Select value={source} onValueChange={setSource}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
-                                <textarea
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    rows={2}
-                                    className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
-                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save Changes
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {!readOnly && (
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Edit Income Entry</DialogTitle>
+                                <DialogDescription className="sr-only">
+                                    Form to edit an existing income entry.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleUpdateRevenue} className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Title</label>
+                                    <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-white/5 border-white/10" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Amount (₹)</label>
+                                    <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="bg-white/5 border-white/10" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Source</label>
+                                    <Select value={source} onValueChange={setSource}>
+                                        <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{INCOME_SOURCES.map(src => <SelectItem key={src} value={src}>{src}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Date</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
+                                    <textarea
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        rows={2}
+                                        className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Save Changes
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <div className="rounded-md border border-white/10 bg-white/5">
@@ -315,32 +320,34 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center justify-end gap-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(rev)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Are you sure you want to delete this income entry? This cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteRevenue(rev.id)} className="bg-red-600 hover:bg-red-700">
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
+                                {!readOnly && (
+                                    <div className="flex items-center justify-end gap-1">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(rev)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to delete this income entry? This cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteRevenue(rev.id)} className="bg-red-600 hover:bg-red-700">
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}
@@ -356,7 +363,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                 <TableHead className="text-stone-400">Source</TableHead>
                                 <TableHead className="text-stone-400">Note</TableHead>
                                 <TableHead className="text-right text-stone-400">Amount</TableHead>
-                                <TableHead className="text-right text-stone-400">Actions</TableHead>
+                                {!readOnly && <TableHead className="text-right text-stone-400">Actions</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -390,34 +397,36 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate }: Addition
                                         <TableCell className="text-right font-medium text-emerald-400">
                                             +₹{rev.amount.toLocaleString('en-IN')}
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(rev)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete this income entry?
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteRevenue(rev.id)} className="bg-red-600 hover:bg-red-700">
-                                                                Delete
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        </TableCell>
+                                        {!readOnly && (
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(rev)}>
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Income Entry?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete this income entry?
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteRevenue(rev.id)} className="bg-red-600 hover:bg-red-700">
+                                                                    Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))
                             )}

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/page-loader';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getCurrentAdmin } from '@/actions/users';
 
 export default function EventExpensesPage() {
     const params = useParams();
@@ -36,9 +37,19 @@ export default function EventExpensesPage() {
     });
     const [breakdown, setBreakdown] = useState<any[]>([]);
     const [financials, setFinancials] = useState<any[]>([]);
+    const [userRole, setUserRole] = useState<string>('collab');
 
     useEffect(() => {
         fetchData();
+        const fetchUserRole = async () => {
+            const adminRes = await getCurrentAdmin();
+            if (adminRes.success && adminRes.data) {
+                setUserRole(adminRes.data.role);
+            } else {
+                setUserRole('admin');
+            }
+        };
+        fetchUserRole();
     }, [eventId]);
 
     const fetchData = async () => {
@@ -294,6 +305,7 @@ export default function EventExpensesPage() {
                     revenues={additionalRevenues}
                     eventId={eventId}
                     onUpdate={() => fetchData()}
+                    readOnly={userRole === 'collab'}
                 />
 
                 <ExpenseTable
@@ -301,6 +313,7 @@ export default function EventExpensesPage() {
                     eventId={eventId}
                     eventName={stats.eventName}
                     onUpdate={() => fetchData()}
+                    readOnly={userRole === 'collab'}
                 />
             </div>
 

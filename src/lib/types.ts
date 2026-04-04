@@ -62,6 +62,7 @@ export type ConnectionToken = {
   eventId: string;
   createdAt: string;
   status: 'active' | 'expired';
+  isQuickJoin?: boolean; // true when token has autoCreatePayload
 };
 
 export type SubEventConnection = {
@@ -206,3 +207,25 @@ export const VerificationOTPEmailInputSchema = z.object({
 });
 export type VerificationOTPEmailInput = z.infer<typeof VerificationOTPEmailInputSchema>;
 
+// ─── Quick-Join Flow Types ──────────────────────────────────────────────────
+
+export interface JoinTokenData {
+  tokenStr: string;
+  majorEventId: string;
+  majorEventName: string;
+  creatorName: string;
+  eventName: string;
+  description: string;
+  cost: number;
+  deadline: string;
+  paymentOptions: string;
+  expiresAt: string;
+}
+
+export interface JoinSessionUser {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  adminId?: string | null;
+}
