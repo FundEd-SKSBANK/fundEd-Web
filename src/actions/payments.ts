@@ -2,9 +2,21 @@
 
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getSession } from '@/lib/auth';
+import { getMyVisibleEventIds } from '@/actions/users';
 
 export async function getEventPayments(eventId: string) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: 'Unauthorized' };
+
+    if (session.user.role === 'collab') {
+      const { eventIds } = await getMyVisibleEventIds();
+      if (!eventIds.includes(eventId)) {
+        return { success: false, error: 'Unauthorized' };
+      }
+    }
+
     const event = await prisma.event.findUnique({ 
         where: { id: eventId },
         include: { 
@@ -122,6 +134,9 @@ export async function getEventPayments(eventId: string) {
 
 export async function updatePaymentStatus(id: string, status: string) {
   try {
+    const session = await getSession();
+    if (!session?.user || session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
+
     const payment = await prisma.payment.update({
       where: { id },
       data: { status },
@@ -147,6 +162,9 @@ export async function updatePaymentStatus(id: string, status: string) {
 
 export async function deletePayment(id: string) {
   try {
+    const session = await getSession();
+    if (!session?.user || session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
+
     const payment = await prisma.payment.delete({
       where: { id },
     });

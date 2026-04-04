@@ -75,8 +75,10 @@ import {
     BarChart2,
     Zap,
     Link2,
+    Lock,
     ExternalLink,
 } from 'lucide-react';
+import { getCurrentAdmin } from '@/actions/users';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -122,16 +124,20 @@ export default function ConnectionsPage() {
     const [removingConnId, setRemovingConnId] = useState<{ id: string; name: string } | null>(null);
     const [removedOpen, setRemovedOpen] = useState(false);
     const [lastGenerated, setLastGenerated] = useState<{ token: ConnectionToken; joinUrl?: string } | null>(null);
+    const [role, setRole] = useState<string | null>(null);
 
     const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
     const fetchAll = useCallback(async () => {
-        const [tokRes, connRes] = await Promise.all([
+        setLoading(true);
+        const [tokRes, connRes, userRes] = await Promise.all([
             listTokens(eventId),
             getMajorEventConnections(eventId),
+            getCurrentAdmin(),
         ]);
         if (tokRes.success) setTokens(tokRes.data || []);
         if (connRes.success) setConnections((connRes.data || []) as SubEventConnection[]);
+        if (userRes.success && userRes.data) setRole(userRes.data.role);
         setLoading(false);
     }, [eventId]);
 
@@ -230,6 +236,27 @@ export default function ConnectionsPage() {
     const removedConns = connections.filter(c => c.disconnectedAt);
 
     if (loading) return <PageLoader message="Loading connections..." />;
+    
+    if (role === 'collab') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-fade-in p-6">
+                <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-lg shadow-red-900/10">
+                    <Lock className="h-10 w-10 text-red-500" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                    <h2 className="text-2xl font-bold text-white">Access Restricted</h2>
+                    <p className="text-stone-400">
+                        Collab users do not have permission to manage event connections or generate access tokens. Please contact the administrator for any connection requests.
+                    </p>
+                </div>
+                <Link href="/dashboard/events">
+                    <Button variant="outline" className="gap-2 border-white/10 hover:bg-white/5">
+                        <ArrowLeft className="h-4 w-4" /> Back to Events
+                    </Button>
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -256,9 +283,16 @@ export default function ConnectionsPage() {
                             <CardTitle className="flex items-center gap-2"><Key className="h-4 w-4" /> Connection Tokens</CardTitle>
                             <CardDescription>Share tokens or Quick-Join links with sub-event admins</CardDescription>
                         </div>
-                        <Button size="sm" className="gap-2 gradient-success border-0 w-full sm:w-auto" onClick={() => { setGenMode('standard'); setGenerateOpen(true); }}>
-                            <Key className="h-3 w-3" /> Generate New
-                        </Button>
+                        {role !== 'collab' && (
+                            <Button size="sm" className="gap-2 gradient-success border-0 w-full sm:w-auto" onClick={() => { setGenMode('standard'); setGenerateOpen(true); }}>
+                                <Key className="h-3 w-3" /> Generate New
+                            </Button>
+                        )}
+                        {role === 'collab' && (
+                            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-white/10 bg-white/5 text-muted-foreground">
+                                <Lock className="h-3.5 w-3.5" /> Read Only
+                            </Badge>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -319,14 +353,16 @@ export default function ConnectionsPage() {
                                             </a>
                                         </Button>
                                     )}
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
-                                        onClick={() => handleDeleteToken(token.id)}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    {role !== 'collab' && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
+                                            onClick={() => handleDeleteToken(token.id)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -364,14 +400,16 @@ export default function ConnectionsPage() {
                                         <span>{format(new Date(conn.createdAt), 'dd MMM, HH:mm')}</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 shrink-0">
-                                    <Button size="sm" className="flex-1 sm:flex-none h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleApprove(conn.id)}>
-                                        <CheckCircle2 className="h-3 w-3" /> Approve
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="flex-1 sm:flex-none h-8 gap-1 text-destructive border-white/10" onClick={() => handleReject(conn.id)}>
-                                        <XCircle className="h-3 w-3" /> Reject
-                                    </Button>
-                                </div>
+                                {role !== 'collab' && (
+                                    <div className="flex gap-2 shrink-0">
+                                        <Button size="sm" className="flex-1 sm:flex-none h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleApprove(conn.id)}>
+                                            <CheckCircle2 className="h-3 w-3" /> Approve
+                                        </Button>
+                                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none h-8 gap-1 text-destructive border-white/10" onClick={() => handleReject(conn.id)}>
+                                            <XCircle className="h-3 w-3" /> Reject
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}
@@ -437,14 +475,16 @@ export default function ConnectionsPage() {
                                                 <p className="text-xs text-muted-foreground truncate">{conn.subEventAdminName}</p>
                                             </div>
                                         </div>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 w-7 p-0 shrink-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ml-3"
-                                            onClick={() => setRemovingConnId({ id: conn.id, name: conn.subEventName || 'Unknown Event' })}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
+                                        {role !== 'collab' && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-7 w-7 p-0 shrink-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ml-3"
+                                                onClick={() => setRemovingConnId({ id: conn.id, name: conn.subEventName || 'Unknown Event' })}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        )}
                                     </div>
 
                                     {/* Divider */}

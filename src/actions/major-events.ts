@@ -54,6 +54,7 @@ export async function generateToken(
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) return { success: false, error: 'Event not found' };
@@ -131,6 +132,7 @@ export async function deleteToken(tokenId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const token = await (prisma as any).connectionToken.findUnique({
       where: { id: tokenId },
@@ -238,6 +240,7 @@ export async function connectSubEvent(tokenStr: string, subEventId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const workspaceId = getWorkspaceId(session.user);
 
@@ -337,6 +340,7 @@ export async function approveConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -385,6 +389,7 @@ export async function rejectConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -431,6 +436,7 @@ export async function disconnectSubEvent(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -483,6 +489,7 @@ export async function removeMajorConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -814,6 +821,7 @@ export async function generateQuickJoinToken(
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
