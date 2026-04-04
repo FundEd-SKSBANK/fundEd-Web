@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useActionState, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GraduationCap, Loader2, Lock, Mail, Eye, EyeOff, ArrowLeft, Send } from 'lucide-react';
@@ -40,6 +41,8 @@ function SubmitButton({ icon: Icon, text, pendingText }: { icon: any, text: stri
 export default function UnifiedLoginPage() {
   const [view, setView] = useState<AuthView>('login');
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '';
 
   // Login form state
   const [loginState, loginAction] = useActionState(login, initialState);
@@ -119,6 +122,8 @@ export default function UnifiedLoginPage() {
             {/* Login View */}
             {view === 'login' && (
               <form action={loginAction} className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-4">
+                {/* Hidden redirect field for Quick-Join flow */}
+                {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
                 <AuthInput icon={Mail} label="Email Address" id="email" name="email" type="email" placeholder="admin@funded.com" />
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
