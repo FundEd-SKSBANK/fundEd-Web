@@ -196,6 +196,7 @@ export async function createEvent(data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
         return { success: false, error: 'Deadline must be today or in the future' };
@@ -307,6 +308,7 @@ export async function saveDraft(data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     const eventData: any = {
       status: 'DRAFT',
@@ -377,6 +379,7 @@ export async function updateEvent(id: string, data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     // Verify ownership
     const existing = await prisma.event.findUnique({ where: { id }});
@@ -432,6 +435,7 @@ export async function deleteEvent(id: string) {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };
