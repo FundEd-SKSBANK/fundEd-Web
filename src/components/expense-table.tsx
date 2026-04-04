@@ -64,6 +64,7 @@ interface ExpenseTableProps {
     eventId: string;
     eventName: string;
     onUpdate: () => void;
+    readOnly?: boolean;
 }
 
 const CATEGORIES = ['General', 'Food', 'Transport', 'Logistics', 'Equipment', 'Decorations', 'Prizes', 'Marketing', 'Other'];
@@ -78,15 +79,12 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 async function downloadWithWatermark(billUrl: string, eventName: string, category: string) {
-    // If it's a PDF, we don't watermark it, just download directly
     if (billUrl.startsWith('data:application/pdf')) {
         const a = document.createElement('a');
         a.href = billUrl;
-
         const safeName = eventName.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
         const safeCat = category.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
         a.download = `${safeName}-${safeCat}.pdf`;
-
         a.click();
         return;
     }
@@ -100,34 +98,23 @@ async function downloadWithWatermark(billUrl: string, eventName: string, categor
             canvas.height = img.height;
             const ctx = canvas.getContext('2d');
             if (!ctx) { reject(new Error('Canvas not supported')); return; }
-
-            // Draw image
             ctx.drawImage(img, 0, 0);
-
-            // Watermark settings
             const fontSize = Math.max(18, Math.floor(img.width / 30));
             ctx.font = `bold ${fontSize}px Inter, Arial, sans-serif`;
             ctx.globalAlpha = 0.55;
-
             const text = 'fundEd';
             const padding = Math.floor(fontSize * 0.8);
             const textWidth = ctx.measureText(text).width;
             const x = img.width - textWidth - padding;
             const y = img.height - padding;
-
-            // Shadow for readability
             ctx.shadowColor = 'rgba(0,0,0,0.7)';
             ctx.shadowBlur = 6;
             ctx.fillStyle = '#ffffff';
             ctx.fillText(text, x, y);
-
             ctx.globalAlpha = 1;
-
-            // Build filename
             const safeName = eventName.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
             const safeCat = category.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
             const filename = `${safeName}-${safeCat}.png`;
-
             canvas.toBlob((blob) => {
                 if (!blob) { reject(new Error('Failed to create blob')); return; }
                 const url = URL.createObjectURL(blob);
@@ -200,9 +187,6 @@ function BillViewerDialog({ expense, eventName }: { expense: Expense; eventName:
                             <p className="text-stone-500 p-8">No bill image available.</p>
                         )}
                     </div>
-                    <p className="text-xs text-stone-500 mt-2">
-                        Category: <span className="text-stone-400">{expense.category}</span> · Amount: <span className="text-red-400">₹{expense.amount.toLocaleString('en-IN')}</span>
-                    </p>
                 </div>
                 <DialogFooter>
                     <Button
@@ -235,21 +219,14 @@ function BillUploadField({
 
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
         let file: File | undefined;
-
         if (e.type === 'drop') {
             file = (e as React.DragEvent).dataTransfer.files?.[0];
         } else {
             file = (e as React.ChangeEvent<HTMLInputElement>).target.files?.[0];
         }
-
         if (!file) return;
-
-        // Check file type
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-        if (!validTypes.includes(file.type)) {
-            return; // In a real app, maybe show a toast here
-        }
-
+        if (!validTypes.includes(file.type)) return;
         const base64 = await fileToBase64(file);
         onChange(base64);
     };
@@ -287,11 +264,7 @@ function BillUploadField({
                             <span className="text-xs text-stone-400">PDF Document Uploaded</span>
                         </div>
                     ) : (
-                        <img
-                            src={billUrl}
-                            alt="Bill preview"
-                            className="w-full max-h-40 object-contain"
-                        />
+                        <img src={billUrl} alt="Bill preview" className="w-full max-h-40 object-contain" />
                     )}
                     <button
                         type="button"
@@ -309,9 +282,7 @@ function BillUploadField({
                     onDrop={onDrop}
                     className={cn(
                         "flex items-center gap-3 rounded-lg border border-dashed px-4 py-8 cursor-pointer transition-all duration-200",
-                        isDragging
-                            ? "border-emerald-500 bg-emerald-500/10 scale-[1.01]"
-                            : "border-white/20 bg-white/5 hover:bg-white/10"
+                        isDragging ? "border-emerald-500 bg-emerald-500/10 scale-[1.01]" : "border-white/20 bg-white/5 hover:bg-white/10"
                     )}
                 >
                     <Upload className={cn("h-6 w-6 shrink-0 transition-colors", isDragging ? "text-emerald-400" : "text-stone-400")} />
@@ -323,26 +294,19 @@ function BillUploadField({
                             JPG, PNG, WEBP, PDF (Max 5MB)
                         </span>
                     </div>
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={(e) => handleFile(e)}
-                    />
+                    <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFile(e)} />
                 </label>
             )}
         </div>
     );
 }
 
-export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly }: ExpenseTableProps) {
     const { toast } = useToast();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Form States
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('General');
@@ -365,7 +329,6 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !amount || !date) return;
-
         setIsSubmitting(true);
         const res = await createExpense({
             title,
@@ -376,7 +339,6 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
             billUrl: billUrl || undefined,
             note: note || undefined,
         });
-
         if (res.success) {
             toast({ title: 'Success', description: 'Expense added successfully' });
             setIsAddOpen(false);
@@ -402,7 +364,6 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
     const handleUpdateExpense = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingExpense || !title || !amount || !date) return;
-
         setIsSubmitting(true);
         const res = await updateExpense(editingExpense.id, eventId, {
             title,
@@ -412,7 +373,6 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
             billUrl: billUrl,
             note: note || null,
         });
-
         if (res.success) {
             toast({ title: 'Success', description: 'Expense updated successfully' });
             setIsEditOpen(false);
@@ -434,137 +394,95 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
         }
     };
 
-
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h3 className="text-lg font-medium">Expense History</h3>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
-                            <Plus className="mr-2 h-4 w-4" /> Add Expense
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Add New Expense</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddExpense} className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Title</label>
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Refreshments" required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Amount (₹)</label>
-                                <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Category</label>
-                                <Select value={category} onValueChange={setCategory}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <BillUploadField billUrl={billUrl} onChange={setBillUrl} />
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
-                                <textarea
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder="e.g. Paid via cash to vendor"
-                                    rows={2}
-                                    className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
-                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Add Expense
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {!readOnly && (
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={resetForm} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
+                                <Plus className="mr-2 h-4 w-4" /> Add Expense
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Add New Expense</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleAddExpense} className="space-y-4 py-4">
+                                <div className="space-y-2"><label className="text-sm font-medium">Title</label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Refreshments" required className="bg-white/5 border-white/10" /></div>
+                                <div className="space-y-2"><label className="text-sm font-medium">Amount (₹)</label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required className="bg-white/5 border-white/10" /></div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Category</label>
+                                    <Select value={category} onValueChange={setCategory}>
+                                        <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Date</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={setDate} initialFocus /></PopoverContent>
+                                    </Popover>
+                                </div>
+                                <BillUploadField billUrl={billUrl} onChange={setBillUrl} />
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
+                                    <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Paid via cash to vendor" rows={2} className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                                </div>
+                                <DialogFooter><Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add Expense</Button></DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
 
-                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                    <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Edit Expense</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleUpdateExpense} className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Title</label>
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Amount (₹)</label>
-                                <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="bg-white/5 border-white/10" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Category</label>
-                                <Select value={category} onValueChange={setCategory}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <BillUploadField billUrl={billUrl} onChange={setBillUrl} />
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
-                                <textarea
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder="e.g. Paid via cash to vendor"
-                                    rows={2}
-                                    className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
-                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save Changes
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {!readOnly && (
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-black/95 border-white/10 backdrop-blur-xl max-h-[90dvh] overflow-y-auto">
+                            <DialogHeader><DialogTitle>Edit Expense</DialogTitle></DialogHeader>
+                            <form onSubmit={handleUpdateExpense} className="space-y-4 py-4">
+                                <div className="space-y-2"><label className="text-sm font-medium">Title</label><Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-white/5 border-white/10" /></div>
+                                <div className="space-y-2"><label className="text-sm font-medium">Amount (₹)</label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="bg-white/5 border-white/10" /></div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Category</label>
+                                    <Select value={category} onValueChange={setCategory}>
+                                        <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                                        <SelectContent>{CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Date</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10', !date && 'text-muted-foreground')}>
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={setDate} initialFocus /></PopoverContent>
+                                    </Popover>
+                                </div>
+                                <BillUploadField billUrl={billUrl} onChange={setBillUrl} />
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Note <span className="text-stone-500">(optional)</span></label>
+                                    <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Paid via cash to vendor" rows={2} className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-stone-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                                </div>
+                                <DialogFooter><Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save Changes</Button></DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <div className="rounded-md border border-white/10 bg-white/5">
-                {/* Mobile Card View */}
                 <div className="md:hidden divide-y divide-white/5">
-                    {expenses.length === 0 ? (
-                        <div className="h-24 flex items-center justify-center text-stone-500 text-sm">
-                            No expenses recorded yet.
-                        </div>
-                    ) : (
+                    {expenses.length === 0 ? (<div className="h-24 flex items-center justify-center text-stone-500 text-sm">No expenses recorded yet.</div>) : (
                         expenses.map((expense) => (
                             <div key={expense.id} className="p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
@@ -575,54 +493,32 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                                     <span className="font-semibold text-red-400 shrink-0 text-sm">-₹{expense.amount.toLocaleString('en-IN')}</span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
-                                        {expense.category}
-                                    </span>
-                                    {expense.note && (
-                                        <span className="text-xs text-stone-500 truncate max-w-[180px]" title={expense.note}>
-                                            📝 {expense.note}
-                                        </span>
-                                    )}
+                                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">{expense.category}</span>
+                                    {expense.note && (<span className="text-xs text-stone-500 truncate max-w-[180px]" title={expense.note}>📝 {expense.note}</span>)}
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <div className="flex gap-1">
-                                        {expense.billUrl && (
-                                            <BillViewerDialog expense={expense} eventName={eventName} />
-                                        )}
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        Are you sure you want to delete this expense? This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">
-                                                        Delete
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
+                                    <div className="flex gap-1">{expense.billUrl && (<BillViewerDialog expense={expense} eventName={eventName} />)}</div>
+                                    {!readOnly && (
+                                        <div className="flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}><Pencil className="h-4 w-4" /></Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
+                                                    <AlertDialogHeader><AlertDialogTitle>Delete Expense?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete this expense? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
 
-                {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
                     <Table>
                         <TableHeader>
@@ -633,75 +529,38 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
                                 <TableHead className="text-stone-400">Note</TableHead>
                                 <TableHead className="text-right text-stone-400">Amount</TableHead>
                                 <TableHead className="text-center text-stone-400">Bill / Receipt</TableHead>
-                                <TableHead className="text-right text-stone-400">Actions</TableHead>
+                                {!readOnly && <TableHead className="text-right text-stone-400">Actions</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {expenses.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center text-stone-500">
-                                        No expenses recorded yet.
-                                    </TableCell>
-                                </TableRow>
+                                <TableRow><TableCell colSpan={7} className="h-24 text-center text-stone-500">No expenses recorded yet.</TableCell></TableRow>
                             ) : (
                                 expenses.map((expense) => (
                                     <TableRow key={expense.id} className="border-white/10 hover:bg-white/5">
-                                        <TableCell className="text-stone-400">
-                                            {format(new Date(expense.date), 'MMM dd, yyyy')}
-                                        </TableCell>
-                                        <TableCell className="font-medium text-stone-200">
-                                            {expense.title}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">
-                                                {expense.category}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-stone-400 max-w-[160px]">
-                                            {expense.note ? (
-                                                <span className="block truncate text-sm" title={expense.note}>{expense.note}</span>
-                                            ) : (
-                                                <span className="text-stone-600 text-xs">—</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium text-red-400">
-                                            -₹{expense.amount.toLocaleString('en-IN')}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            {expense.billUrl ? (
-                                                <BillViewerDialog expense={expense} eventName={eventName} />
-                                            ) : (
-                                                <span className="text-stone-600 text-xs">—</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete this expense? This action cannot be undone.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">
-                                                                Delete
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        </TableCell>
+                                        <TableCell className="text-stone-400">{format(new Date(expense.date), 'MMM dd, yyyy')}</TableCell>
+                                        <TableCell className="font-medium text-stone-200">{expense.title}</TableCell>
+                                        <TableCell><span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-stone-400">{expense.category}</span></TableCell>
+                                        <TableCell className="text-stone-400 max-w-[160px]">{expense.note ? (<span className="block truncate text-sm" title={expense.note}>{expense.note}</span>) : (<span className="text-stone-600 text-xs">—</span>)}</TableCell>
+                                        <TableCell className="text-right font-medium text-red-400">-₹{expense.amount.toLocaleString('en-IN')}</TableCell>
+                                        <TableCell className="text-center">{expense.billUrl ? (<BillViewerDialog expense={expense} eventName={eventName} />) : (<span className="text-stone-600 text-xs">—</span>)}</TableCell>
+                                        {!readOnly && (
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}><Pencil className="h-4 w-4" /></Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
+                                                            <AlertDialogHeader><AlertDialogTitle>Delete Expense?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete this expense? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteExpense(expense.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))
                             )}
@@ -712,4 +571,3 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate }: Expense
         </div>
     );
 }
-
