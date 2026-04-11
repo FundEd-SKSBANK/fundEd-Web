@@ -40,6 +40,7 @@ export async function createExpense(data: {
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         const expense = await prisma.expense.create({
             data: {
@@ -67,6 +68,7 @@ export async function deleteExpense(id: string, eventId: string) {
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         await prisma.expense.delete({
             where: { id }
@@ -92,6 +94,7 @@ export async function updateExpense(id: string, eventId: string, data: {
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         const expense = await prisma.expense.update({
             where: { id },
@@ -327,6 +330,7 @@ export async function createAdditionalRevenue(data: {
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         const revenue = await prisma.additionalRevenue.create({
             data: {
@@ -358,6 +362,7 @@ export async function updateAdditionalRevenue(id: string, eventId: string, data:
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         const revenue = await prisma.additionalRevenue.update({
             where: { id },
@@ -382,6 +387,7 @@ export async function deleteAdditionalRevenue(id: string, eventId: string) {
     try {
         const session = await getSession();
         if (!session?.user) return { success: false, error: "Unauthorized" };
+        if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
         await prisma.additionalRevenue.delete({
             where: { id }

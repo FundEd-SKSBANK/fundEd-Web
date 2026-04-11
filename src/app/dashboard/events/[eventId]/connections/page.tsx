@@ -30,6 +30,16 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
@@ -39,6 +49,7 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { useToast } from '@/hooks/use-toast';
 import {
     generateToken,
+    generateQuickJoinToken,
     listTokens,
     getMajorEventConnections,
     approveConnection,
@@ -62,9 +73,15 @@ import {
     Clock,
     ChevronRight,
     BarChart2,
+    Zap,
+    Link2,
+    Lock,
+    ExternalLink,
 } from 'lucide-react';
+import { getCurrentAdmin } from '@/actions/users';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+
 
 function TokenCountdown({ expiresAt }: { expiresAt: string }) {
     const [now, setNow] = useState(new Date());
@@ -98,19 +115,29 @@ export default function ConnectionsPage() {
     const [loading, setLoading] = useState(true);
     const [generateOpen, setGenerateOpen] = useState(false);
     const [genLabel, setGenLabel] = useState('');
-    const [genExpiry, setGenExpiry] = useState('1'); // Default to 1 hour
+    const [genAmount, setGenAmount] = useState('');
+    const [genExpiry, setGenExpiry] = useState('168');
     const [genLoading, setGenLoading] = useState(false);
+    const [genMode, setGenMode] = useState<'standard' | 'quickjoin'>('standard');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [rejectedOpen, setRejectedOpen] = useState(false);
+    const [removingConnId, setRemovingConnId] = useState<{ id: string; name: string } | null>(null);
     const [removedOpen, setRemovedOpen] = useState(false);
+    const [lastGenerated, setLastGenerated] = useState<{ token: ConnectionToken; joinUrl?: string } | null>(null);
+    const [role, setRole] = useState<string | null>(null);
+
+    const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
     const fetchAll = useCallback(async () => {
-        const [tokRes, connRes] = await Promise.all([
+        setLoading(true);
+        const [tokRes, connRes, userRes] = await Promise.all([
             listTokens(eventId),
             getMajorEventConnections(eventId),
+            getCurrentAdmin(),
         ]);
         if (tokRes.success) setTokens(tokRes.data || []);
         if (connRes.success) setConnections((connRes.data || []) as SubEventConnection[]);
+        if (userRes.success && userRes.data) setRole(userRes.data.role);
         setLoading(false);
     }, [eventId]);
 
@@ -118,15 +145,38 @@ export default function ConnectionsPage() {
 
     const handleGenerateToken = async () => {
         setGenLoading(true);
-        const result = await generateToken(eventId, genLabel || undefined, parseInt(genExpiry));
-        if (result.success) {
-            toast({ title: 'Token Generated', description: 'Share the connection string with sub-event admins.' });
-            setTokens(prev => [result.data as ConnectionToken, ...prev]);
-            setGenerateOpen(false);
-            setGenLabel('');
-            setGenExpiry('1');
+        if (genMode === 'quickjoin') {
+            const result = await generateQuickJoinToken(
+                eventId,
+                genLabel.trim(),
+                parseInt(genExpiry),
+                genAmount ? parseFloat(genAmount) : 0,
+            ) as any;
+            if (result.success) {
+                const newToken: ConnectionToken = { ...result.data, isQuickJoin: true };
+                const joinUrl = `${appUrl}/join/${result.data.token}`;
+                toast({ title: '⚡ Quick-Join Link Created', description: 'Share the link with tutors/class reps.' });
+                setTokens(prev => [newToken, ...prev]);
+                setLastGenerated({ token: newToken, joinUrl });
+                setGenerateOpen(false);
+                setGenLabel('');
+                setGenAmount('');
+                setGenExpiry('168');
+                setGenMode('standard');
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            }
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error });
+            const result = await generateToken(eventId, genLabel || undefined, parseInt(genExpiry));
+            if (result.success) {
+                toast({ title: 'Token Generated', description: 'Share the connection string with sub-event admins.' });
+                setTokens(prev => [result.data as ConnectionToken, ...prev]);
+                setGenerateOpen(false);
+                setGenLabel('');
+                setGenExpiry('1');
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            }
         }
         setGenLoading(false);
     };
@@ -157,7 +207,9 @@ export default function ConnectionsPage() {
         }
     };
 
-    const handleRemove = async (connectionId: string) => {
+    const confirmRemove = async () => {
+        if (!removingConnId) return;
+        const connectionId = removingConnId.id;
         const result = await removeMajorConnection(connectionId);
         if (result.success) {
             toast({ title: 'Removed', description: 'The sub-event has been removed from this Major Event.' });
@@ -165,6 +217,7 @@ export default function ConnectionsPage() {
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
+        setRemovingConnId(null);
     };
 
     const handleDeleteToken = async (tokenId: string) => {
@@ -183,6 +236,27 @@ export default function ConnectionsPage() {
     const removedConns = connections.filter(c => c.disconnectedAt);
 
     if (loading) return <PageLoader message="Loading connections..." />;
+    
+    if (role === 'collab') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-fade-in p-6">
+                <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-lg shadow-red-900/10">
+                    <Lock className="h-10 w-10 text-red-500" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                    <h2 className="text-2xl font-bold text-white">Access Restricted</h2>
+                    <p className="text-stone-400">
+                        Collab users do not have permission to manage event connections or generate access tokens. Please contact the administrator for any connection requests.
+                    </p>
+                </div>
+                <Link href="/dashboard/events">
+                    <Button variant="outline" className="gap-2 border-white/10 hover:bg-white/5">
+                        <ArrowLeft className="h-4 w-4" /> Back to Events
+                    </Button>
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -201,43 +275,94 @@ export default function ConnectionsPage() {
                 </div>
             </div>
 
-            {/* ── Tokens Section ── */}
+            {/* Tokens Section */}
             <GlassCard>
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <CardTitle className="flex items-center gap-2"><Key className="h-4 w-4" /> Connection Tokens</CardTitle>
-                            <CardDescription>Share these strings with sub-event admins to let them request a connection</CardDescription>
+                            <CardDescription>Share tokens or Quick-Join links with sub-event admins</CardDescription>
                         </div>
-                        <Button size="sm" className="gap-2 gradient-success border-0 w-full sm:w-auto" onClick={() => setGenerateOpen(true)}>
-                            <Key className="h-3 w-3" /> Generate New
-                        </Button>
+                        {role !== 'collab' && (
+                            <Button size="sm" className="gap-2 gradient-success border-0 w-full sm:w-auto" onClick={() => { setGenMode('standard'); setGenerateOpen(true); }}>
+                                <Key className="h-3 w-3" /> Generate New
+                            </Button>
+                        )}
+                        {role === 'collab' && (
+                            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-white/10 bg-white/5 text-muted-foreground">
+                                <Lock className="h-3.5 w-3.5" /> Read Only
+                            </Badge>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                    {/* Last generated Quick-Join URL banner */}
+                    {lastGenerated?.joinUrl && (
+                        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/8 p-3">
+                            <Zap className="h-4 w-4 text-emerald-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-emerald-400 mb-0.5">Quick-Join Link Ready</p>
+                                <p className="font-mono text-xs truncate text-stone-300">{lastGenerated.joinUrl}</p>
+                            </div>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={() => {
+                                navigator.clipboard.writeText(lastGenerated.joinUrl!);
+                                toast({ title: 'Link copied!' });
+                            }}>
+                                <Copy className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    )}
+
                     {tokens.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">No tokens yet. Generate one to start accepting connection requests.</p>
                     ) : (
                         tokens.map(token => (
-                            <div key={token.id} className="flex items-center gap-3 rounded-lg border bg-muted/10 p-3">
+                            <div key={token.id} className={cn(
+                                'flex items-center gap-3 rounded-lg border p-3',
+                                token.isQuickJoin ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/10'
+                            )}>
                                 <div className="flex-1 min-w-0">
-                                    {token.label && <p className="text-xs text-muted-foreground mb-1">{token.label}</p>}
-                                    <p className="font-mono text-xs truncate">{token.token}</p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        {token.isQuickJoin && (
+                                            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px] px-1.5 h-4 gap-1">
+                                                <Zap className="h-2.5 w-2.5" /> Quick-Join
+                                            </Badge>
+                                        )}
+                                        {token.label && <p className="text-xs text-muted-foreground">{token.label}</p>}
+                                    </div>
+                                    {token.isQuickJoin ? (
+                                        <p className="font-mono text-xs truncate text-stone-400">{appUrl}/join/{token.token}</p>
+                                    ) : (
+                                        <p className="font-mono text-xs truncate">{token.token}</p>
+                                    )}
                                     <TokenCountdown expiresAt={token.expiresAt} />
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCopy(token)}>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <Button size="sm" variant="ghost" className="h-7 px-2" title={token.isQuickJoin ? 'Copy join link' : 'Copy token'} onClick={() => {
+                                        const text = token.isQuickJoin ? `${appUrl}/join/${token.token}` : token.token;
+                                        navigator.clipboard.writeText(text);
+                                        setCopiedId(token.id);
+                                        setTimeout(() => setCopiedId(null), 2000);
+                                    }}>
                                         {copiedId === token.id ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                                     </Button>
-                                    {/* Delete Button */}
-                                    <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
-                                        onClick={() => handleDeleteToken(token.id)}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    {token.isQuickJoin && (
+                                        <Button size="sm" variant="ghost" className="h-7 px-2" title="Open join page" asChild>
+                                            <a href={`${appUrl}/join/${token.token}`} target="_blank" rel="noopener noreferrer">
+                                                <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                        </Button>
+                                    )}
+                                    {role !== 'collab' && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
+                                            onClick={() => handleDeleteToken(token.id)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -275,14 +400,16 @@ export default function ConnectionsPage() {
                                         <span>{format(new Date(conn.createdAt), 'dd MMM, HH:mm')}</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 shrink-0">
-                                    <Button size="sm" className="flex-1 sm:flex-none h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleApprove(conn.id)}>
-                                        <CheckCircle2 className="h-3 w-3" /> Approve
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="flex-1 sm:flex-none h-8 gap-1 text-destructive border-white/10" onClick={() => handleReject(conn.id)}>
-                                        <XCircle className="h-3 w-3" /> Reject
-                                    </Button>
-                                </div>
+                                {role !== 'collab' && (
+                                    <div className="flex gap-2 shrink-0">
+                                        <Button size="sm" className="flex-1 sm:flex-none h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleApprove(conn.id)}>
+                                            <CheckCircle2 className="h-3 w-3" /> Approve
+                                        </Button>
+                                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none h-8 gap-1 text-destructive border-white/10" onClick={() => handleReject(conn.id)}>
+                                            <XCircle className="h-3 w-3" /> Reject
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}
@@ -348,14 +475,16 @@ export default function ConnectionsPage() {
                                                 <p className="text-xs text-muted-foreground truncate">{conn.subEventAdminName}</p>
                                             </div>
                                         </div>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 w-7 p-0 shrink-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => handleRemove(conn.id)}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
+                                        {role !== 'collab' && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-7 w-7 p-0 shrink-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ml-3"
+                                                onClick={() => setRemovingConnId({ id: conn.id, name: conn.subEventName || 'Unknown Event' })}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        )}
                                     </div>
 
                                     {/* Divider */}
@@ -444,41 +573,140 @@ export default function ConnectionsPage() {
             )}
 
             {/* Generate Token Dialog */}
-            <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+            <Dialog open={generateOpen} onOpenChange={(o) => { setGenerateOpen(o); if (!o) { setGenMode('standard'); setGenLabel(''); setGenAmount(''); setGenExpiry('168'); } }}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><Key className="h-4 w-4" /> Generate Connection Token</DialogTitle>
-                        <DialogDescription>Create a new token to share with sub-event admins.</DialogDescription>
+                        <DialogTitle className="flex items-center gap-2">
+                            {genMode === 'quickjoin' ? <Zap className="h-4 w-4 text-emerald-400" /> : <Key className="h-4 w-4" />}
+                            {genMode === 'quickjoin' ? 'Quick-Join Link' : 'Generate Connection Token'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {genMode === 'quickjoin'
+                                ? 'Share this link — clicking it auto-creates a connected class event after login.'
+                                : 'Create a token for sub-event admins to connect manually.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-3 py-2">
+
+                    {/* Mode tabs */}
+                    <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                        <button
+                            onClick={() => { setGenMode('standard'); setGenExpiry('1'); }}
+                            className={cn(
+                                'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all',
+                                genMode === 'standard' ? 'bg-white/10 text-white' : 'text-stone-500 hover:text-stone-300'
+                            )}
+                        >
+                            <Key className="h-3 w-3" /> Standard Token
+                        </button>
+                        <button
+                            onClick={() => { setGenMode('quickjoin'); setGenExpiry('168'); }}
+                            className={cn(
+                                'flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all',
+                                genMode === 'quickjoin' ? 'bg-emerald-500/20 text-emerald-400' : 'text-stone-500 hover:text-stone-300'
+                            )}
+                        >
+                            <Zap className="h-3 w-3" /> Quick-Join Link
+                        </button>
+                    </div>
+
+                    <div className="space-y-3 py-2 max-h-[50vh] overflow-y-auto overflow-x-hidden pr-2">
                         <div className="grid gap-1.5">
-                            <Label>Label (optional)</Label>
-                            <Input value={genLabel} onChange={e => setGenLabel(e.target.value)} placeholder="e.g. Batch 1 — IT classes" />
+                            <Label>
+                                {genMode === 'quickjoin' ? 'Token Label (optional)' : 'Label (optional)'}
+                            </Label>
+                            <Input
+                                value={genLabel}
+                                onChange={e => setGenLabel(e.target.value)}
+                                placeholder={genMode === 'quickjoin' ? 'e.g. IT Dept link, Batch A' : 'e.g. Batch 1 — IT classes'}
+                            />
+                            {genMode === 'quickjoin' && (
+                                <p className="text-xs text-stone-500">For your own reference only — class label is entered by the person who clicks the link</p>
+                            )}
                         </div>
+
+                        {/* Amount — Quick-Join only */}
+                        {genMode === 'quickjoin' && (
+                            <div className="grid gap-1.5">
+                                <Label className="flex items-center gap-1.5">
+                                    Amount per Student (₹) <span className="text-red-400">*</span>
+                                </Label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">₹</span>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={genAmount}
+                                        onChange={e => setGenAmount(e.target.value)}
+                                        placeholder="e.g. 500"
+                                        className="pl-7"
+                                    />
+                                </div>
+                                <p className="text-xs text-stone-500">Each auto-created class event will collect this amount per student</p>
+                            </div>
+                        )}
+
                         <div className="grid gap-1.5">
                             <Label>Expiry</Label>
                             <Select value={genExpiry} onValueChange={setGenExpiry}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="1">1 hour</SelectItem>
-                                    <SelectItem value="12">12 hours</SelectItem>
+                                    {genMode === 'standard' && <SelectItem value="1">1 hour</SelectItem>}
+                                    {genMode === 'standard' && <SelectItem value="12">12 hours</SelectItem>}
                                     <SelectItem value="24">1 day</SelectItem>
                                     <SelectItem value="72">3 days</SelectItem>
                                     <SelectItem value="168">7 days</SelectItem>
+                                    <SelectItem value="720">30 days</SelectItem>
                                     <SelectItem value="999999">Never</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {genMode === 'quickjoin' && (
+                            <div className="p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
+                                <p className="text-xs text-emerald-400 font-medium mb-1">⚡ What happens when someone clicks the link:</p>
+                                <ul className="text-xs text-stone-400 space-y-0.5">
+                                    <li>→ They sign in to FundEd</li>
+                                    <li>→ See event preview popup</li>
+                                    <li>→ Pick their students + QR code</li>
+                                    <li>→ Event auto-created + connected here</li>
+                                </ul>
+                            </div>
+                        )}
                     </div>
-                    <DialogFooter>
+
+                    <DialogFooter className="gap-2 pt-2">
                         <Button variant="outline" onClick={() => setGenerateOpen(false)}>Cancel</Button>
-                        <Button onClick={handleGenerateToken} disabled={genLoading} className="gap-2 gradient-success border-0">
-                            {genLoading ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Key className="h-3 w-3" />}
-                            Generate
+                        <Button
+                            onClick={handleGenerateToken}
+                            disabled={genLoading || (genMode === 'quickjoin' && !genAmount)}
+                            className={cn('gap-2 border-0', genMode === 'quickjoin' ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'gradient-success')}
+                        >
+                            {genLoading ? <RefreshCw className="h-3 w-3 animate-spin" /> : genMode === 'quickjoin' ? <Zap className="h-3 w-3" /> : <Key className="h-3 w-3" />}
+                            {genMode === 'quickjoin' ? 'Create Quick-Join Link' : 'Generate'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Remove Connection Dialog */}
+            <AlertDialog open={!!removingConnId} onOpenChange={open => !open && setRemovingConnId(null)}>
+                <AlertDialogContent className="bg-[#09090b] border-white/10">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Connection?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to disconnect <strong className="text-white">{removingConnId?.name}</strong>?
+                            The sub-event will still exist, but its payments will no longer be aggregated into this Major Event.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmRemove} className="bg-red-600 hover:bg-red-700 text-white border-0">
+                            Remove Connection
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
