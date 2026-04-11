@@ -111,8 +111,8 @@ export default function SupportPage() {
                             icon: <BookOpen className="w-6 h-6" />,
                             title: 'Documentation',
                             desc: 'Admin guides and onboarding docs.',
-                            action: 'Coming soon',
-                            href: '#',
+                            action: 'Read Docs',
+                            href: '/docs',
                         },
                     ].map((card, i) => (
                         <a
