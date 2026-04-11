@@ -235,10 +235,11 @@ fundEd-Web/
 - ✅ **Animated Step Indicator**: Visual step tracker with checkmark icons on completion.
 - ✅ **Superadmin Notification**: Superadmin is notified via email when a new admin registers.
 
-### Major Events & Cross-Admin Collaboration (v1.5.5)
+### Major Events & Cross-Admin Collaboration (v1.6.1)
+- ✅ **Quick Join Links (New)**: Automatically generated, shareable URLs (`/join/[token]`) that allow sub-event admins to seamlessly connect to major events in a single click, bypassing manual token entry.
 - ✅ **Major Event Category**: New event type that aggregates data from linked sub-events — no direct student payments.
-- ✅ **Token Generator**: Major Event admins generate labeled, time-limited tokens (7 or 30 day expiry) with countdown display.
-- ✅ **Sub-Event Connection**: Sub-event admins paste a token to request a connection; status starts as `PENDING`.
+- ✅ **Token Generator**: Major Event admins generate labeled, time-limited connection tokens (7 or 30 day expiry) with countdown display.
+- ✅ **Sub-Event Connection**: Sub-event admins can use a token or quick link to request a connection; status starts as `PENDING`.
 - ✅ **Connections Management Page**: Approve, view, and revoke connections per Major Event.
 - ✅ **Disconnect Flow**: Sub-event admins can disconnect from a Major Event with a confirmation dialog.
 - ✅ **Post-Publish Success Modal**: After creating a Major Event, a modal guides the admin straight to the connections page.
