@@ -157,6 +157,12 @@ export async function login(prevState: any, formData: FormData) {
     });
     
     console.log('✅ [AuthAction] Login successful, redirecting...');
+
+    // Support safe post-login redirect — only /join/* paths allowed (prevents open redirect)
+    const rawRedirect = formData.get('redirectTo') as string | null;
+    if (rawRedirect && /^\/join\/[A-Z0-9\-]+$/.test(rawRedirect)) {
+      redirect(rawRedirect);
+    }
     
     // Directly redirect superadmins to their dashboard
     if (user.role === 'superadmin') {

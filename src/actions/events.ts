@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { sendNewEventEmail } from '@/lib/email-templates';
 import { getSession, getWorkspaceId } from '@/lib/auth';
+import { getMyVisibleEventIds } from '@/actions/users';
 
 
 export async function getEvents() {
@@ -13,9 +14,17 @@ export async function getEvents() {
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
     const workspaceId = getWorkspaceId(session.user);
-    const whereClause: any = session.user.role === 'superadmin' 
-        ? {} 
-        : { createdById: workspaceId };
+
+    let whereClause: any;
+    if (session.user.role === 'superadmin') {
+      whereClause = {};
+    } else if (session.user.role === 'collab') {
+      // Collab users only see explicitly granted events
+      const { eventIds } = await getMyVisibleEventIds();
+      whereClause = { createdById: workspaceId, id: { in: eventIds } };
+    } else {
+      whereClause = { createdById: workspaceId };
+    }
 
     const events = await prisma.event.findMany({
       where: whereClause,
@@ -187,6 +196,7 @@ export async function createEvent(data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     if (new Date(data.deadline) < new Date(new Date().setHours(0, 0, 0, 0))) {
         return { success: false, error: 'Deadline must be today or in the future' };
@@ -298,6 +308,7 @@ export async function saveDraft(data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     const eventData: any = {
       status: 'DRAFT',
@@ -368,6 +379,7 @@ export async function updateEvent(id: string, data: {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     // Verify ownership
     const existing = await prisma.event.findUnique({ where: { id }});
@@ -423,6 +435,7 @@ export async function deleteEvent(id: string) {
   try {
     const session = await getSession();
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    if (session.user.role === 'collab') return { success: false, error: "Unauthorized" };
 
     const existing = await prisma.event.findUnique({ where: { id }});
     if (!existing) return { success: false, error: "Event not found" };

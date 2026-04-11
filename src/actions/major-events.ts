@@ -54,6 +54,7 @@ export async function generateToken(
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) return { success: false, error: 'Event not found' };
@@ -116,6 +117,7 @@ export async function listTokens(eventId: string) {
         expiresAt: t.expiresAt.toISOString(),
         createdAt: t.createdAt.toISOString(),
         status: now < t.expiresAt ? 'active' : 'expired',
+        isQuickJoin: t.autoCreatePayload !== null && t.autoCreatePayload !== undefined,
       })),
     };
   } catch (error) {
@@ -130,6 +132,7 @@ export async function deleteToken(tokenId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const token = await (prisma as any).connectionToken.findUnique({
       where: { id: tokenId },
@@ -237,6 +240,7 @@ export async function connectSubEvent(tokenStr: string, subEventId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const workspaceId = getWorkspaceId(session.user);
 
@@ -336,6 +340,7 @@ export async function approveConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -384,6 +389,7 @@ export async function rejectConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -430,6 +436,7 @@ export async function disconnectSubEvent(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -482,6 +489,7 @@ export async function removeMajorConnection(connectionId: string) {
   try {
     const session = await getSession();
     if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
 
     const conn = await (prisma as any).subEventConnection.findUnique({
       where: { id: connectionId },
@@ -799,5 +807,229 @@ export async function generateMajorEventReport(eventId: string) {
   } catch (error) {
     console.error('Error generating major event report:', error);
     return { success: false, error: 'Failed to generate report' };
+  }
+}
+
+// ─── Quick-Join token generation ──────────────────────────────────────────────
+
+export async function generateQuickJoinToken(
+  eventId: string,
+  label: string,
+  expiryHours: number | string,
+  amount: number = 0,
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+    if (session.user.role === 'collab') return { success: false, error: 'Unauthorized' };
+
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: { createdBy: { select: { name: true, email: true } } },
+    });
+    if (!event) return { success: false, error: 'Event not found' };
+    if (!(event as any).isMajorEvent) return { success: false, error: 'Not a major event' };
+    if (session.user.role !== 'superadmin' && (event as any).createdById !== getWorkspaceId(session.user)) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const token = generateTokenString();
+    const expiresAt = getExpiryDate(expiryHours);
+
+    // classLabel is intentionally NOT stored here — it's entered by the tutor who clicks the link
+    // NOTE: Convert Prisma Decimal → Number before storing in Json field (Decimal isn't JSON-serializable)
+    // Amount is explicitly set by the organizer in the Quick-Join dialog
+    const autoCreatePayload = {
+      name: event.name,
+      description: event.description ?? '',
+      cost: amount,  // Organizer-set amount per student
+      deadline: (event as any).deadline.toISOString(),
+      paymentOptions: (event as any).paymentOptions ?? null,
+      creatorName: (event as any).createdBy?.name || 'Event Creator',
+      majorEventId: eventId,
+    };
+
+    const record = await (prisma as any).connectionToken.create({
+      data: {
+        token,
+        label: label.trim(),
+        expiresAt,
+        eventId,
+        autoCreatePayload,
+      },
+    });
+
+    revalidatePath(`/dashboard/events/${eventId}/connections`);
+    return {
+      success: true,
+      data: {
+        ...record,
+        expiresAt: record.expiresAt.toISOString(),
+        createdAt: record.createdAt.toISOString(),
+        status: 'active',
+        joinUrl: `${getAppUrl()}/join/${token}`,
+      },
+    };
+  } catch (error) {
+    console.error('Error generating quick-join token:', error);
+    return { success: false, error: 'Failed to generate Quick-Join token' };
+  }
+}
+
+// ─── Get Quick-Join token info (public, no auth) ─────────────────────────────
+
+export async function getQuickJoinTokenInfo(tokenStr: string) {
+  try {
+    const record = await (prisma as any).connectionToken.findUnique({
+      where: { token: tokenStr },
+      include: {
+        event: {
+          include: { createdBy: { select: { name: true, email: true } } },
+        },
+      },
+    });
+
+    if (!record) {
+      return { success: false, error: 'Invalid link — this Quick-Join token does not exist.' };
+    }
+    if (new Date() > record.expiresAt) {
+      return { success: false, error: 'This Quick-Join link has expired. Contact the event creator for a new one.' };
+    }
+    if (!record.autoCreatePayload) {
+      return { success: false, error: 'This is a standard connection token, not a Quick-Join link.' };
+    }
+
+    const payload = record.autoCreatePayload as any;
+    return {
+      success: true,
+      data: {
+        tokenId: record.id,
+        tokenStr: record.token,
+        majorEventId: record.eventId,
+        majorEventName: record.event.name,
+        creatorName: record.event.createdBy?.name || 'Event Creator',
+        eventName: payload.name,
+        description: payload.description,
+        cost: payload.cost,
+        deadline: payload.deadline,
+        paymentOptions: payload.paymentOptions,
+        expiresAt: record.expiresAt.toISOString(),
+      },
+    };
+  } catch (error) {
+    console.error('Error getting quick-join token info:', error);
+    return { success: false, error: 'Failed to load Quick-Join token info' };
+  }
+}
+
+// ─── Auto-create sub-event + connect (authenticated) ─────────────────────────
+
+export async function autoCreateAndConnectSubEvent(
+  tokenStr: string,
+  opts: {
+    classLabel: string;
+    selectedStudentIds: string[];
+    qrCodeUrl?: string;
+  }
+) {
+  try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+
+    // Block collab users — they cannot own events
+    if (session.user.role === 'collab') {
+      return { success: false, error: 'Quick-Join links are only available for admin accounts.' };
+    }
+
+    const workspaceId = getWorkspaceId(session.user);
+
+    // Fetch and validate token
+    const record = await (prisma as any).connectionToken.findUnique({
+      where: { token: tokenStr },
+      include: { event: true },
+    });
+    if (!record) return { success: false, error: 'Invalid token' };
+    if (new Date() > record.expiresAt) return { success: false, error: 'Token expired' };
+    if (!record.autoCreatePayload) return { success: false, error: 'Not a Quick-Join token' };
+
+    // Duplicate-join check: has this admin already created a sub-event linked to this major event?
+    const existing = await (prisma as any).subEventConnection.findFirst({
+      where: {
+        majorEventId: record.eventId,
+        status: { in: ['PENDING', 'APPROVED'] },
+        disconnectedAt: null,
+        subEvent: { createdById: workspaceId },
+      },
+      include: { subEvent: { select: { id: true, name: true } } },
+    });
+    if (existing) {
+      return {
+        success: false,
+        error: 'Already connected',
+        alreadyConnected: true,
+        existingEventId: existing.subEvent?.id,
+        existingEventName: existing.subEvent?.name,
+      };
+    }
+
+    // Validate all student IDs belong to the caller's workspace
+    const payload = record.autoCreatePayload as any;
+    if (opts.selectedStudentIds.length > 0) {
+      const studentCount = await prisma.student.count({
+        where: { id: { in: opts.selectedStudentIds }, createdById: workspaceId },
+      });
+      if (studentCount !== opts.selectedStudentIds.length) {
+        return { success: false, error: 'Some selected students do not belong to your account' };
+      }
+    }
+
+    // Generate a unique slug
+    const subEventName = `${payload.name} — ${opts.classLabel.trim()}`;
+    let slug = subEventName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const existingSlug = await prisma.event.findUnique({ where: { slug } });
+    if (existingSlug) {
+      slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`;
+    }
+
+    // Create the sub-event
+    const newEvent = await prisma.event.create({
+      data: {
+        name: subEventName,
+        slug,
+        description: payload.description || '',
+        cost: payload.cost || 0,
+        deadline: new Date(payload.deadline),
+        paymentOptions: payload.paymentOptions || JSON.stringify(['Razorpay']),
+        qrCodeUrl: opts.qrCodeUrl || null,
+        category: 'Normal',
+        isMajorEvent: false,
+        status: 'PUBLISHED',
+        createdById: workspaceId,
+        participants: opts.selectedStudentIds.length > 0
+          ? { connect: opts.selectedStudentIds.map(id => ({ id })) }
+          : undefined,
+      } as any,
+    });
+
+    // Create the connection — immediately APPROVED (pre-authorised by token)
+    await (prisma as any).subEventConnection.create({
+      data: {
+        tokenId: record.id,
+        majorEventId: record.eventId,
+        subEventId: newEvent.id,
+        status: 'APPROVED',
+      },
+    });
+
+    revalidatePath('/dashboard/events');
+    revalidatePath(`/dashboard/events/${record.eventId}/connections`);
+
+    return {
+      success: true,
+      data: { newEventId: newEvent.id, newEventName: newEvent.name },
+    };
+  } catch (error) {
+    console.error('Error auto-creating sub-event:', error);
+    return { success: false, error: 'Failed to create and connect event' };
   }
 }

@@ -17,7 +17,10 @@ export async function recordCashPayment(data: {
   try {
     // Get current user session for audit trail
     const session = await getSession();
-    if (!session) {
+    if (!session || !session.user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+    if (session.user.role === 'collab') {
       return { success: false, error: 'Unauthorized' };
     }
 
@@ -140,8 +143,20 @@ export async function recordCashPayment(data: {
 
 export async function getManualPayments() {
   try {
+    const session = await getSession();
+    if (!session?.user) return { success: false, error: 'Unauthorized' };
+
+    const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin';
+    if (!isAdmin) return { success: false, error: 'Unauthorized' }; // Don't let collabs see global manual payment lists if they exist
+
+    const whereClause: any = { isManualEntry: true };
+    if (session.user.role !== 'superadmin') {
+       // Filter by events owned by this admin's workspace
+       whereClause.event = { createdById: session.user.id };
+    }
+
     const payments = await prisma.payment.findMany({
-      where: { isManualEntry: true },
+      where: whereClause,
       include: {
         student: true,
         event: true,

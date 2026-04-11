@@ -26,6 +26,7 @@ model User {
   createdStudents   Student[]           @relation("CreatedStudents")
   admin             User?               @relation("AdminCollabs", fields: [adminId], references: [id])
   collabs           User[]              @relation("AdminCollabs")
+  collabVisibility  CollabEventVisibility[]
 
   @@index([email])
   @@index([resetToken])
@@ -81,17 +82,19 @@ model Event {
   @@index([deadline])
   @@index([category])
   @@index([createdAt])
+  collabVisibility  CollabEventVisibility[]
 }
 
 model ConnectionToken {
-  id          String               @id @default(cuid())
-  token       String               @unique
-  label       String?
-  expiresAt   DateTime
-  eventId     String
-  createdAt   DateTime             @default(now())
-  event       Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  connections SubEventConnection[]
+  id                String               @id @default(cuid())
+  token             String               @unique
+  label             String?
+  expiresAt         DateTime
+  eventId           String
+  createdAt         DateTime             @default(now())
+  autoCreatePayload Json?                // stores event template for Quick-Join links
+  event             Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  connections       SubEventConnection[]
 
   @@index([token])
   @@index([eventId])
@@ -215,6 +218,16 @@ model VerificationOTP {
   @@index([email])
 }
 
+model CollabEventVisibility {
+  id        String   @id @default(cuid())
+  collabId  String
+  eventId   String
+  grantType String   @default("full") // "full" or "view_only"
+  grantedAt DateTime @default(now())
+  collab    User     @relation(fields: [collabId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-
-
+  @@unique([collabId, eventId])
+  @@index([collabId])
+  @@index([eventId])
+}
