@@ -351,7 +351,7 @@ export function JoinClient({ token, tokenData, tokenError, initialSession }: Pro
           <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 className="w-10 h-10 text-emerald-400" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Event Created! 🎉</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Event Created!</h1>
           <p className="text-stone-400 text-xs sm:text-sm mb-1">Your class event is live and connected to</p>
           <p className="text-emerald-400 font-semibold mb-1 text-sm sm:text-base">{tokenData.majorEventName}</p>
           <p className="text-xs text-stone-500 mb-6 px-4">"{createdEventName}"</p>

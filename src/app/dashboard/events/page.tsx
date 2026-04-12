@@ -629,15 +629,15 @@ export default function EventsPage() {
 
                                     <div className="space-y-3">
                                         <Label className="text-stone-300">Category</Label>
-                                        <div className="flex gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Normal
+                                        <div className="grid grid-cols-3 gap-1 sm:gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight">Normal</span>
                                             </button>
-                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Print
+                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight">Print</span>
                                             </button>
-                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Major Event
+                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight text-center">Major Event</span>
                                             </button>
                                         </div>
                                         {isMajorEvent && (
@@ -674,7 +674,7 @@ export default function EventsPage() {
                                             </Popover>
                                         </div>
 
-                                        {category === 'Print' && (
+                                        {!isMajorEvent && (
                                             <div className="grid gap-2">
                                                 <Label className="text-stone-300">QR Code for Payment</Label>
                                                 <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
@@ -693,6 +693,33 @@ export default function EventsPage() {
                                         )}
                                     </div>
 
+                                    {!isMajorEvent && (
+                                        <div className="space-y-3 pt-2">
+                                            <Label className="text-stone-300">Payment Methods Supported <span className="text-red-500">*</span></Label>
+                                            <div className="flex flex-wrap gap-4">
+                                                {['Cash', 'QR', 'Razorpay'].map((method) => (
+                                                    <div key={method} className="flex items-center space-x-2">
+                                                        <Checkbox 
+                                                            id={`payment-method-${method}`} 
+                                                            checked={paymentOptions.includes(method)} 
+                                                            onCheckedChange={(checked) => {
+                                                                if (checked) {
+                                                                    setPaymentOptions([...paymentOptions, method]);
+                                                                } else {
+                                                                    setPaymentOptions(paymentOptions.filter(m => m !== method));
+                                                                }
+                                                            }}
+                                                            className="border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                                                        />
+                                                        <label htmlFor={`payment-method-${method}`} className="text-sm font-medium leading-none cursor-pointer text-stone-300">
+                                                            {method}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {isMajorEvent && editingEvent && (
                                         <div className="pt-2">
                                             <TokenGeneratorCard eventId={editingEvent.id} />
@@ -704,6 +731,21 @@ export default function EventsPage() {
                                             <div className="flex items-center justify-between">
                                                 <Label className="text-stone-300">Participants ({selectedStudents.length})</Label>
                                                 <div className="flex gap-2">
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => {
+                                                            if (selectedStudents.length === students.length && students.length > 0) {
+                                                                setSelectedStudents([]);
+                                                            } else {
+                                                                setSelectedStudents(students.map(s => s.id));
+                                                            }
+                                                        }} 
+                                                        className="h-7 text-xs text-stone-400 hover:text-white hover:bg-white/5"
+                                                    >
+                                                        {selectedStudents.length === students.length && students.length > 0 ? "Deselect All" : "Select All"}
+                                                    </Button>
                                                     <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
                                                         Search Students
                                                     </Button>

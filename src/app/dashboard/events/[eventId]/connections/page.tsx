@@ -123,6 +123,7 @@ export default function ConnectionsPage() {
     const [rejectedOpen, setRejectedOpen] = useState(false);
     const [removingConnId, setRemovingConnId] = useState<{ id: string; name: string } | null>(null);
     const [removedOpen, setRemovedOpen] = useState(false);
+    const [deletingTokenId, setDeletingTokenId] = useState<string | null>(null);
     const [lastGenerated, setLastGenerated] = useState<{ token: ConnectionToken; joinUrl?: string } | null>(null);
     const [role, setRole] = useState<string | null>(null);
 
@@ -358,7 +359,7 @@ export default function ConnectionsPage() {
                                             size="sm"
                                             variant="ghost"
                                             className="h-7 w-7 p-0 text-destructive/60 hover:text-destructive hover:bg-red-500/10 rounded-lg"
-                                            onClick={() => handleDeleteToken(token.id)}
+                                            onClick={() => setDeletingTokenId(token.id)}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
@@ -609,7 +610,7 @@ export default function ConnectionsPage() {
                         </button>
                     </div>
 
-                    <div className="space-y-3 py-2 max-h-[50vh] overflow-y-auto overflow-x-hidden pr-2">
+                    <div className="space-y-3 py-2 max-h-[50vh] overflow-y-auto px-1 sm:pr-2">
                         <div className="grid gap-1.5">
                             <Label>
                                 {genMode === 'quickjoin' ? 'Token Label (optional)' : 'Label (optional)'}
@@ -703,6 +704,24 @@ export default function ConnectionsPage() {
                         <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white">Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmRemove} className="bg-red-600 hover:bg-red-700 text-white border-0">
                             Remove Connection
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Token Dialog */}
+            <AlertDialog open={!!deletingTokenId} onOpenChange={open => !open && setDeletingTokenId(null)}>
+                <AlertDialogContent className="bg-[#09090b] border-white/10">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Connection Token?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this connection token? This action cannot be undone. Any sub-events that have not yet connected using this token will no longer be able to do so.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => { if (deletingTokenId) handleDeleteToken(deletingTokenId); setDeletingTokenId(null); }} className="bg-red-600 hover:bg-red-700 text-white border-0">
+                            Delete Token
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
