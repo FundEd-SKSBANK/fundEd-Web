@@ -90,7 +90,6 @@ export async function getEventPayments(eventId: string) {
           transactionId: 'N/A',
           status: 'Pending',
           paymentMethod: 'N/A',
-          screenshotUrl: null,
           razorpay_order_id: null,
           isManualEntry: false,
           recordedBy: null,

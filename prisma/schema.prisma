@@ -126,7 +126,6 @@ model Payment {
   transactionId     String?
   status            String
   paymentMethod     String
-  screenshotUrl     String?
   razorpay_order_id String?
   isManualEntry     Boolean  @default(false)
   recordedBy        String?

@@ -744,7 +744,6 @@ export async function getSubEventPaymentsReadOnly(subEventId: string, requesting
       transactionId: p.transactionId || '',
       status: p.status,
       paymentMethod: p.paymentMethod,
-      screenshotUrl: p.screenshotUrl || undefined,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
     }));
