@@ -13,7 +13,6 @@ export type Payment = {
   transactionId: string;
   status: 'Paid' | 'Pending' | 'Failed' | 'Verification Pending';
   paymentMethod: 'Razorpay' | 'QR Scan' | 'Cash' | 'N/A';
-  screenshotUrl?: string;
   razorpay_order_id?: string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
