@@ -61,6 +61,29 @@ export async function getPaymentPageData(slugOrId: string) {
         }))
         .filter(s => s.paidAmount < event.cost);
 
+    // Fetch UPI ID from the matching QrCode record for UPI QR generation
+    let upiId: string | null = null;
+    if (event.qrCodeUrl) {
+      const qrCodeRecord = await prisma.qrCode.findFirst({
+        where: { url: event.qrCodeUrl },
+        select: { upiString: true },
+      });
+      if (qrCodeRecord?.upiString) {
+        const raw = qrCodeRecord.upiString.trim();
+        // If it's a full UPI deep-link, extract only the 'pa' (payee address) param
+        if (raw.toLowerCase().startsWith('upi://')) {
+          try {
+            const url = new URL(raw);
+            upiId = url.searchParams.get('pa') || null;
+          } catch {
+            upiId = raw; // fallback: use as-is
+          }
+        } else {
+          upiId = raw; // already a plain UPI ID
+        }
+      }
+    }
+
     return { 
       success: true, 
       data: {
@@ -70,7 +93,8 @@ export async function getPaymentPageData(slugOrId: string) {
             createdAt: event.createdAt.toISOString(), 
             updatedAt: event.updatedAt.toISOString(), 
             paymentOptions: JSON.parse(event.paymentOptions),
-            adminSlug: (event as any).createdBy?.slug || null
+            adminSlug: (event as any).createdBy?.slug || null,
+            upiId,
         },
         availableStudents
       }

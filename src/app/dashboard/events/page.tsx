@@ -604,7 +604,7 @@ export default function EventsPage() {
                                     <span>Create Event</span>
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl">
+                            <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-[95vw] sm:w-full mx-auto max-h-[90dvh] flex flex-col">
                                 <DialogHeader className="p-6 pb-0">
                                     <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-br from-white to-stone-400 bg-clip-text text-transparent">
                                         {editingEvent ? 'Edit Event' : 'Create New Event'}
@@ -613,59 +613,75 @@ export default function EventsPage() {
                                         {editingEvent ? 'Update event details' : 'Fill in the details for your new fund collection event'}
                                     </DialogDescription>
                                 </DialogHeader>
-                                <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-4 max-h-[80vh] overflow-y-auto">
-                                    <div className="grid gap-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="name" className="text-stone-300 flex items-center gap-1">Event Name <span className="text-red-500">*</span></Label>
-                                            <Input id="name" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Annual Day Fund" className="bg-white/5 border-white/10 h-10 focus:border-emerald-500/50 transition-colors" />
+                                <form onSubmit={handleSubmit} className="p-5 pt-3 space-y-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1">
+                                    {/* Name + Description */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="name" className="text-stone-300 text-xs flex items-center gap-1">Event Name <span className="text-red-500">*</span></Label>
+                                            <Input id="name" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Annual Day Fund" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50 transition-colors" />
                                         </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="description" className="text-stone-300 flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
-                                            <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[80px] focus:border-emerald-500/50 transition-colors" />
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="description" className="text-stone-300 text-xs flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
+                                            <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[36px] h-9 resize-none focus:border-emerald-500/50 transition-colors text-sm" />
                                         </div>
                                     </div>
 
-                                    <div className="mx-4 h-px bg-white/5 my-2" />
+                                    <div className="h-px bg-white/5" />
 
-                                    <div className="space-y-3">
-                                        <Label className="text-stone-300">Category</Label>
-                                        <div className="grid grid-cols-3 gap-1 sm:gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight">Normal</span>
+                                    {/* Category */}
+                                    <div className="space-y-2">
+                                        <Label className="text-stone-300 text-xs">Category</Label>
+                                        <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Normal
                                             </button>
-                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight">Print</span>
+                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Print
                                             </button>
-                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex items-center justify-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-medium py-2 sm:py-1.5 px-1 sm:px-3 rounded-lg transition-all h-full", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-3 h-3 rounded-full border-2 shrink-0", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> <span className="leading-tight text-center">Major Event</span>
+                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Major Event
                                             </button>
                                         </div>
                                         {isMajorEvent && (
-                                            <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fade-in text-[10px] leading-relaxed">
-                                                <p className="text-emerald-400/80 font-medium mb-1">Events aggregate payment data from connected sub-events. No direct student payments.</p>
-                                                <p className="text-stone-500">After publishing, go to "Manage Connections" to generate tokens for sub-events.</p>
+                                            <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fade-in text-[10px] leading-relaxed">
+                                                <p className="text-emerald-400/80 font-medium">Aggregates payment data from connected sub-events. No direct student payments.</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    {!isMajorEvent && (
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="cost" className="text-stone-300 flex items-center gap-1">Cost per student (₹) <span className="text-red-500">*</span></Label>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 font-medium">₹</span>
-                                                <Input id="cost" type="number" value={cost} onChange={e => setCost(e.target.value)} required min="1" placeholder="500" className="bg-white/5 border-white/10 h-10 pl-7 focus:border-emerald-500/50" />
+                                    {/* Cost + Deadline — side by side for normal events */}
+                                    {!isMajorEvent ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="grid gap-1.5">
+                                                <Label htmlFor="cost" className="text-stone-300 text-xs flex items-center gap-1">Cost per student (₹) <span className="text-red-500">*</span></Label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 font-medium text-sm">₹</span>
+                                                    <Input id="cost" type="number" value={cost} onChange={e => setCost(e.target.value)} required min="1" placeholder="500" className="bg-white/5 border-white/10 h-9 pl-7 text-sm focus:border-emerald-500/50" />
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-stone-300 text-xs flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-9 hover:bg-white/10 text-sm", !deadline && "text-muted-foreground")}>
+                                                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                                                            {deadline ? format(deadline, "MMM d, yyyy") : <span>Pick a date</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0 border-white/10" align="start">
+                                                        <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-zinc-950 text-white" />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="grid gap-2">
-                                            <Label className="text-stone-300 flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
+                                    ) : (
+                                        <div className="grid gap-1.5">
+                                            <Label className="text-stone-300 text-xs flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-10 hover:bg-white/10", !deadline && "text-muted-foreground")}>
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-9 hover:bg-white/10 text-sm", !deadline && "text-muted-foreground")}>
+                                                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                                                        {deadline ? format(deadline, "MMM d, yyyy") : <span>Pick a date</span>}
                                                     </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-auto p-0 border-white/10" align="start">
@@ -673,40 +689,24 @@ export default function EventsPage() {
                                                 </PopoverContent>
                                             </Popover>
                                         </div>
+                                    )}
 
-                                        {!isMajorEvent && (
-                                            <div className="grid gap-2">
-                                                <Label className="text-stone-300">QR Code for Payment</Label>
-                                                <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
-                                                    <SelectTrigger className="bg-white/5 border-white/10 h-10">
-                                                        <SelectValue placeholder="Select a QR code" />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                                        {qrCodes.map((qr) => (
-                                                            <SelectItem key={qr.id} value={qr.url}>
-                                                                {qr.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        )}
-                                    </div>
-
+                                    {/* Payment Methods + conditional QR selector */}
                                     {!isMajorEvent && (
-                                        <div className="space-y-3 pt-2">
-                                            <Label className="text-stone-300">Payment Methods Supported <span className="text-red-500">*</span></Label>
+                                        <div className="space-y-2">
+                                            <Label className="text-stone-300 text-xs">Payment Methods <span className="text-red-500">*</span></Label>
                                             <div className="flex flex-wrap gap-4">
                                                 {['Cash', 'QR', 'Razorpay'].map((method) => (
                                                     <div key={method} className="flex items-center space-x-2">
-                                                        <Checkbox 
-                                                            id={`payment-method-${method}`} 
-                                                            checked={paymentOptions.includes(method)} 
+                                                        <Checkbox
+                                                            id={`payment-method-${method}`}
+                                                            checked={paymentOptions.includes(method)}
                                                             onCheckedChange={(checked) => {
                                                                 if (checked) {
                                                                     setPaymentOptions([...paymentOptions, method]);
                                                                 } else {
                                                                     setPaymentOptions(paymentOptions.filter(m => m !== method));
+                                                                    if (method === 'QR') setSelectedQrCode('');
                                                                 }
                                                             }}
                                                             className="border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
@@ -717,53 +717,69 @@ export default function EventsPage() {
                                                     </div>
                                                 ))}
                                             </div>
+                                            {paymentOptions.includes('QR') && (
+                                                <div className="grid gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <Label className="text-stone-300 text-xs">QR Code for Payment</Label>
+                                                    <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
+                                                        <SelectTrigger className="bg-white/5 border-white/10 h-9 text-sm">
+                                                            <SelectValue placeholder="Select a QR code" />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                                            {qrCodes.length === 0 ? (
+                                                                <div className="py-3 px-2 text-xs text-stone-500 text-center">No QR codes found. Add one in Settings.</div>
+                                                            ) : (
+                                                                qrCodes.map((qr) => (
+                                                                    <SelectItem key={qr.id} value={qr.url}>{qr.name}</SelectItem>
+                                                                ))
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
                                     {isMajorEvent && editingEvent && (
-                                        <div className="pt-2">
-                                            <TokenGeneratorCard eventId={editingEvent.id} />
-                                        </div>
+                                        <TokenGeneratorCard eventId={editingEvent.id} />
                                     )}
 
+                                    {/* Participants */}
                                     {!isMajorEvent && (
-                                        <div className="space-y-3 pt-2">
-                                            <div className="flex items-center justify-between">
-                                                <Label className="text-stone-300">Participants ({selectedStudents.length})</Label>
-                                                <div className="flex gap-2">
-                                                    <Button 
-                                                        type="button" 
-                                                        variant="ghost" 
-                                                        size="sm" 
-                                                        onClick={() => {
-                                                            if (selectedStudents.length === students.length && students.length > 0) {
-                                                                setSelectedStudents([]);
-                                                            } else {
-                                                                setSelectedStudents(students.map(s => s.id));
-                                                            }
-                                                        }} 
-                                                        className="h-7 text-xs text-stone-400 hover:text-white hover:bg-white/5"
-                                                    >
-                                                        {selectedStudents.length === students.length && students.length > 0 ? "Deselect All" : "Select All"}
-                                                    </Button>
-                                                    <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
-                                                        Search Students
-                                                    </Button>
-                                                </div>
+                                        <div className="flex items-center justify-between pt-1">
+                                            <Label className="text-stone-300 text-xs">Participants ({selectedStudents.length})</Label>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button" variant="ghost" size="sm"
+                                                    onClick={() => {
+                                                        if (selectedStudents.length === students.length && students.length > 0) {
+                                                            setSelectedStudents([]);
+                                                        } else {
+                                                            setSelectedStudents(students.map(s => s.id));
+                                                        }
+                                                    }}
+                                                    className="h-7 text-xs text-stone-400 hover:text-white hover:bg-white/5"
+                                                >
+                                                    {selectedStudents.length === students.length && students.length > 0 ? "Deselect All" : "Select All"}
+                                                </Button>
+                                                <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
+                                                    Search Students
+                                                </Button>
                                             </div>
                                         </div>
                                     )}
 
-                                    <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-white/5">
+                                    <DialogFooter className="gap-2 sm:gap-0 pt-3 border-t border-white/5">
                                         <div className="flex gap-2 w-full justify-end">
-                                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-stone-400 hover:text-white h-10 px-6">Cancel</Button>
-                                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-10 px-8 shadow-lg shadow-emerald-900/40 font-semibold">
+                                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-stone-400 hover:text-white h-9 px-5 text-sm">Cancel</Button>
+                                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-9 px-6 shadow-lg shadow-emerald-900/40 font-semibold text-sm">
                                                 {editingEvent?.status === 'PUBLISHED' ? 'Update Event' : 'Publish Event'}
                                             </Button>
                                         </div>
                                     </DialogFooter>
                                 </form>
                             </DialogContent>
+
+
                         </Dialog>
                     )}
 
