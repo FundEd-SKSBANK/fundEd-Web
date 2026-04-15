@@ -22,7 +22,8 @@ import {
 import { Check, ChevronsUpDown, QrCode as QrCodeIcon, Loader2, GraduationCap, Lock, Info, ExternalLink } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Command,
@@ -71,6 +72,7 @@ export default function PaymentPage() {
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // New state for custom amount
   const [amountToPay, setAmountToPay] = useState<string>('');
@@ -363,6 +365,16 @@ export default function PaymentPage() {
     await handleOtherPaymentSubmission('QR Scan', 'Verification Pending');
   }
 
+  const handleDownloadQr = () => {
+    const canvas = qrCanvasRef.current;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payment-qr-${event.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+    a.click();
+  };
+
 
   return (
     <div className="min-h-screen bg-black text-stone-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-100 overflow-x-hidden relative cursor-none">
@@ -617,14 +629,17 @@ export default function PaymentPage() {
       </main>
 
       <AlertDialog open={showQrDialog} onOpenChange={setShowQrDialog}>
-        <AlertDialogContent className="max-w-md bg-zinc-950 border-white/10">
+        <AlertDialogContent className="max-w-md bg-zinc-950 border-white/10 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-[95vw] sm:w-full rounded-2xl p-4 sm:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-white">
               <QrCodeIcon className="h-6 w-6 text-emerald-500" />
               Scan to Pay
             </AlertDialogTitle>
             <AlertDialogDescription className="text-stone-400">
-              Use any UPI app to scan the QR code below to pay <span className="text-white font-bold">₹{amountToPay ? parseFloat(amountToPay).toLocaleString('en-IN') : event.cost.toLocaleString('en-IN')}</span> from the form.
+              Use any UPI app to scan the QR code below to pay{' '}
+              <span className="text-white font-bold">
+                ₹{amountToPay ? parseFloat(amountToPay).toLocaleString('en-IN') : event.cost.toLocaleString('en-IN')}
+              </span>.
               After paying, click the submit button below for verification.
               <br />
               <span className="block mt-2 text-xs text-yellow-500/80">
@@ -632,9 +647,58 @@ export default function PaymentPage() {
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex flex-col items-center gap-4 py-6">
-            <div className="p-4 bg-white rounded-xl">
-              {event.qrCodeUrl && (
+
+          <div className="flex flex-col items-center gap-3 py-1 sm:py-3">
+            {event.upiId && amountToPay ? (
+              <>
+                {/* Dynamic UPI QR Code */}
+                <div className="p-4 bg-white rounded-xl shadow-lg shadow-emerald-500/10 ring-2 ring-emerald-500/20">
+                  <QRCodeCanvas
+                    ref={qrCanvasRef}
+                    value={`upi://pay?pa=${event.upiId}&pn=${encodeURIComponent('FundEd')}&am=${parseFloat(amountToPay).toFixed(2)}&cu=INR&tn=${encodeURIComponent(event.name)}`}
+                    size={200}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    level="M"
+                    imageSettings={{
+                      src: "/favicon.ico",
+                      x: undefined,
+                      y: undefined,
+                      height: 28,
+                      width: 28,
+                      excavate: true,
+                    }}
+                  />
+                </div>
+
+                {/* UPI Details */}
+                <div className="w-full rounded-lg bg-white/5 border border-white/10 p-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-400">UPI ID</span>
+                    <span className="font-mono text-emerald-300 text-xs">{event.upiId}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-400">Amount</span>
+                    <span className="text-white font-bold">₹{parseFloat(amountToPay).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Download Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadQr}
+                  className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download QR Code
+                </Button>
+              </>
+            ) : event.qrCodeUrl ? (
+              // Fallback: show admin-uploaded QR image if no UPI ID stored
+              <div className="p-4 bg-white rounded-xl">
                 <Image
                   src={event.qrCodeUrl}
                   alt="QR Code"
@@ -642,10 +706,14 @@ export default function PaymentPage() {
                   height={200}
                   className="mix-blend-multiply"
                 />
-              )}
-            </div>
-
+              </div>
+            ) : (
+              <div className="py-6 text-center text-stone-500 text-sm">
+                QR code not available.
+              </div>
+            )}
           </div>
+
           <AlertDialogFooter>
             <Button variant="ghost" onClick={() => setShowQrDialog(false)} disabled={isSubmitting} className="text-stone-400 hover:text-white">Cancel</Button>
             <Button onClick={handleSubmitQrPayment} disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-500 text-white">

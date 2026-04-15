@@ -179,7 +179,18 @@ export default function SettingsPage() {
       const valid = decoded !== null && isUpiQr(decoded);
       setIsValidQr(valid);
       if (valid && decoded) {
-        setUpiString(decoded);
+        // If decoded text is a full UPI URL, extract only the 'pa' (UPI ID) parameter
+        if (decoded.trim().toLowerCase().startsWith('upi://') || decoded.includes('pa=')) {
+          try {
+            const url = new URL(decoded.trim());
+            const pa = url.searchParams.get('pa');
+            setUpiString(pa || decoded);
+          } catch {
+            setUpiString(decoded);
+          }
+        } else {
+          setUpiString(decoded);
+        }
       } else {
         setUpiString('');
       }
@@ -253,8 +264,8 @@ export default function SettingsPage() {
   const portalUrl = slugPreview ? `${typeof window !== 'undefined' ? window.location.origin : ''}/check-status/${slugPreview}` : '';
   const canSaveSlug = slugPreview.length >= 3 && !isSavingSlug && slugAvailability !== 'taken' && slugAvailability !== 'checking' && slugAvailability !== 'invalid';
 
-  // Save is enabled only when: image uploaded + validated + valid UPI QR
-  const canSave = !!newQrUrl && isValidQr === true && !isSubmittingQr && !isValidating;
+  // Save is enabled only when: image uploaded + validated + valid UPI QR + upiString provided
+  const canSave = !!newQrUrl && isValidQr === true && !!upiString.trim() && !isSubmittingQr && !isValidating;
 
   return (
     <div className="grid gap-6 sm:gap-8 w-full max-w-full overflow-hidden min-w-0">
@@ -445,8 +456,8 @@ export default function SettingsPage() {
                       <Input
                         id="upi-id"
                         placeholder="e.g., yourname@okaxis"
-                        value={upiString.startsWith('upi://') ? (new URL(upiString).searchParams.get('pa') || upiString) : upiString}
-                        onChange={(e) => setUpiString(e.target.value)}
+                        value={upiString}
+                        onChange={(e) => setUpiString(e.target.value.trim())}
                         className={submitted && !upiString ? 'border-red-500 focus-visible:ring-red-500' : ''}
                       />
                       <p className="text-[10px] text-stone-500 leading-tight">
