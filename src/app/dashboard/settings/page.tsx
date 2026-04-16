@@ -75,6 +75,7 @@ export default function SettingsPage() {
 
   // QR Code State
   const [openQr, setOpenQr] = useState(false);
+  const [previewQr, setPreviewQr] = useState<string | null>(null);
   const [isSubmittingQr, setIsSubmittingQr] = useState(false);
   const [newQrName, setNewQrName] = useState('');
   const [newQrUrl, setNewQrUrl] = useState('');
@@ -480,22 +481,33 @@ export default function SettingsPage() {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent className="px-3.5 sm:px-6 w-full min-w-0">
-              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full min-w-0">
+            <CardContent className="px-3.5 sm:px-6 w-full min-w-0 pb-6">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full min-w-0">
                 {qrCodes?.length === 0 && (
                   <div className="col-span-full text-center py-6 sm:py-8 text-muted-foreground border-2 border-dashed rounded-lg border-white/10">
                     No QR codes found. Add your first payment QR code above.
                   </div>
                 )}
                 {qrCodes?.map((qr) => (
-                  <GlassCard key={qr.id} variant="bordered" className="bg-black/20 overflow-hidden flex flex-col h-full min-w-0">
-                    <CardContent className="p-4 sm:p-6 pt-8 sm:pt-10 flex flex-col items-center gap-4 flex-1 w-full min-w-0">
-                      <div className="relative w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-xl p-2 flex items-center justify-center shadow-inner overflow-hidden shrink-0">
-                        <Image src={qr.url} alt={qr.name} fill className="object-contain p-2" />
-                      </div>
-                      <p className="font-medium text-center text-sm mt-1 sm:mt-2 w-full break-words line-clamp-2 px-2">{qr.name}</p>
-                    </CardContent>
-                    <CardFooter className="p-0 border-t border-white/10">
+                  <div key={qr.id} className="group relative flex items-center gap-3 bg-stone-900/40 border border-white/5 hover:border-white/10 rounded-xl p-2.5 transition-all w-full min-w-0 shadow-sm">
+                    {/* Thumbnail */}
+                    <div 
+                      className="relative w-12 h-12 bg-white rounded-lg p-1 shrink-0 cursor-pointer border border-white/10 overflow-hidden hover:scale-105 transition-transform shadow-inner"
+                      onClick={() => setPreviewQr(qr.url)}
+                      title="Click to preview"
+                    >
+                      <Image src={qr.url} alt={qr.name} fill className="object-contain p-0.5" />
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center text-left cursor-pointer" onClick={() => setPreviewQr(qr.url)}>
+                      <p className="font-medium text-[13px] sm:text-sm text-stone-200 truncate leading-tight">
+                        {qr.name}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="shrink-0 flex items-center pr-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <DeleteConfirmationDialog
                         title="Delete QR Code?"
                         description={
@@ -508,17 +520,49 @@ export default function SettingsPage() {
                         onConfirm={() => handleDeleteQr(qr.id)}
                         trigger={
                           <Button
-                            variant="ghost" size="lg"
-                            className="w-full h-12 rounded-t-none text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center justify-center gap-2"
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8 text-stone-400 hover:text-red-400 hover:bg-red-500/10 transition-colors rounded-lg"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete QR Code
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         }
                       />
-                    </CardFooter>
-                  </GlassCard>
+                    </div>
+                  </div>
                 ))}
               </div>
+
+              {/* QR Preview Dialog */}
+              <Dialog open={!!previewQr} onOpenChange={(open) => !open && setPreviewQr(null)}>
+                <DialogContent className="max-w-[90vw] sm:max-w-sm border-white/10 p-6 bg-stone-950 flex flex-col items-center rounded-2xl shadow-2xl">
+                  <DialogHeader className="mb-2">
+                    <DialogTitle className="text-center font-medium text-stone-300">QR Code Preview</DialogTitle>
+                  </DialogHeader>
+                  <DialogDescription className="sr-only">Preview your QR code image here.</DialogDescription>
+                  {previewQr && (
+                    <div className="relative w-full aspect-square max-w-[280px] bg-white rounded-xl shadow-inner border-[3px] border-emerald-500/30 overflow-hidden">
+                      <Image src={previewQr} alt="QR Preview" fill className="object-contain p-2" />
+                    </div>
+                  )}
+                  <Button 
+                    onClick={() => {
+                      if(previewQr) {
+                        const a = document.createElement('a');
+                        a.href = previewQr;
+                        a.download = 'QR_Code.png';
+                        a.target = '_blank';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }
+                    }} 
+                    className="mt-4 w-full sm:w-auto px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md shadow-emerald-900/20"
+                  >
+                    Download QR
+                  </Button>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </GlassCard>
         )}
