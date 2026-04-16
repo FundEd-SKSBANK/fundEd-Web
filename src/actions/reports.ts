@@ -21,6 +21,7 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
+        participants: true,
         payments: {
           where: {
             ...(filters?.dateFrom && { paymentDate: { gte: new Date(filters.dateFrom) } }),
@@ -59,8 +60,38 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
       'Receipt Number': p.receiptNumber || 'N/A',
     }));
 
+    const paymentStudentIds = new Set(event.payments.map(p => p.studentId));
+    
+    // Find participants who have no payment record at all
+    const missingParticipants = event.participants.filter(s => !paymentStudentIds.has(s.id));
+    
+    const missingData = missingParticipants.map(s => ({
+      'Payment ID': 'N/A',
+      'Student Name': s.name,
+      'Roll Number': s.rollNo,
+      'Email': s.email,
+      'Amount': 0,
+      'Payment Date': 'N/A',
+      'Payment Method': 'N/A',
+      'Status': 'Pending',
+      'Transaction ID': 'N/A',
+      'Manual Entry': 'N/A',
+      'Receipt Number': 'N/A',
+    }));
+
+    const fullReportData = [...reportData, ...missingData];
+
     const totalCollected = event.payments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0);
-    const totalPending = event.payments.filter(p => p.status === 'Pending' || p.status === 'Verification Pending').reduce((sum, p) => sum + p.amount, 0);
+    
+    const allUniqueStudentIds = new Set([...event.participants.map(s => s.id), ...paymentStudentIds]);
+    const totalParticipantsCount = allUniqueStudentIds.size;
+    
+    const targetCollection = totalParticipantsCount * event.cost;
+    const calculatedTotalPending = targetCollection - totalCollected;
+
+    const paidStudentIds = new Set(event.payments.filter(p => p.status === 'Paid').map(p => p.studentId));
+    const paidCount = paidStudentIds.size;
+    const pendingCount = totalParticipantsCount - paidCount;
 
     return {
       success: true,
@@ -72,13 +103,14 @@ export async function generateEventReport(eventId: string, filters?: { dateFrom?
           deadline: event.deadline.toISOString(),
         },
         summary: {
+          targetCollection,
           totalCollected,
-          totalPending,
+          totalPending: Math.max(0, calculatedTotalPending),
           totalTransactions: event.payments.length,
-          paidCount: event.payments.filter(p => p.status === 'Paid').length,
-          pendingCount: event.payments.filter(p => p.status !== 'Paid').length,
+          paidCount,
+          pendingCount,
         },
-        transactions: reportData,
+        transactions: fullReportData,
       }
     };
   } catch (error) {

@@ -138,8 +138,16 @@ export default function ReportsPage() {
         }
 
         try {
+            let eventNameFilter = selectedEvent;
+            if (reportType === 'event') {
+                const eventObj = events.find(e => e.id === selectedEvent);
+                if (eventObj) {
+                    eventNameFilter = eventObj.name.replace(/[^a-zA-Z0-9]/g, '_');
+                }
+            }
+
             const filename = reportType === 'event'
-                ? `Event_Report_${selectedEvent}`
+                ? `Event_Report_${eventNameFilter}`
                 : reportType === 'summary'
                     ? 'Transaction_Summary'
                     : reportType === 'student'
@@ -199,13 +207,25 @@ export default function ReportsPage() {
             // Add title
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
-            doc.text('FundEd - Report', 14, 20);
+            
+            let reportTitle = 'FundEd - Report';
+            let eventNameForTitle = '';
+            
+            if (reportType === 'event') {
+                const eventObj = events.find(e => e.id === selectedEvent);
+                if (eventObj) {
+                    eventNameForTitle = eventObj.name;
+                    reportTitle = `FundEd - ${eventNameForTitle}`;
+                }
+            }
+            
+            doc.text(reportTitle, 14, 20);
 
             // Add report type
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
             const reportTypeText = reportType === 'event'
-                ? 'Event-wise Report'
+                ? (eventNameForTitle ? `Event-wise Report` : 'Event-wise Report')
                 : reportType === 'summary'
                     ? 'Transaction Summary'
                     : reportType === 'student'
@@ -225,12 +245,21 @@ export default function ReportsPage() {
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
 
-                const summaryData = [
-                    ['Total Transactions', (reportSummary.totalTransactions || 0).toString()],
-                    ['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString('en-IN')],
-                    ['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString('en-IN')],
-                    ['Paid Count', (reportSummary.paidCount || 0).toString()],
-                ];
+                const summaryData = [];
+                if (reportSummary.targetCollection !== undefined) {
+                    summaryData.push(['Target Collection', reportSummary.targetCollection.toLocaleString('en-IN')]);
+                }
+                summaryData.push(['Total Collected', (reportSummary.totalCollected || reportSummary.paidAmount || 0).toLocaleString('en-IN')]);
+                summaryData.push(['Pending Amount', (reportSummary.totalPending || reportSummary.pendingAmount || 0).toLocaleString('en-IN')]);
+                if (reportSummary.totalTransactions !== undefined) {
+                    summaryData.push(['Total Transactions', reportSummary.totalTransactions.toString()]);
+                }
+                if (reportSummary.paidCount !== undefined) {
+                    summaryData.push(['Paid Count', reportSummary.paidCount.toString()]);
+                }
+                if (reportSummary.pendingCount !== undefined) {
+                    summaryData.push(['Pending Count', reportSummary.pendingCount.toString()]);
+                }
 
                 autoTable(doc, {
                     startY: yPosition,
@@ -283,8 +312,16 @@ export default function ReportsPage() {
             }
 
             // Generate filename
+            let eventNameFilter = selectedEvent;
+            if (reportType === 'event') {
+                const eventObj = events.find(e => e.id === selectedEvent);
+                if (eventObj) {
+                    eventNameFilter = eventObj.name.replace(/[^a-zA-Z0-9]/g, '_');
+                }
+            }
+
             const filename = reportType === 'event'
-                ? `Event_Report_${selectedEvent}`
+                ? `Event_Report_${eventNameFilter}`
                 : reportType === 'summary'
                     ? 'Transaction_Summary'
                     : reportType === 'student'
@@ -453,16 +490,19 @@ export default function ReportsPage() {
             {/* Summary Cards */}
             {
                 reportSummary && (
-                    <div className="grid gap-3 sm:gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 animate-slide-up">
-                        <GlassCard className="hover-lift">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-xl sm:text-2xl font-bold">{reportSummary.totalTransactions || 0}</div>
-                            </CardContent>
-                        </GlassCard>
-
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 animate-slide-up">
+                        {reportSummary.targetCollection !== undefined && (
+                            <GlassCard className="hover-lift border-blue-200/20 dark:border-blue-900/50 bg-blue-500/5">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Target Collection</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                        ₹{reportSummary.targetCollection.toLocaleString('en-IN')}
+                                    </div>
+                                </CardContent>
+                            </GlassCard>
+                        )}
                         <GlassCard className="hover-lift border-green-200/20 dark:border-green-900/50 bg-green-500/5">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Collected</CardTitle>
@@ -487,12 +527,32 @@ export default function ReportsPage() {
 
                         <GlassCard className="hover-lift">
                             <CardHeader className="pb-2">
+                                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-xl sm:text-2xl font-bold">{reportSummary.totalTransactions || 0}</div>
+                            </CardContent>
+                        </GlassCard>
+
+                        <GlassCard className="hover-lift">
+                            <CardHeader className="pb-2">
                                 <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Paid Count</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-xl sm:text-2xl font-bold">{reportSummary.paidCount || 0}</div>
                             </CardContent>
                         </GlassCard>
+
+                        {reportSummary.pendingCount !== undefined && (
+                            <GlassCard className="hover-lift border-red-200/20 dark:border-red-900/50 bg-red-500/5">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Pending Count</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{reportSummary.pendingCount}</div>
+                                </CardContent>
+                            </GlassCard>
+                        )}
                     </div>
                 )
             }
@@ -558,29 +618,40 @@ export default function ReportsPage() {
                             </div>
 
                             {/* Desktop View - Table */}
-                            <div className="hidden md:block overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto pb-4">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            {Object.keys(transactions[0]).map((key) => (
-                                                <TableHead key={key} className="text-center whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">{key}</TableHead>
-                                            ))}
+                                        <TableRow className="border-b border-white/10">
+                                            {Object.keys(transactions[0]).map((key) => {
+                                                // Exclude verbose columns from UI preview to avoid horizontal scroll overload
+                                                if (['Payment ID', 'Transaction ID', 'Email', 'Transaction Reference', 'Manual Entry', 'Receipt Number', 'Recorded By', 'Notes'].includes(key) && Object.keys(transactions[0]).length > 6) {
+                                                    return null;
+                                                }
+                                                return (
+                                                    <TableHead key={key} className="text-left whitespace-nowrap text-xs sm:text-sm px-4 py-3 font-medium text-muted-foreground">{key}</TableHead>
+                                                );
+                                            })}
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {transactions.slice(0, 10).map((transaction, idx) => (
-                                            <TableRow key={idx} className="hover:bg-muted/50">
-                                                {Object.values(transaction).map((value: any, i) => (
-                                                    <TableCell key={i} className="text-center text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap">
-                                                        {i === Object.keys(transaction).indexOf('Status') ? (
-                                                            <div className="flex justify-center">
+                                            <TableRow key={idx} className="hover:bg-white/5 border-b border-white/5 transition-colors">
+                                                {Object.entries(transaction).map(([key, value]: [string, any], i) => {
+                                                    if (['Payment ID', 'Transaction ID', 'Email', 'Transaction Reference', 'Manual Entry', 'Receipt Number', 'Recorded By', 'Notes'].includes(key) && Object.keys(transactions[0]).length > 6) {
+                                                        return null;
+                                                    }
+                                                    return (
+                                                        <TableCell key={i} className="text-left text-sm px-4 py-3 whitespace-nowrap">
+                                                            {key === 'Status' ? (
                                                                 <StatusBadge status={value} />
-                                                            </div>
-                                                        ) : (
-                                                            value
-                                                        )}
-                                                    </TableCell>
-                                                ))}
+                                                            ) : (key === 'Amount' || key === 'Total Amount' || key === 'Collected Amount' || key === 'Pending Amount') ? (
+                                                                <span className="font-semibold text-stone-200">₹{Number(value).toLocaleString('en-IN')}</span>
+                                                            ) : (
+                                                                <span className="text-stone-300">{value}</span>
+                                                            )}
+                                                        </TableCell>
+                                                    );
+                                                })}
                                             </TableRow>
                                         ))}
                                     </TableBody>
