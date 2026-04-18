@@ -74,7 +74,7 @@ export default function SupportPage() {
                 </div>
             </nav>
 
-            <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 py-16 md:py-24">
+            <main className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 pt-16 pb-8 md:pt-24 md:pb-12">
                 {/* Header */}
                 <div className="mb-16 pt-10 md:pt-0">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-8">
@@ -159,7 +159,7 @@ export default function SupportPage() {
                 </div>
 
                 {/* Still stuck */}
-                <div className="rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 p-12 text-center backdrop-blur-md">
+                <div className="mt-20 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 p-12 text-center backdrop-blur-md">
                     <div className="inline-flex p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-6">
                         <LifeBuoy className="w-8 h-8" />
                     </div>
@@ -175,10 +175,10 @@ export default function SupportPage() {
                         {' '}and we&apos;ll get back to you within 24 hours.
                     </p>
                 </div>
-            </main >
+            </main>
 
             {/* Footer */}
-            < footer className="relative z-10 border-t border-white/5 px-6 md:px-16 py-8 mt-12" >
+            <footer className="relative z-10 border-t border-white/5 px-6 md:px-16 py-8">
                 <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-600">
                     <p>© {new Date().getFullYear()} FundEd · A sub-product of <span className="text-emerald-500/80">SKS DM</span></p>
                     <div className="flex gap-6">
