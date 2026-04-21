@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverExternalPackages: ['@prisma/client', 'pg', '@neondatabase/serverless', '@prisma/adapter-neon', 'ws'],
+  serverExternalPackages: ['@prisma/client', 'pg', '@neondatabase/serverless', '@prisma/adapter-neon', 'ws', 'bcryptjs'],
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
