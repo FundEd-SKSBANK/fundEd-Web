@@ -107,19 +107,19 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   try {
-    console.time('⏱️ [AuthAction] LogIn: FindUser');
+    console.time(' [AuthAction] LogIn: FindUser');
     const user = await prisma.user.findUnique({
       where: { email },
     });
-    console.timeEnd('⏱️ [AuthAction] LogIn: FindUser');
+    console.timeEnd(' [AuthAction] LogIn: FindUser');
 
     if (!user) {
       return { error: 'Invalid credentials' };
     }
 
-    console.time('⏱️ [AuthAction] LogIn: BcryptCompare');
+    console.time(' [AuthAction] LogIn: BcryptCompare');
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    console.timeEnd('⏱️ [AuthAction] LogIn: BcryptCompare');
+    console.timeEnd(' [AuthAction] LogIn: BcryptCompare');
 
     if (!isPasswordCorrect) {
       return { error: 'Invalid credentials' };
@@ -134,7 +134,7 @@ export async function login(prevState: any, formData: FormData) {
       user.role = 'superadmin';
     }
 
-    console.time('⏱️ [AuthAction] LogIn: EncryptSession');
+    console.time(' [AuthAction] LogIn: EncryptSession');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const sessionToken = await encrypt({ 
       user: { 
@@ -146,7 +146,7 @@ export async function login(prevState: any, formData: FormData) {
       }, 
       expires 
     });
-    console.timeEnd('⏱️ [AuthAction] LogIn: EncryptSession');
+    console.timeEnd(' [AuthAction] LogIn: EncryptSession');
 
     (await cookies()).set('session', sessionToken, { 
       expires, 
@@ -226,7 +226,7 @@ export async function signup(prevState: any, formData: FormData) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.time('⏱️ [AuthAction] Signup: CreateUser');
+    console.time(' [AuthAction] Signup: CreateUser');
     const user = await prisma.user.create({
       data: {
         email,
@@ -235,7 +235,7 @@ export async function signup(prevState: any, formData: FormData) {
         role: 'admin',
       },
     });
-    console.timeEnd('⏱️ [AuthAction] Signup: CreateUser');
+    console.timeEnd(' [AuthAction] Signup: CreateUser');
 
     // Clean up verification record
     await (prisma as any).verificationOTP.delete({
@@ -384,11 +384,11 @@ export async function logout() {
 }
 
 export async function getUserRole() {
-  console.time('⏱️ [AuthAction] GetUserRole');
+  console.time(' [AuthAction] GetUserRole');
   const session = await getSession();
   
   if (!session || !session.user) {
-    console.timeEnd('⏱️ [AuthAction] GetUserRole');
+    console.timeEnd(' [AuthAction] GetUserRole');
     return null;
   }
   
@@ -400,7 +400,7 @@ export async function getUserRole() {
   // Only hit DB if it's the special superadmin email and we need to check'admin' status
   // but usually login handles this upgrade.
   if (session.user.email === 'super@funded.com' && role === 'admin') {
-    console.time('⏱️ [AuthAction] GetUserRole: DB-UpgradeCheck');
+    console.time(' [AuthAction] GetUserRole: DB-UpgradeCheck');
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { id: true, email: true, role: true }
@@ -411,13 +411,13 @@ export async function getUserRole() {
         where: { id: user.id },
         data: { role: 'superadmin' }
       });
-      console.timeEnd('⏱️ [AuthAction] GetUserRole: DB-UpgradeCheck');
-      console.timeEnd('⏱️ [AuthAction] GetUserRole');
+      console.timeEnd(' [AuthAction] GetUserRole: DB-UpgradeCheck');
+      console.timeEnd(' [AuthAction] GetUserRole');
       return 'superadmin';
     }
-    console.timeEnd('⏱️ [AuthAction] GetUserRole: DB-UpgradeCheck');
+    console.timeEnd(' [AuthAction] GetUserRole: DB-UpgradeCheck');
   }
 
-  console.timeEnd('⏱️ [AuthAction] GetUserRole');
+  console.timeEnd(' [AuthAction] GetUserRole');
   return role;
 }
