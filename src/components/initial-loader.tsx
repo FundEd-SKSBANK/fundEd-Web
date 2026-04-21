@@ -44,7 +44,7 @@ export function InitialLoader() {
                 if (j === fullText2.length) {
                     clearInterval(interval2);
                     // Dismiss after completion
-                    setTimeout(() => setShow(false), 2000);
+                    setTimeout(() => setShow(false), 400);
                 }
             }, 100);
             return () => clearInterval(interval2);
