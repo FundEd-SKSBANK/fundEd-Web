@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaNeonHttp } from '@prisma/adapter-neon';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const prismaClientSingleton = () => {
   if (!process.env.DATABASE_URL) {
@@ -9,9 +10,8 @@ const prismaClientSingleton = () => {
   }
   
   const connectionString = process.env.DATABASE_URL as string;
-  const adapter = new PrismaNeonHttp(connectionString, {
-    // Empty options object satisfies TypeScript
-  } as any);
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
     adapter,
