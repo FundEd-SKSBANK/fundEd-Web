@@ -82,5 +82,8 @@
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "flatted": "^3.4.2"
   }
 }
