@@ -660,6 +660,7 @@ export default function PaymentPage() {
                     bgColor="#ffffff"
                     fgColor="#000000"
                     level="M"
+                    includeMargin={true}
                     imageSettings={{
                       src: "/favicon.ico",
                       x: undefined,
