@@ -661,14 +661,6 @@ export default function PaymentPage() {
                     fgColor="#000000"
                     level="M"
                     includeMargin={true}
-                    imageSettings={{
-                      src: "/favicon.ico",
-                      x: undefined,
-                      y: undefined,
-                      height: 28,
-                      width: 28,
-                      excavate: true,
-                    }}
                   />
                 </div>
 
