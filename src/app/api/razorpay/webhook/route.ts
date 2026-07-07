@@ -53,6 +53,32 @@ export async function POST(request: Request) {
       });
 
       console.log(`Payment ${payment.id} updated to Paid for order ${orderId}`);
+    } else if (event.event === 'payment.failed') {
+      const paymentEntity = event.payload.payment.entity;
+      const orderId = paymentEntity.order_id;
+
+      // Find payment by razorpay_order_id
+      const payment = await prisma.payment.findFirst({
+        where: { razorpay_order_id: orderId }
+      });
+
+      if (!payment) {
+        console.error('No payment document found for failed order_id:', orderId);
+        // Do not return 404 here to allow Razorpay to mark the webhook as successful even if we don't track the failure, 
+        // or return 404 based on preference. A 404 will cause Razorpay to retry. Let's return 404 for consistency.
+        return NextResponse.json({ error: 'Payment document not found' }, { status: 404 });
+      }
+
+      // Update the payment doc
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+            status: 'Failed',
+            transactionId: paymentEntity.id,
+        }
+      });
+
+      console.log(`Payment ${payment.id} updated to Failed for order ${orderId}`);
     }
 
     return NextResponse.json({ status: 'ok' });
