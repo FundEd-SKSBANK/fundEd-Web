@@ -570,6 +570,7 @@ export default function SettingsPage() {
         {isAdminRole && currentUserId && (
           <CollabManagement currentUserId={currentUserId} />
         )}
+
       </div>
     </div>
   );

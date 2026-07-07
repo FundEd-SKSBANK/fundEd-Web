@@ -17,6 +17,8 @@ model User {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   slug              String?             @unique
+  eventFilterOptions Json?
+  defaultClass      String?
   resetToken        String?             @unique
   resetTokenExpires DateTime?
   adminId           String?
@@ -64,6 +66,9 @@ model Event {
   paymentOptions     String               @default("[\"Razorpay\"]")
   qrCodeUrl          String?
   category           String               @default("Normal")
+  semester           String?
+  className          String?
+  year               String?
   isMajorEvent       Boolean              @default(false)
   status             String               @default("PUBLISHED")
   createdAt          DateTime             @default(now())

@@ -350,6 +350,7 @@ export default function EventsPage() {
     const [adminSlug, setAdminSlug] = useState<string | null>(null);
     const [publishedEventId, setPublishedEventId] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [defaultClass, setDefaultClass] = useState<string>('');
     const { toast } = useToast();
     const router = useRouter();
 
@@ -360,10 +361,18 @@ export default function EventsPage() {
     const [deadline, setDeadline] = useState<Date | undefined>(new Date());
     const [category, setCategory] = useState<'Normal' | 'Print' | 'MajorEvent'>('Normal');
     const [paymentOptions, setPaymentOptions] = useState<string[]>(['Razorpay']);
+    const [semester, setSemester] = useState<string>('');
+    const [className, setClassName] = useState<string>('');
+    const [year, setYear] = useState<string>('');
     const [selectedQrCode, setSelectedQrCode] = useState<string>('');
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionDialogOpen, setIsSelectionDialogOpen] = useState(false);
+
+    // Filters for dashboard
+    const [filterSemester, setFilterSemester] = useState<string>('all');
+    const [filterClass, setFilterClass] = useState<string>('all');
+    const [filterYear, setFilterYear] = useState<string>('all');
 
     // Connection modal state
     const [connectingEvent, setConnectingEvent] = useState<Event | null>(null);
@@ -410,7 +419,12 @@ export default function EventsPage() {
 
         if (eventsRes.success && eventsRes.data) setEvents(eventsRes.data as unknown as Event[]);
         if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
-        if (adminRes.success && adminRes.data) setAdminSlug(adminRes.data.slug);
+        if (adminRes.success && adminRes.data) {
+            setAdminSlug((adminRes.data as any).slug);
+            if ((adminRes.data as any).defaultClass) {
+                setDefaultClass((adminRes.data as any).defaultClass);
+            }
+        }
         setIsLoading(false);
     };
 
@@ -434,6 +448,9 @@ export default function EventsPage() {
             cost: isMajorEvent ? 0 : parseFloat(cost),
             deadline: deadline.toISOString(),
             category,
+            semester: semester || undefined,
+            className: className || undefined,
+            year: year || undefined,
             paymentOptions: isMajorEvent ? [] : paymentOptions,
             qrCodeUrl: isMajorEvent ? undefined : selectedQrCode,
             selectedStudents: isMajorEvent ? [] : selectedStudents,
@@ -446,6 +463,9 @@ export default function EventsPage() {
             cost: eventData.cost,
             deadline: deadline.toISOString(),
             category,
+            semester: eventData.semester,
+            className: eventData.className,
+            year: eventData.year,
             paymentOptions: eventData.paymentOptions,
             qrCodeUrl: eventData.qrCodeUrl,
             participantIds: eventData.selectedStudents,
@@ -507,6 +527,9 @@ export default function EventsPage() {
         setCost(event.cost.toString());
         setDeadline(new Date(event.deadline));
         setCategory((event.isMajorEvent ? 'MajorEvent' : event.category) as 'Normal' | 'Print' | 'MajorEvent');
+        setSemester(event.semester || '');
+        setClassName(event.className || '');
+        setYear(event.year || '');
         setPaymentOptions(event.paymentOptions);
         setSelectedQrCode(event.qrCodeUrl || '');
         setSelectedStudents(event.participantIds || []);
@@ -520,6 +543,9 @@ export default function EventsPage() {
         setCost('');
         setDeadline(new Date());
         setCategory('Normal');
+        setSemester('');
+        setClassName(defaultClass);
+        setYear('');
         setPaymentOptions(['Razorpay']);
         setSelectedQrCode('');
         setSelectedStudents(students.map(s => s.id));
@@ -565,6 +591,13 @@ export default function EventsPage() {
         setDisconnectingConnection(null);
     };
 
+    const displayedEvents = events.filter(e => {
+        if (filterSemester !== 'all' && e.semester !== filterSemester) return false;
+        if (filterClass !== 'all' && e.className !== filterClass) return false;
+        if (filterYear !== 'all' && e.year !== filterYear) return false;
+        return true;
+    });
+
     if (isLoading) return <PageLoader message="Loading events..." />;
 
     return (
@@ -578,7 +611,42 @@ export default function EventsPage() {
                     </p>
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                    {/* Filters */}
+                    {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 && (
+                        <Select value={filterSemester} onValueChange={setFilterSemester}>
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
+                                <SelectValue placeholder="Semester" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                <SelectItem value="all">All Semesters</SelectItem>
+                                {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).map(s => <SelectItem key={s as string} value={s as string}>{s as string}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    )}
+                    {Array.from(new Set(events.map(e => e.className).filter(Boolean))).length > 0 && (
+                        <Select value={filterClass} onValueChange={setFilterClass}>
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
+                                <SelectValue placeholder="Class" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                <SelectItem value="all">All Classes</SelectItem>
+                                {Array.from(new Set(events.map(e => e.className).filter(Boolean))).map(c => <SelectItem key={c as string} value={c as string}>{c as string}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    )}
+                    {Array.from(new Set(events.map(e => e.year).filter(Boolean))).length > 0 && (
+                        <Select value={filterYear} onValueChange={setFilterYear}>
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
+                                <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                <SelectItem value="all">All Years</SelectItem>
+                                {Array.from(new Set(events.map(e => e.year).filter(Boolean))).map(y => <SelectItem key={y as string} value={y as string}>{y as string}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    )}
+
                     <Button
                         variant="ghost"
                         onClick={handleSharePortal}
@@ -623,6 +691,22 @@ export default function EventsPage() {
                                         <div className="grid gap-1.5">
                                             <Label htmlFor="description" className="text-stone-300 text-xs flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
                                             <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[36px] h-9 resize-none focus:border-emerald-500/50 transition-colors text-sm" />
+                                        </div>
+                                    </div>
+
+                                    {/* Optional Filters */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="grid gap-1.5">
+                                            <Label className="text-stone-300 text-xs">Semester</Label>
+                                            <Input value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. S6" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <Label className="text-stone-300 text-xs">Class / Dept</Label>
+                                            <Input value={className} onChange={e => setClassName(e.target.value)} placeholder="e.g. CSA" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <Label className="text-stone-300 text-xs">Year</Label>
+                                            <Input value={year} onChange={e => setYear(e.target.value)} placeholder="e.g. 2024" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
                                         </div>
                                     </div>
 
@@ -800,9 +884,17 @@ export default function EventsPage() {
                         <p className="text-sm text-muted-foreground mt-1">Create your first fund collection event to get started</p>
                     </CardContent>
                 </Card>
+            ) : displayedEvents.length === 0 ? (
+                <Card className="py-12 border-white/5 bg-white/[0.02]">
+                    <CardContent className="text-center">
+                        <Wallet className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <p className="text-lg font-medium">No Events Match Filters</p>
+                        <p className="text-sm text-muted-foreground mt-1">Try clearing your Semester, Class, or Year filters.</p>
+                    </CardContent>
+                </Card>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {events.map((event) => {
+                    {displayedEvents.map((event) => {
                         const isMajor = event.isMajorEvent;
                         const conn = event.activeConnection;
 
@@ -830,6 +922,16 @@ export default function EventsPage() {
                                                 )}
                                             </div>
                                             <CardDescription className="mt-0.5 line-clamp-1 text-xs">{event.description}</CardDescription>
+                                            
+                                            {/* Tags */}
+                                            {(event.semester || event.className || event.year) && (
+                                                <div className="flex gap-1 mt-1.5 flex-wrap">
+                                                    {event.semester && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-white/5 text-stone-400">{event.semester}</Badge>}
+                                                    {event.className && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-white/5 text-stone-400">{event.className}</Badge>}
+                                                    {event.year && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-white/5 text-stone-400">{event.year}</Badge>}
+                                                </div>
+                                            )}
+
                                             {!isMajor && conn && (
                                                 <div className="mt-2">
                                                     <Badge variant="outline" className={cn(
