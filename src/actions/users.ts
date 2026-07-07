@@ -70,7 +70,7 @@ export async function getCurrentAdmin() {
 
         const user = await prisma.user.findUnique({
             where: { id: targetId },
-            select: { id: true, name: true, email: true, role: true, image: true, slug: true }
+            select: { id: true, name: true, email: true, role: true, image: true, slug: true, defaultClass: true }
         });
 
         if (!user) {
@@ -395,3 +395,4 @@ export async function getMyVisibleEventIds(): Promise<{ eventIds: string[]; gran
         return { eventIds: [], grantMap: {} };
     }
 }
+

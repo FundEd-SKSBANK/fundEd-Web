@@ -33,6 +33,9 @@ export type Event = {
   qrCodeUrl?: string;
   upiId?: string | null;
   category: 'Normal' | 'Print' | 'MajorEvent';
+  semester?: string | null;
+  className?: string | null;
+  year?: string | null;
   isMajorEvent?: boolean;
   createdAt?: Date | string;
   updatedAt?: Date | string;

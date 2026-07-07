@@ -38,6 +38,7 @@ export default function SignupPage() {
     const [step, setStep] = useState(1); // 1: Info, 2: OTP, 3: Password
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [defaultClass, setDefaultClass] = useState('');
     const [otp, setOtp] = useState('');
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -208,6 +209,19 @@ export default function SignupPage() {
                                                 />
                                             </div>
                                         </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="defaultClass" className="text-sm font-medium text-stone-300">Class / Batch (Optional)</Label>
+                                            <div className="relative">
+                                                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-500" />
+                                                <Input
+                                                    id="defaultClass"
+                                                    value={defaultClass}
+                                                    onChange={(e) => setDefaultClass(e.target.value)}
+                                                    placeholder="e.g. S6 CSA"
+                                                    className="h-12 pl-12 bg-white/5 border-white/10 focus:border-emerald-500/50 text-white rounded-xl"
+                                                />
+                                            </div>
+                                        </div>
                                         <Button 
                                             onClick={handleSendOTP}
                                             disabled={isPending || !name || !email}
@@ -266,6 +280,7 @@ export default function SignupPage() {
                                         {/* Hidden fields for previous steps */}
                                         <input type="hidden" name="name" value={name} />
                                         <input type="hidden" name="email" value={email} />
+                                        <input type="hidden" name="defaultClass" value={defaultClass} />
                                         
                                         <div className="space-y-1.5">
                                             <Label htmlFor="password" className="text-sm font-medium text-stone-300">Password</Label>

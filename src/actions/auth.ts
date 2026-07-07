@@ -188,6 +188,7 @@ export async function signup(prevState: any, formData: FormData) {
   const password = formData.get('password') as string;
   const confirmPassword = formData.get('confirmPassword') as string;
   const name = formData.get('name') as string;
+  const defaultClass = formData.get('defaultClass') as string | undefined;
 
   if (!email || !password || !confirmPassword || !name) {
     return { error: 'Please fill in all fields' };
@@ -233,6 +234,7 @@ export async function signup(prevState: any, formData: FormData) {
         password: hashedPassword,
         name,
         role: 'admin',
+        defaultClass,
       },
     });
     console.timeEnd(' [AuthAction] Signup: CreateUser');

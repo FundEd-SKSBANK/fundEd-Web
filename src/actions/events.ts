@@ -190,6 +190,9 @@ export async function createEvent(data: {
   paymentOptions: string[];
   qrCodeUrl?: string;
   category: string;
+  semester?: string;
+  className?: string;
+  year?: string;
   selectedStudents: string[];
   isMajorEvent?: boolean;
 }) {
@@ -219,6 +222,9 @@ export async function createEvent(data: {
         paymentOptions: data.isMajorEvent ? JSON.stringify([]) : JSON.stringify(data.paymentOptions),
         qrCodeUrl: data.isMajorEvent ? null : data.qrCodeUrl,
         category: data.category,
+        semester: data.semester,
+        className: data.className,
+        year: data.year,
         isMajorEvent: data.isMajorEvent || false,
         status: 'PUBLISHED',
         createdById: getWorkspaceId(session.user),
@@ -303,6 +309,9 @@ export async function saveDraft(data: {
   paymentOptions?: string[];
   qrCodeUrl?: string;
   category?: string;
+  semester?: string;
+  className?: string;
+  year?: string;
   selectedStudents?: string[];
 }) {
   try {
@@ -326,6 +335,9 @@ export async function saveDraft(data: {
     if (data.paymentOptions) eventData.paymentOptions = JSON.stringify(data.paymentOptions);
     if (data.qrCodeUrl !== undefined) eventData.qrCodeUrl = data.qrCodeUrl;
     if (data.category) eventData.category = data.category;
+    if (data.semester !== undefined) eventData.semester = data.semester;
+    if (data.className !== undefined) eventData.className = data.className;
+    if (data.year !== undefined) eventData.year = data.year;
     
     let event;
     if (data.id) {
@@ -373,6 +385,9 @@ export async function updateEvent(id: string, data: {
   paymentOptions: string[];
   qrCodeUrl?: string;
   category: string;
+  semester?: string;
+  className?: string;
+  year?: string;
   selectedStudents: string[];
   isMajorEvent?: boolean;
 }) {
@@ -416,6 +431,9 @@ export async function updateEvent(id: string, data: {
         paymentOptions: isMajorEvent ? JSON.stringify([]) : JSON.stringify(data.paymentOptions),
         qrCodeUrl: isMajorEvent ? null : data.qrCodeUrl,
         category: data.category,
+        semester: data.semester,
+        className: data.className,
+        year: data.year,
         isMajorEvent,
         status: 'PUBLISHED',
         participants: isMajorEvent ? undefined : {
