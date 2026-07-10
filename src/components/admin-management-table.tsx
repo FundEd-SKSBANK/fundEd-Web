@@ -33,10 +33,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Eye, EyeOff, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAdmins, createUser, deleteUser, updateUser } from '@/actions/users';
-import { Pencil } from 'lucide-react';
 
 function getInitials(email?: string | null, name?: string | null): string {
     if (name) {
@@ -71,6 +70,7 @@ export function AdminManagementTable() {
     const [newAdminEmail, setNewAdminEmail] = useState('');
     const [newAdminName, setNewAdminName] = useState('');
     const [newAdminPassword, setNewAdminPassword] = useState('');
+    const [showNewAdminPassword, setShowNewAdminPassword] = useState(false);
 
     // Edit Admin Form State
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -78,6 +78,7 @@ export function AdminManagementTable() {
     const [editName, setEditName] = useState('');
     const [editEmail, setEditEmail] = useState('');
     const [editPassword, setEditPassword] = useState('');
+    const [showEditPassword, setShowEditPassword] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -240,13 +241,22 @@ export function AdminManagementTable() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Password</label>
-                                <Input
-                                    type="password"
-                                    value={newAdminPassword}
-                                    onChange={(e) => setNewAdminPassword(e.target.value)}
-                                    required
-                                    className="bg-white/5 border-white/10"
-                                />
+                                <div className="relative">
+                                    <Input
+                                        type={showNewAdminPassword ? "text" : "password"}
+                                        value={newAdminPassword}
+                                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                                        required
+                                        className="bg-white/5 border-white/10 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewAdminPassword(!showNewAdminPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white"
+                                    >
+                                        {showNewAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <DialogFooter>
                                 <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
@@ -288,13 +298,22 @@ export function AdminManagementTable() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">New Password (Optional)</label>
-                                <Input
-                                    type="password"
-                                    value={editPassword}
-                                    onChange={(e) => setEditPassword(e.target.value)}
-                                    placeholder="Leave blank to keep current"
-                                    className="bg-white/5 border-white/10"
-                                />
+                                <div className="relative">
+                                    <Input
+                                        type={showEditPassword ? "text" : "password"}
+                                        value={editPassword}
+                                        onChange={(e) => setEditPassword(e.target.value)}
+                                        placeholder="Leave blank to keep current"
+                                        className="bg-white/5 border-white/10 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditPassword(!showEditPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white"
+                                    >
+                                        {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <DialogFooter>
                                 <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
