@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export function InitialLoader() {
-    const [mounted, setMounted] = useState(false);
     const [show, setShow] = useState(true);
     const [text1, setText1] = useState('');
     const [text2, setText2] = useState('');
@@ -14,8 +13,6 @@ export function InitialLoader() {
     const fullText2 = "CLASSROOM OS";
 
     useEffect(() => {
-        setMounted(true);
-
         const typeSpeed = 100;
         const startDelay = 500;
 
@@ -50,8 +47,6 @@ export function InitialLoader() {
             return () => clearInterval(interval2);
         }
     }, [startSecondLine]);
-
-    if (!mounted) return null;
 
     return (
         <div
