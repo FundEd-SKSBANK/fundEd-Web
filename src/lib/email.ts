@@ -33,9 +33,8 @@ export async function sendEmail(options: SendEmailOptions) {
 
     console.log('Message sent: %s', info.messageId);
     return { success: true, messageId: info.messageId };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending email:', error);
-    // In production, you'd want more robust error handling and logging.
-    return { success: false, message: 'Failed to send email.' };
+    return { success: false, message: `Failed to send email: ${error.message || String(error)}` };
   }
 }
