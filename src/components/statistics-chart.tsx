@@ -95,7 +95,7 @@ export function StatisticsChart({ className }: StatisticsChartProps) {
 
                         {/* Vertical Bar Chart with Horizontal Scroll on Mobile */}
                         <div className="overflow-x-auto pb-4 -mx-2 px-2 no-scrollbar">
-                            <div className="flex items-stretch justify-between gap-2 h-48 min-w-[max-content] md:min-w-min">
+                            <div className="flex items-stretch justify-between gap-2 h-60 pt-12 min-w-[max-content] md:min-w-min">
                                 {data.map((item, index) => {
                                     const value = metric === 'collections' ? Number(item.collections) : Number(item.transactions);
                                     const heightPercent = (value / maxValue) * 100;
