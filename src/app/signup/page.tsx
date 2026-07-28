@@ -1,18 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState, useEffect, useRef } from 'react';
+import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GraduationCap, Loader2, Lock, Mail, User, Eye, EyeOff, UserPlus, ArrowRight, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
-import { signup, sendSignupOTP, verifySignupOTP } from '@/actions/auth';
+import { GraduationCap, Loader2, Lock, Mail, User, Eye, EyeOff, UserPlus, MailCheck } from 'lucide-react';
+import { signup } from '@/actions/auth';
 import { Label } from '@/components/ui/label';
 import { useFormStatus } from 'react-dom';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
 
-const initialState: { error?: string } = {
+const initialState: { error?: string, success?: string } = {
     error: '',
+    success: '',
 };
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
@@ -24,91 +25,18 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
             className="w-full relative text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 px-10 py-6 rounded-full shadow-xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all hover:scale-105 group"
             disabled={pending || disabled}
         >
-            {pending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-            <span className="flex items-center gap-2 justify-center">
-                <UserPlus className="w-5 h-5" />
-                {pending ? 'Creating Account...' : 'Create Account'}
-            </span>
+            {pending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UserPlus className="mr-2 h-5 w-5" />}
+            <span>{pending ? 'Creating Account...' : 'Create Account'}</span>
         </Button>
     );
 }
 
 export default function SignupPage() {
     const [state, formAction] = useActionState(signup, initialState);
-    const [step, setStep] = useState(1); // 1: Info, 2: OTP, 3: Password
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [defaultClass, setDefaultClass] = useState('');
-    const [otp, setOtp] = useState('');
-    const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [localError, setLocalError] = useState('');
-    const [isPending, setIsPending] = useState(false);
-    const [resendTimer, setResendTimer] = useState(0);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-    useEffect(() => {
-        if (resendTimer > 0) {
-            timerRef.current = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-        }
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, [resendTimer]);
-
-    const handleSendOTP = async () => {
-        if (!name || !email) {
-            setLocalError('Please fill in your name and email');
-            return;
-        }
-        
-        // Basic email validation
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            setLocalError('Please enter a valid email address');
-            return;
-        }
-
-        setIsPending(true);
-        setLocalError('');
-        
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('name', name);
-        
-        const result = await sendSignupOTP(null, formData);
-        setIsPending(false);
-        
-        if (result.error) {
-            setLocalError(result.error);
-        } else {
-            setStep(2);
-            setResendTimer(30);
-        }
-    };
-
-    const handleVerifyOTP = async () => {
-        if (!otp || otp.length !== 6) {
-            setLocalError('Please enter the 6-digit code');
-            return;
-        }
-
-        setIsPending(true);
-        setLocalError('');
-        
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('otp', otp);
-        
-        const result = await verifySignupOTP(null, formData);
-        setIsPending(false);
-        
-        if (result.error) {
-            setLocalError(result.error);
-        } else {
-            setIsEmailVerified(true);
-            setStep(3);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-black text-stone-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-100 overflow-x-hidden relative cursor-none">
@@ -143,78 +71,69 @@ export default function SignupPage() {
                         <div className="absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full blur-3xl"></div>
 
                         <div className="relative z-10">
-                            <div className="text-center mb-6">
-                                <h1 className="text-3xl font-bold text-white mb-2">
-                                    {step === 1 ? 'Create Account' : step === 2 ? 'Verify Email' : 'Set Password'}
-                                </h1>
-                                <p className="text-stone-400 text-sm">
-                                    {step === 1 ? 'Join the FundEd community today' : step === 2 ? `Enter the code sent to ${email}` : 'Protect your new account'}
-                                </p>
-                            </div>
-
-                            {/* Step Indicator */}
-                            <div className="flex items-center mb-8">
-                                {/* Step 1 */}
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
-                                    step >= 1 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/10 text-stone-500'
-                                }`}>
-                                    {isEmailVerified ? <CheckCircle2 className="w-5 h-5" /> : '1'}
+                            {state?.success ? (
+                                <div className="text-center space-y-6 py-8">
+                                    <div className="mx-auto w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                                        <MailCheck className="w-8 h-8 text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
+                                        <p className="text-stone-400 text-sm">
+                                            We've sent a verification link to <span className="text-emerald-400">{email}</span>. Please click the link to verify your account and complete signup.
+                                        </p>
+                                    </div>
+                                    <Button asChild variant="outline" className="w-full border-white/10 text-stone-300 hover:text-white hover:bg-white/5">
+                                        <Link href="/login">Return to Login</Link>
+                                    </Button>
                                 </div>
-                                {/* Line 1→2 */}
-                                <div className={`flex-1 h-0.5 transition-all duration-500 ${step > 1 ? 'bg-emerald-500' : 'bg-white/10'}`} />
-                                {/* Step 2 */}
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
-                                    step >= 2 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/10 text-stone-500'
-                                }`}>
-                                    {isEmailVerified ? <CheckCircle2 className="w-5 h-5" /> : '2'}
-                                </div>
-                                {/* Line 2→3 */}
-                                <div className={`flex-1 h-0.5 transition-all duration-500 ${step > 2 ? 'bg-emerald-500' : 'bg-white/10'}`} />
-                                {/* Step 3 */}
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
-                                    step >= 3 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white/10 text-stone-500'
-                                }`}>
-                                    3
-                                </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="text-center mb-8">
+                                        <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+                                        <p className="text-stone-400 text-sm">Join the FundEd community today</p>
+                                    </div>
 
-
-                            <div className="space-y-4">
-                                {step === 1 && (
-                                    <>
+                                    <form action={formAction} className="space-y-4">
                                         <div className="space-y-1.5">
                                             <Label htmlFor="name" className="text-sm font-medium text-stone-300">Full Name</Label>
                                             <div className="relative">
                                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-500" />
                                                 <Input
                                                     id="name"
+                                                    name="name"
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
                                                     placeholder="John Doe"
+                                                    required
                                                     className="h-12 pl-12 bg-white/5 border-white/10 focus:border-emerald-500/50 text-white rounded-xl"
                                                 />
                                             </div>
                                         </div>
+
                                         <div className="space-y-1.5">
                                             <Label htmlFor="email" className="text-sm font-medium text-stone-300">Email Address</Label>
                                             <div className="relative">
                                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-500" />
                                                 <Input
                                                     id="email"
+                                                    name="email"
                                                     type="email"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     placeholder="john@example.com"
+                                                    required
                                                     className="h-12 pl-12 bg-white/5 border-white/10 focus:border-emerald-500/50 text-white rounded-xl"
                                                 />
                                             </div>
                                         </div>
+
                                         <div className="space-y-1.5">
                                             <Label htmlFor="defaultClass" className="text-sm font-medium text-stone-300">Class / Batch (Optional)</Label>
                                             <div className="relative">
                                                 <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-500" />
                                                 <Input
                                                     id="defaultClass"
+                                                    name="defaultClass"
                                                     value={defaultClass}
                                                     onChange={(e) => setDefaultClass(e.target.value)}
                                                     placeholder="e.g. S6 CSA"
@@ -222,66 +141,7 @@ export default function SignupPage() {
                                                 />
                                             </div>
                                         </div>
-                                        <Button 
-                                            onClick={handleSendOTP}
-                                            disabled={isPending || !name || !email}
-                                            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg shadow-emerald-500/20"
-                                        >
-                                            {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ArrowRight className="mr-2 h-5 w-5" />}
-                                            Continue to Verify
-                                        </Button>
-                                    </>
-                                )}
 
-                                {step === 2 && (
-                                    <>
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="otp" className="text-sm font-medium text-stone-300">Verification Code</Label>
-                                            <div className="relative">
-                                                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-500" />
-                                                <Input
-                                                    id="otp"
-                                                    value={otp}
-                                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                                    placeholder="123456"
-                                                    className="h-12 pl-12 bg-white/5 border-white/10 focus:border-emerald-500/50 text-white rounded-xl tracking-[0.5em] text-center font-mono text-xl"
-                                                />
-                                            </div>
-                                        </div>
-                                        <Button 
-                                            onClick={handleVerifyOTP}
-                                            disabled={isPending || otp.length !== 6}
-                                            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg shadow-emerald-500/20"
-                                        >
-                                            {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
-                                            Verify Code
-                                        </Button>
-                                        <div className="text-center">
-                                            <button
-                                                onClick={handleSendOTP}
-                                                disabled={resendTimer > 0 || isPending}
-                                                className="text-xs text-stone-400 hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:hover:text-stone-400 flex items-center justify-center gap-1.5 mx-auto"
-                                            >
-                                                <RefreshCw className={`w-3 h-3 ${isPending ? 'animate-spin' : ''}`} />
-                                                {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : 'Resend Verification Code'}
-                                            </button>
-                                        </div>
-                                        <button 
-                                            onClick={() => setStep(1)} 
-                                            className="w-full text-xs text-stone-500 hover:text-white transition-colors"
-                                        >
-                                            Change email or name
-                                        </button>
-                                    </>
-                                )}
-
-                                {step === 3 && (
-                                    <form action={formAction} className="space-y-4">
-                                        {/* Hidden fields for previous steps */}
-                                        <input type="hidden" name="name" value={name} />
-                                        <input type="hidden" name="email" value={email} />
-                                        <input type="hidden" name="defaultClass" value={defaultClass} />
-                                        
                                         <div className="space-y-1.5">
                                             <Label htmlFor="password" className="text-sm font-medium text-stone-300">Password</Label>
                                             <div className="relative">
@@ -304,6 +164,7 @@ export default function SignupPage() {
                                                 </button>
                                             </div>
                                         </div>
+
                                         <div className="space-y-1.5">
                                             <Label htmlFor="confirmPassword" className="text-sm font-medium text-stone-300">Confirm Password</Label>
                                             <div className="relative">
@@ -314,29 +175,31 @@ export default function SignupPage() {
                                                     type={showPassword ? "text" : "password"}
                                                     placeholder="••••••••"
                                                     required
+                                                    minLength={6}
                                                     className="h-12 pl-12 bg-white/5 border-white/10 focus:border-emerald-500/50 text-white rounded-xl"
                                                 />
                                             </div>
                                         </div>
-                                        <div className="pt-2">
+
+                                        {state?.error && (
+                                            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                                                <p className="text-xs text-red-400 text-center">{state.error}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="pt-4">
                                             <SubmitButton />
                                         </div>
                                     </form>
-                                )}
 
-                                {(localError || state?.error) && (
-                                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-                                        <p className="text-xs text-red-400 text-center">{localError || state?.error}</p>
+                                    <div className="mt-6 text-center">
+                                        <p className="text-sm text-stone-400">
+                                            Already have an account?{' '}
+                                            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">Sign In</Link>
+                                        </p>
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="mt-6 text-center">
-                                <p className="text-sm text-stone-400">
-                                    Already have an account?{' '}
-                                    <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">Sign In</Link>
-                                </p>
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -353,4 +216,3 @@ export default function SignupPage() {
         </div>
     );
 }
-
