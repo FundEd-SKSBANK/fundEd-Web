@@ -8,7 +8,7 @@ import {
     type SendEmailOutput,
     type SendEmailInput,
     type ResetPasswordEmailInput,
-    type VerificationOTPEmailInput
+    type VerificationLinkEmailInput
 } from '@/lib/types';
 
 
@@ -512,33 +512,30 @@ export async function sendSubEventRemovedEmail(input: {
         : { success: false, message: result.message || 'Failed to send email' };
 }
 
-// Flow for sending verification OTP email
-export async function sendVerificationOTPEmail(input: VerificationOTPEmailInput): Promise<SendEmailOutput> {
+// Flow for sending verification link email
+export async function sendVerificationLinkEmail(input: VerificationLinkEmailInput): Promise<SendEmailOutput> {
     const content = `
         <h2>Verify Your Email</h2>
         <p>Hi ${input.name || 'there'},</p>
-        <p>Thank you for choosing FundEd. Use the following 6-digit verification code to complete your sign-up process. This code will expire in 10 minutes.</p>
-        
-        <div class="details-box" style="text-align: center; background-color: #f0fdf4; border: 2px solid #059669;">
-            <h1 style="margin: 0; font-size: 32px; letter-spacing: 12px; color: #059669; font-family: monospace;">${input.otp}</h1>
-        </div>
+        <p>Thank you for choosing FundEd. Click the button below to verify your email address and complete your sign-up process. This link will expire in 10 minutes.</p>
         
         <p style="font-size: 14px; color: #64748b; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
     `;
 
     const emailHtml = generateEmailLayout(
         'Verify Your FundEd Account',
-        content
+        content,
+        { text: 'Verify Email', url: input.verificationLink }
     );
 
     const result = await sendEmail({
         to: input.email,
-        subject: `${input.otp} is your FundEd verification code`,
+        subject: `Verify your FundEd account`,
         html: emailHtml,
     });
 
     return result.success
-        ? { success: true, message: `Verification OTP sent to ${input.email}` }
+        ? { success: true, message: `Verification email sent to ${input.email}` }
         : { success: false, message: result.message || 'Failed to send verification email' };
 }
 

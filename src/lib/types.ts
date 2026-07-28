@@ -203,12 +203,12 @@ export const ResetPasswordEmailInputSchema = z.object({
 });
 export type ResetPasswordEmailInput = z.infer<typeof ResetPasswordEmailInputSchema>;
 
-export const VerificationOTPEmailInputSchema = z.object({
+export const VerificationLinkEmailInputSchema = z.object({
   email: z.string().email(),
-  otp: z.string(),
+  verificationLink: z.string(),
   name: z.string().optional(),
 });
-export type VerificationOTPEmailInput = z.infer<typeof VerificationOTPEmailInputSchema>;
+export type VerificationLinkEmailInput = z.infer<typeof VerificationLinkEmailInputSchema>;
 
 // ─── Quick-Join Flow Types ──────────────────────────────────────────────────
 
