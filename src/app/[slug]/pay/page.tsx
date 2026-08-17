@@ -85,7 +85,9 @@ export default function PaymentPage() {
       const res = await getPaymentPageData(slug);
       if (res.success && res.data) {
         setEvent(res.data.event as unknown as Event);
-        setAvailableStudents(res.data.availableStudents as unknown as (Student & { paidAmount?: number })[]);
+        const students = res.data.availableStudents as unknown as (Student & { paidAmount?: number })[];
+        students.sort((a, b) => a.name.localeCompare(b.name));
+        setAvailableStudents(students);
       } else {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to load event data' });
       }

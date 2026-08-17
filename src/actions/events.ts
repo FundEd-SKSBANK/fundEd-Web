@@ -487,3 +487,37 @@ export async function deleteEvent(id: string) {
 }
 
 
+
+export async function getRecentEventsForNav() {
+  try {
+    const session = await getSession();
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const workspaceId = getWorkspaceId(session.user);
+    
+    let whereClause: any;
+    if (session.user.role === 'superadmin') {
+      whereClause = {};
+    } else if (session.user.role === 'collab') {
+      const { eventIds } = await getMyVisibleEventIds();
+      whereClause = { createdById: workspaceId, id: { in: eventIds } };
+    } else {
+      whereClause = { createdById: workspaceId };
+    }
+
+    const events = await prisma.event.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return { success: true, data: events };
+  } catch (error) {
+    console.error('Error fetching recent events:', error);
+    return { success: false, error: 'Failed to fetch events' };
+  }
+}
