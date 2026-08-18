@@ -49,9 +49,10 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { Transaction } from '@/lib/types';
 import { getPendingTransactions, getUserNotifications } from '@/actions/notifications';
-import { getEvents } from '@/actions/events';
+import { getRecentEventsForNav } from '@/actions/events';
 import { logout } from '@/actions/auth';
 import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { CustomCursor } from '@/components/custom-cursor';
 import { MouseFollower } from '@/components/mouse-follower';
 
@@ -226,38 +227,35 @@ export default function DashboardClientLayout({
 }: DashboardClientLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
-    const [userNotifications, setUserNotifications] = useState<any[]>([]);
-
     const isSuperUser = user?.role === 'superadmin';
     const adminUser = user;
-    const [recentEvents, setRecentEvents] = useState<{ id: string; name: string }[]>(initialEvents);
 
-    useEffect(() => {
-        const initData = async () => {
-            if (!isSuperUser) {
-                const notifRes = await getPendingTransactions();
-                if (notifRes.success && notifRes.data) {
-                    setPendingTransactions(notifRes.data as unknown as Transaction[]);
-                }
-            } else {
-                const userNotifRes = await getUserNotifications();
-                if (userNotifRes.success && userNotifRes.data) {
-                    setUserNotifications(userNotifRes.data as any[]);
-                }
-            }
-            const eventsRes = await getEvents();
-            if (eventsRes.success && eventsRes.data) {
-                setRecentEvents((eventsRes.data as any[]).slice(0, 6).map((e: any) => ({ id: e.id, name: e.name })));
-            }
-        };
+    const { data: pendingTransactionsRes } = useSWR(
+        !isSuperUser ? 'pendingTransactions' : null,
+        getPendingTransactions,
+        { refreshInterval: 60000, fallbackData: { success: true, data: [] } }
+    );
+    const pendingTransactions = pendingTransactionsRes?.success && pendingTransactionsRes?.data 
+        ? (pendingTransactionsRes.data as unknown as Transaction[]) 
+        : [];
 
-        initData();
+    const { data: userNotificationsRes } = useSWR(
+        isSuperUser ? 'userNotifications' : null,
+        getUserNotifications,
+        { refreshInterval: 60000, fallbackData: { success: true, data: [] } }
+    );
+    const userNotifications = userNotificationsRes?.success && userNotificationsRes?.data
+        ? (userNotificationsRes.data as any[])
+        : [];
 
-        // Poll every minute
-        const interval = setInterval(initData, 60000);
-        return () => clearInterval(interval);
-    }, [isSuperUser]);
+    const { data: recentEventsRes } = useSWR(
+        'recentEvents',
+        getRecentEventsForNav,
+        { refreshInterval: 60000, fallbackData: { success: true, data: initialEvents } }
+    );
+    const recentEvents = recentEventsRes?.success && recentEventsRes?.data
+        ? (recentEventsRes.data as { id: string; name: string }[])
+        : initialEvents;
 
     const handleLogout = async () => {
         await logout();
