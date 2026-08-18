@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -380,21 +381,35 @@ export default function EventsPage() {
 
     const filteredStudents = filterStudents(students, searchQuery);
 
+    const { data: eventsRes, mutate: mutateEvents, isLoading: isEventsLoading } = useSWR('events', getEvents);
+    const { data: qrRes, isLoading: isQrLoading } = useSWR('qrCodes', getQrCodes);
+    const { data: adminRes, isLoading: isAdminLoading } = useSWR('currentAdmin', getCurrentAdmin);
+
     useEffect(() => {
-        async function checkRole() {
-            const adminRes = await getCurrentAdmin();
-            if (adminRes.success && adminRes.data) {
-                if (adminRes.data.role === 'superadmin') {
-                    router.replace('/dashboard/super');
-                    return;
-                }
-                setUserRole(adminRes.data.role);
-                setAdminSlug(adminRes.data.slug);
+        if (adminRes?.success && adminRes.data) {
+            if ((adminRes.data as any).role === 'superadmin') {
+                router.replace('/dashboard/super');
+                return;
+            }
+            setUserRole((adminRes.data as any).role);
+            setAdminSlug((adminRes.data as any).slug);
+            if ((adminRes.data as any).defaultClass) {
+                setDefaultClass((adminRes.data as any).defaultClass);
             }
         }
-        checkRole();
-        fetchData();
-    }, []);
+    }, [adminRes, router]);
+
+    useEffect(() => {
+        if (eventsRes?.success && eventsRes.data) setEvents(eventsRes.data as unknown as Event[]);
+    }, [eventsRes]);
+
+    useEffect(() => {
+        if (qrRes?.success && qrRes.data) setQrCodes(qrRes.data as QrCode[]);
+    }, [qrRes]);
+
+    const fetchData = (isBackground = false) => {
+        mutateEvents();
+    };
 
     const fetchStudents = async () => {
         if (students.length > 0) return; // Already fetched
@@ -409,24 +424,7 @@ export default function EventsPage() {
         }
     };
 
-    const fetchData = async (isBackground = false) => {
-        if (!isBackground) setIsLoading(true);
-        const [eventsRes, qrRes, adminRes] = await Promise.all([
-            getEvents(),
-            getQrCodes(),
-            getCurrentAdmin()
-        ]);
-
-        if (eventsRes.success && eventsRes.data) setEvents(eventsRes.data as unknown as Event[]);
-        if (qrRes.success) setQrCodes(qrRes.data as QrCode[]);
-        if (adminRes.success && adminRes.data) {
-            setAdminSlug((adminRes.data as any).slug);
-            if ((adminRes.data as any).defaultClass) {
-                setDefaultClass((adminRes.data as any).defaultClass);
-            }
-        }
-        setIsLoading(false);
-    };
+    const isLoadingPage = (isEventsLoading && !eventsRes) || (isAdminLoading && !adminRes) || (isQrLoading && !qrRes);
 
     const isMajorEvent = category === 'MajorEvent';
 
@@ -598,7 +596,7 @@ export default function EventsPage() {
         return true;
     });
 
-    if (isLoading) return <PageLoader message="Loading events..." />;
+    if (isLoadingPage) return <PageLoader message="Loading events..." />;
 
     return (
         <div className="space-y-6 animate-fade-in text-white">
@@ -611,22 +609,22 @@ export default function EventsPage() {
                     </p>
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1">
                     {/* Filters */}
                     {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 && (
                         <Select value={filterSemester} onValueChange={setFilterSemester}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
-                                <SelectValue placeholder="Semester" />
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[95px] sm:w-[110px] shrink-0">
+                                <SelectValue placeholder="Sem" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                <SelectItem value="all">All Semesters</SelectItem>
+                                <SelectItem value="all">All Sem</SelectItem>
                                 {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).map(s => <SelectItem key={s as string} value={s as string}>{s as string}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     )}
                     {Array.from(new Set(events.map(e => e.className).filter(Boolean))).length > 0 && (
                         <Select value={filterClass} onValueChange={setFilterClass}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] sm:w-[130px] shrink-0">
                                 <SelectValue placeholder="Class" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-950 border-white/10 text-white">
@@ -637,7 +635,7 @@ export default function EventsPage() {
                     )}
                     {Array.from(new Set(events.map(e => e.year).filter(Boolean))).length > 0 && (
                         <Select value={filterYear} onValueChange={setFilterYear}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] shrink-0">
+                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] sm:w-[130px] shrink-0">
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-950 border-white/10 text-white">
@@ -651,7 +649,7 @@ export default function EventsPage() {
                         variant="ghost"
                         onClick={handleSharePortal}
                         className={cn(
-                            "gap-2 bg-white/5 border border-white/10 flex-1 md:flex-none transition-opacity h-10 hover:bg-white/10",
+                            "gap-2 bg-white/5 border border-white/10 shrink-0 transition-opacity h-10 hover:bg-white/10",
                             !adminSlug && "opacity-40"
                         )}
                     >
@@ -667,9 +665,9 @@ export default function EventsPage() {
                             setIsDialogOpen(open);
                         }}>
                             <DialogTrigger asChild>
-                                <Button onClick={resetForm} className="gap-2 gradient-success w-full md:w-auto border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300 h-10 px-4">
-                                    <Plus className="h-4 w-4" />
-                                    <span>Create Event</span>
+                                <Button onClick={resetForm} className="gap-2 gradient-success shrink-0 border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300 h-10 px-3 sm:px-4">
+                                    <Plus className="h-4 w-4 shrink-0" />
+                                    <span className="hidden sm:inline">Create Event</span>
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-[95vw] sm:w-full mx-auto max-h-[90dvh] flex flex-col">

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import useSWR from 'swr';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -233,35 +234,27 @@ export default function MajorEventAnalyticsPage() {
     const eventId = params.eventId as string;
     const { toast } = useToast();
 
-    const [analytics, setAnalytics] = useState<MajorEventAnalytics | null>(null);
-    const [loading, setLoading] = useState(true);
     const [exportLoading, setExportLoading] = useState(false);
     const [viewingPayments, setViewingPayments] = useState<SubEventConnection | null>(null);
 
-    const fetchAnalytics = useCallback(async () => {
-        const result = await getMajorEventAnalytics(eventId);
-        if (result.success && result.data) {
-            setAnalytics(result.data as MajorEventAnalytics);
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error });
-        }
-        setLoading(false);
-    }, [eventId]);
+    const refreshMs = process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS 
+        ? parseInt(process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS as string) 
+        : 60000;
 
-    useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
-    
-    // Auto-refresh logic
+    const { data: analyticsRes, isLoading } = useSWR(
+        ['majorEventAnalytics', eventId],
+        () => getMajorEventAnalytics(eventId),
+        { refreshInterval: refreshMs }
+    );
+
+    const analytics = analyticsRes?.success ? (analyticsRes.data as MajorEventAnalytics) : null;
+    const loading = isLoading && !analytics;
+
     useEffect(() => {
-        const refreshMs = process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS 
-            ? parseInt(process.env.NEXT_PUBLIC_ANALYTICS_REFRESH_MS) 
-            : 60000; // Default to 60 seconds
-        
-        const interval = setInterval(() => {
-            fetchAnalytics();
-        }, refreshMs);
-
-        return () => clearInterval(interval);
-    }, [fetchAnalytics]);
+        if (analyticsRes && !analyticsRes.success) {
+            toast({ variant: 'destructive', title: 'Error', description: analyticsRes.error });
+        }
+    }, [analyticsRes, toast]);
 
     const handleExport = async () => {
         setExportLoading(true);
