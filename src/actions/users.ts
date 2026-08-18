@@ -49,7 +49,16 @@ export async function getAdmins() {
         const admins = await prisma.user.findMany({
             where: { role: 'admin' },
             orderBy: { createdAt: 'desc' },
-            select: { id: true, name: true, email: true, image: true, createdAt: true, role: true }
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                createdAt: true,
+                role: true,
+                defaultClass: true,
+                _count: { select: { createdStudents: true } }
+            }
         });
         return { success: true, data: admins };
     } catch (error) {
