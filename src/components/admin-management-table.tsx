@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Search, Loader2, Eye, EyeOff, Pencil, GraduationCap, Users, CalendarDays } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Eye, EyeOff, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAdmins, createUser, deleteUser, updateUser } from '@/actions/users';
 
@@ -362,17 +362,17 @@ export function AdminManagementTable() {
                             </div>
                             
                             <div className="grid grid-cols-3 gap-2 text-[10px]">
-                                <div className="bg-white/5 rounded-lg p-2 flex items-center gap-1.5">
-                                    <GraduationCap className="h-3 w-3 text-emerald-400 shrink-0" />
-                                    <span className="text-stone-400 truncate">{admin.defaultClass || <span className="text-stone-600">No class</span>}</span>
+                                <div className="bg-white/5 rounded-lg p-2">
+                                    <span className="text-stone-500">Class</span>
+                                    <p className="text-stone-300 truncate mt-0.5">{admin.defaultClass || '—'}</p>
                                 </div>
-                                <div className="bg-white/5 rounded-lg p-2 flex items-center gap-1.5">
-                                    <Users className="h-3 w-3 text-blue-400 shrink-0" />
-                                    <span className="text-stone-400">{admin._count.createdStudents} students</span>
+                                <div className="bg-white/5 rounded-lg p-2">
+                                    <span className="text-stone-500">Students</span>
+                                    <p className="text-stone-300 mt-0.5">{admin._count.createdStudents}</p>
                                 </div>
-                                <div className="bg-white/5 rounded-lg p-2 flex items-center gap-1.5">
-                                    <CalendarDays className="h-3 w-3 text-purple-400 shrink-0" />
-                                    <span className="text-stone-400">{admin._count.createdEvents} events</span>
+                                <div className="bg-white/5 rounded-lg p-2">
+                                    <span className="text-stone-500">Events</span>
+                                    <p className="text-stone-300 mt-0.5">{admin._count.createdEvents}</p>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between pt-3 border-t border-white/10">
@@ -462,27 +462,14 @@ export function AdminManagementTable() {
                                             {admin.role}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
-                                        {admin.defaultClass ? (
-                                            <div className="flex items-center gap-1.5">
-                                                <GraduationCap className="h-3.5 w-3.5 text-emerald-400" />
-                                                <span className="text-stone-300 text-sm font-medium">{admin.defaultClass}</span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-stone-600 text-xs">—</span>
-                                        )}
+                                    <TableCell className="text-stone-300">
+                                        {admin.defaultClass || <span className="text-stone-600">—</span>}
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1.5">
-                                            <Users className="h-3.5 w-3.5 text-blue-400" />
-                                            <span className="text-stone-300 text-sm font-medium">{admin._count.createdStudents}</span>
-                                        </div>
+                                    <TableCell className="text-stone-300">
+                                        {admin._count.createdStudents}
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1.5">
-                                            <CalendarDays className="h-3.5 w-3.5 text-purple-400" />
-                                            <span className="text-stone-300 text-sm font-medium">{admin._count.createdEvents}</span>
-                                        </div>
+                                    <TableCell className="text-stone-300">
+                                        {admin._count.createdEvents}
                                     </TableCell>
                                     <TableCell className="text-stone-400">
                                         {new Date(admin.createdAt).toLocaleDateString('en-GB')}
