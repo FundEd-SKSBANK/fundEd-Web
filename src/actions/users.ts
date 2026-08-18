@@ -57,7 +57,7 @@ export async function getAdmins() {
                 createdAt: true,
                 role: true,
                 defaultClass: true,
-                _count: { select: { createdStudents: true } }
+                _count: { select: { createdStudents: true, createdEvents: true } }
             }
         });
         return { success: true, data: admins };
