@@ -72,22 +72,24 @@ export default function EventPaymentsPage() {
     }
   }, [searchParams]);
 
-  const { data, mutate, isLoading } = useSWR(
+  const { data, mutate, isLoading, error } = useSWR(
     eventIdStr ? ['eventPayments', eventIdStr] : null,
     async () => {
       const res = await getEventPayments(eventIdStr);
-      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch payments');
+      if (!res.success || !res.data) return null;
       return res.data;
-    }
+    },
+    { revalidateOnFocus: false }
   );
 
   const { data: studentsData } = useSWR(
     eventIdStr ? 'allStudents' : null,
     async () => {
       const res = await getStudents();
-      if (!res.success || !res.students) throw new Error('Failed to fetch students');
+      if (!res.success || !res.students) return [];
       return res.students as unknown as Student[];
-    }
+    },
+    { revalidateOnFocus: false }
   );
 
   const event = (data?.event as unknown as Event) || null;
@@ -200,7 +202,7 @@ export default function EventPaymentsPage() {
     }).toUpperCase();
   };
 
-  if (isLoading) {
+  if (isLoading || (!data && !error)) {
     return (
       <Card className="flex items-center justify-center py-12">
         <PageLoader message="Fetching transaction details..." />
@@ -208,24 +210,18 @@ export default function EventPaymentsPage() {
     )
   }
 
-  if (!event) {
+  if (error || !event) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Event Not Found</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>The event you are looking for does not exist.</p>
-          <Button asChild variant="link" className="mt-4 px-0">
-            <Link href="/dashboard/events">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Events
-            </Link>
-          </Button>
-        </CardContent>
+      <Card className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <p className="text-muted-foreground">Failed to load payment data.</p>
+          <Button variant="outline" className="mt-4" onClick={() => mutate()}>Retry</Button>
+        </div>
       </Card>
-    );
+    )
   }
+
+
 
   const StatusBadge = ({ status }: { status: Transaction['status'] }) => {
     const variant = getStatusBadgeVariant(status);
