@@ -24,19 +24,28 @@ export async function getDashboardData(passedRole?: string | null) {
     const paymentWhere: any = role === 'superadmin' ? {} : { event: { createdById: workspaceId } };
 
     console.time(` [DashboardData] PrismaParallel-${callId}`);
-    const [events, transactions] = await Promise.all([
+    const [events, paidAgg, pendingAgg, uniqueStudents, recentTransactionsRaw] = await Promise.all([
       prisma.event.findMany({ where: eventWhere }),
-      prisma.payment.findMany({ 
-          where: paymentWhere,
-          include: { student: true, event: true } 
+      prisma.payment.aggregate({
+        where: { ...paymentWhere, status: 'Paid' },
+        _sum: { amount: true }
+      }),
+      prisma.payment.aggregate({
+        where: { ...paymentWhere, status: { in: ['Pending', 'Verification Pending'] } },
+        _sum: { amount: true }
+      }),
+      prisma.payment.groupBy({
+        by: ['studentId'],
+        where: paymentWhere,
+      }),
+      prisma.payment.findMany({
+        where: paymentWhere,
+        include: { student: true, event: true },
+        orderBy: { paymentDate: 'desc' },
+        take: 5
       })
     ]);
     
-    // Calculate recentTransactions locally to save a massive 2-second global connection ping!
-    const recentTransactions = [...transactions]
-      .sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime())
-      .slice(0, 5);
-
     console.timeEnd(` [DashboardData] PrismaParallel-${callId}`);
 
     const mapTransaction = (t: any) => ({
@@ -47,14 +56,20 @@ export async function getDashboardData(passedRole?: string | null) {
       paymentDate: t.paymentDate.toISOString(),
     });
 
+    const stats = {
+      totalCollected: paidAgg._sum.amount || 0,
+      pendingAmount: pendingAgg._sum.amount || 0,
+      uniqueStudents: uniqueStudents.length
+    };
+
     console.timeEnd(` [DashboardData] Total-${callId}`);
 
     return {
       success: true,
       data: {
         events: events.map(e => ({...e, deadline: e.deadline.toISOString()})),
-        transactions: transactions.map(mapTransaction),
-        recentTransactions: recentTransactions.map(mapTransaction),
+        stats,
+        recentTransactions: recentTransactionsRaw.map(mapTransaction),
       }
     };
   } catch (error) {

@@ -61,39 +61,15 @@ function StatCard({ title, value, description, icon, trend, className }: StatCar
 
 interface DashboardClientProps {
     events: Event[];
-    transactions: Transaction[];
+    stats: {
+        totalCollected: number;
+        pendingAmount: number;
+        uniqueStudents: number;
+    };
     recentTransactions: Transaction[];
 }
 
-export function DashboardClient({ events, transactions, recentTransactions }: DashboardClientProps) {
-
-    const stats = useMemo(() => {
-        if (!transactions || !events) {
-            return {
-                totalEvents: 0,
-                totalCollected: 0,
-                pendingAmount: 0,
-                uniqueStudents: 0,
-            };
-        }
-
-        const totalCollected = transactions
-            .filter(t => t?.status === 'Paid')
-            .reduce((sum, t) => sum + (Number(t?.amount) || 0), 0);
-
-        const pendingAmount = transactions
-            .filter(t => t?.status === 'Pending' || t?.status === 'Verification Pending')
-            .reduce((sum, t) => sum + (Number(t?.amount) || 0), 0);
-
-        const uniqueStudents = new Set(transactions.map(t => t?.studentId).filter(Boolean)).size;
-
-        return {
-            totalEvents: events.length,
-            totalCollected,
-            pendingAmount,
-            uniqueStudents,
-        };
-    }, [events, transactions]);
+export function DashboardClient({ events, stats, recentTransactions }: DashboardClientProps) {
 
     const StatusBadge = ({ status }: { status: Transaction['status'] }) => {
         const variant = getStatusBadgeVariant(status);
@@ -118,7 +94,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
             <div className="grid gap-3 sm:gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 w-full max-w-full">
                 <StatCard
                     title="Total Events"
-                    value={stats.totalEvents.toString()}
+                    value={events?.length?.toString() || "0"}
                     description="Active fund collection events"
                     icon={<Wallet className="h-3 w-3 sm:h-4 sm:w-4" />}
                 />

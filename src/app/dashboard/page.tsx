@@ -27,12 +27,12 @@ export default async function DashboardPage() {
         );
     }
 
-    const { events, transactions, recentTransactions } = res.data;
+    const { events, stats, recentTransactions } = res.data;
 
     return (
         <DashboardClient
             events={events as unknown as Event[]}
-            transactions={transactions as unknown as Transaction[]}
+            stats={stats as { totalCollected: number; pendingAmount: number; uniqueStudents: number }}
             recentTransactions={recentTransactions as unknown as Transaction[]}
         />
     );
