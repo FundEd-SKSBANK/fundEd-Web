@@ -73,6 +73,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Form States
     const [title, setTitle] = useState('');
@@ -152,6 +153,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }
     };
 
     const handleDeleteRevenue = async (id: string) => {
+        setDeletingId(id);
         const res = await deleteAdditionalRevenue(id, eventId);
         if (res.success) {
             toast({ title: 'Success', description: 'Income deleted successfully' });
@@ -159,6 +161,7 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }
         } else {
             toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to delete income' });
         }
+        setDeletingId(null);
     };
 
     return (
@@ -327,8 +330,8 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }
                                         </Button>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                    <Trash2 className="h-4 w-4" />
+                                                <Button disabled={deletingId === rev.id} variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                    {deletingId === rev.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                                 </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
@@ -405,8 +408,8 @@ export function AdditionalRevenuePanel({ revenues, eventId, onUpdate, readOnly }
                                                     </Button>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                                <Trash2 className="h-4 w-4" />
+                                                            <Button disabled={deletingId === rev.id} variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                                                {deletingId === rev.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                                             </Button>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">

@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Check, X, DollarSign, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, X, DollarSign, Trash2, Loader2 } from 'lucide-react';
 import type { Transaction, Event, Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { sendPaymentApprovedEmail } from '@/app/actions';
@@ -66,6 +66,7 @@ export default function EventPaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, pendingCount: 0, paidCount: 0 });
   const [filterStatus, setFilterStatus] = useState<string>(initialStatus);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -78,13 +79,15 @@ export default function EventPaymentsPage() {
   const confirmDelete = async () => {
     if (!deletingTransaction) return;
 
+    setProcessingIds(prev => new Set(prev).add(deletingTransaction.id));
     const res = await deletePayment(deletingTransaction.id);
     if (res.success) {
       toast({ title: 'Payment Deleted', description: 'The payment record has been removed.' });
-      fetchPayments();
+      fetchPayments(false);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete payment.' });
     }
+    setProcessingIds(prev => { const next = new Set(prev); next.delete(deletingTransaction.id); return next; });
     setDeletingTransaction(null);
   };
 
@@ -94,8 +97,8 @@ export default function EventPaymentsPage() {
     return t.status.toLowerCase() === filterStatus.toLowerCase();
   });
 
-  const fetchPayments = async () => {
-    setIsLoading(true);
+  const fetchPayments = async (showLoader = true) => {
+    if (showLoader) setIsLoading(true);
     const res = await getEventPayments(eventIdStr);
     if (res.success && res.data) {
       setEvent(res.data.event as unknown as Event);
@@ -106,7 +109,7 @@ export default function EventPaymentsPage() {
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch payments' });
     }
-    setIsLoading(false);
+    if (showLoader) setIsLoading(false);
   };
 
   useEffect(() => {
@@ -132,6 +135,11 @@ export default function EventPaymentsPage() {
   }, [eventIdStr]);
 
   const handlePaymentAction = async (transaction: Transaction, newStatus: 'Paid' | 'Failed') => {
+    setProcessingIds(prev => new Set(prev).add(transaction.id));
+    
+    // Optimistic update
+    setTransactions(prev => prev.map(t => t.id === transaction.id ? { ...t, status: newStatus } : t));
+
     const res = await updatePaymentStatus(transaction.id, newStatus);
 
     if (res.success) {
@@ -140,7 +148,7 @@ export default function EventPaymentsPage() {
         description: `Transaction ${transaction.id} has been marked as ${newStatus}.`
       });
 
-      fetchPayments();
+      fetchPayments(false);
 
       if (newStatus === 'Paid' && event && res.data) {
         const student = res.data.student;
@@ -163,8 +171,16 @@ export default function EventPaymentsPage() {
         }
       }
     } else {
+      // Revert optimistic update
+      setTransactions(prev => prev.map(t => t.id === transaction.id ? { ...t, status: transaction.status } : t));
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status' });
     }
+
+    setProcessingIds(prev => {
+      const next = new Set(prev);
+      next.delete(transaction.id);
+      return next;
+    });
   };
 
   const formatDate = (date: string | Date) => {
@@ -220,6 +236,8 @@ export default function EventPaymentsPage() {
   };
 
   const PaymentActions = ({ transaction }: { transaction: Transaction }) => {
+    const isProcessing = processingIds.has(transaction.id);
+
     // If it's a virtual pending transaction, no actions available
     if (transaction.id.startsWith('pending_')) return null;
 
@@ -229,22 +247,25 @@ export default function EventPaymentsPage() {
           <Button
             variant="outline"
             size="icon"
+            disabled={isProcessing}
             className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
             onClick={() => handlePaymentAction(transaction, 'Paid')}>
-            <Check className="h-4 w-4" />
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             <span className="sr-only">Confirm</span>
           </Button>
           <Button
             variant="outline"
             size="icon"
+            disabled={isProcessing}
             className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
             onClick={() => handlePaymentAction(transaction, 'Failed')}>
-            <X className="h-4 w-4" />
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
             <span className="sr-only">Reject</span>
           </Button>
           <Button
             variant="ghost"
             size="icon"
+            disabled={isProcessing}
             className="h-8 w-8 text-muted-foreground hover:text-destructive"
             onClick={(e) => {
               e.preventDefault();
@@ -252,7 +273,7 @@ export default function EventPaymentsPage() {
               handleDeletePayment(transaction);
             }}
           >
-            <Trash2 className="h-4 w-4" />
+            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </Button>
         </div>
       );
@@ -264,10 +285,11 @@ export default function EventPaymentsPage() {
         <Button
           variant="ghost"
           size="icon"
+          disabled={isProcessing}
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
           onClick={() => handleDeletePayment(transaction)}
         >
-          <Trash2 className="h-4 w-4" />
+          {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           <span className="sr-only">Delete</span>
         </Button>
       </div>
@@ -315,7 +337,7 @@ export default function EventPaymentsPage() {
             events={[event]}
             payments={transactions}
             preSelectedEvent={event}
-            onSuccess={fetchPayments}
+            onSuccess={() => fetchPayments(false)}
             trigger={
               <Button className="gap-2 gradient-primary w-full md:w-auto justify-center h-10">
                 <DollarSign className="h-4 w-4 shrink-0" />

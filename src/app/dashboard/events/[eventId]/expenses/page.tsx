@@ -52,8 +52,8 @@ export default function EventExpensesPage() {
         fetchUserRole();
     }, [eventId]);
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = async (showLoader = true) => {
+        if (showLoader) setLoading(true);
         try {
             const [expensesRes, revenuesRes, balanceRes, breakdownRes, financialsRes] = await Promise.all([
                 getEventExpenses(eventId),
@@ -95,7 +95,7 @@ export default function EventExpensesPage() {
                 variant: "destructive"
             });
         } finally {
-            setLoading(false);
+            if (showLoader) setLoading(false);
         }
     };
 
@@ -304,7 +304,7 @@ export default function EventExpensesPage() {
                 <AdditionalRevenuePanel
                     revenues={additionalRevenues}
                     eventId={eventId}
-                    onUpdate={() => fetchData()}
+                    onUpdate={() => fetchData(false)}
                     readOnly={userRole === 'collab'}
                 />
 
@@ -312,7 +312,7 @@ export default function EventExpensesPage() {
                     expenses={expenses}
                     eventId={eventId}
                     eventName={stats.eventName}
-                    onUpdate={() => fetchData()}
+                    onUpdate={() => fetchData(false)}
                     readOnly={userRole === 'collab'}
                 />
             </div>
