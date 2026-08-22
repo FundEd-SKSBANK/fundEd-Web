@@ -360,7 +360,6 @@ export function AdminManagementTable() {
                                     {admin.role}
                                 </Badge>
                             </div>
-                            
                             <div className="grid grid-cols-3 gap-2 text-[10px]">
                                 <div className="bg-white/5 rounded-lg p-2">
                                     <span className="text-stone-500">Class</span>
@@ -429,86 +428,86 @@ export function AdminManagementTable() {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="h-24 text-center">
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-500" />
-                                </TableCell>
-                            </TableRow>
+        <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-500" />
+    </TableCell>
+</TableRow>
                         ) : filteredAdmins.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center text-stone-500">
-                                    No admins found.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filteredAdmins.map((admin) => (
-                                <TableRow key={admin.id} className="border-white/10 hover:bg-white/5">
-                                    <TableCell className="font-medium">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8 ring-1 ring-emerald-500/20">
-                                                {admin.image ? (
-                                                    <AvatarImage src={admin.image} />
-                                                ) : null}
-                                                <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                                                    {getInitials(admin.email, admin.name)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="text-stone-200 font-medium">{admin.name || 'Unnamed Admin'}</span>
-                                                <span className="text-xs text-stone-500">{admin.email}</span>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
-                                            {admin.role}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-stone-300">
-                                        {admin.defaultClass || <span className="text-stone-600">—</span>}
-                                    </TableCell>
-                                    <TableCell className="text-stone-300">
-                                        {admin._count.createdStudents}
-                                    </TableCell>
-                                    <TableCell className="text-stone-300">
-                                        {admin._count.createdEvents}
-                                    </TableCell>
-                                    <TableCell className="text-stone-400">
-                                        {new Date(admin.createdAt).toLocaleDateString('en-GB')}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(admin)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete the admin account
-                                                            and remove their data from our servers.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteAdmin(admin.id)} className="bg-red-600 hover:bg-red-700">
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-        </div>
+    <TableRow>
+        <TableCell colSpan={7} className="h-24 text-center text-stone-500">
+            No admins found.
+        </TableCell>
+    </TableRow>
+) : (
+    filteredAdmins.map((admin) => (
+        <TableRow key={admin.id} className="border-white/10 hover:bg-white/5">
+            <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8 ring-1 ring-emerald-500/20">
+                        {admin.image ? (
+                            <AvatarImage src={admin.image} />
+                        ) : null}
+                        <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                            {getInitials(admin.email, admin.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <span className="text-stone-200 font-medium">{admin.name || 'Unnamed Admin'}</span>
+                        <span className="text-xs text-stone-500">{admin.email}</span>
+                    </div>
+                </div>
+            </TableCell>
+            <TableCell>
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                    {admin.role}
+                </Badge>
+            </TableCell>
+            <TableCell className="text-stone-300">
+                {admin.defaultClass || <span className="text-stone-600">—</span>}
+            </TableCell>
+            <TableCell className="text-stone-300">
+                {admin._count.createdStudents}
+            </TableCell>
+            <TableCell className="text-stone-300">
+                {admin._count.createdEvents}
+            </TableCell>
+            <TableCell className="text-stone-400">
+                {new Date(admin.createdAt).toLocaleDateString('en-GB')}
+            </TableCell>
+            <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(admin)}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the admin account
+                                    and remove their data from our servers.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteAdmin(admin.id)} className="bg-red-600 hover:bg-red-700">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </TableCell>
+        </TableRow>
+    ))
+)}
+                    </TableBody >
+                </Table >
+            </div >
+        </div >
     );
 }

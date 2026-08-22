@@ -827,6 +827,14 @@ export default function EventsPage() {
                             </Badge>
                         )}
                     </div>
+
+                    {/* Filters */}
+                    {userRole === 'collab' && (
+                        <Badge variant="outline" className="gap-1.5 py-1.5 px-4 border-white/10 bg-white/5 text-muted-foreground h-10 rounded-lg">
+                            <Lock className="h-4 w-4" /> Read Only Access
+                        </Badge>
+                    )}
+>>>>>>> 7fa1ded074fda4100655e6ca9253f81c750bdb30
                 </div>
 
                 {/* Filters */}
