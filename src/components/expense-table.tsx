@@ -306,6 +306,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState('');
@@ -385,6 +386,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly 
     };
 
     const handleDeleteExpense = async (id: string) => {
+        setDeletingId(id);
         const res = await deleteExpense(id, eventId);
         if (res.success) {
             toast({ title: 'Success', description: 'Expense deleted successfully' });
@@ -392,6 +394,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly 
         } else {
             toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to delete expense' });
         }
+        setDeletingId(null);
     };
 
     return (
@@ -502,7 +505,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly 
                                         <div className="flex gap-1">
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}><Pencil className="h-4 w-4" /></Button>
                                             <AlertDialog>
-                                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                <AlertDialogTrigger asChild><Button disabled={deletingId === expense.id} variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">{deletingId === expense.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button></AlertDialogTrigger>
                                                 <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl w-[calc(100%-2rem)]">
                                                     <AlertDialogHeader><AlertDialogTitle>Delete Expense?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete this expense? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                                     <AlertDialogFooter>
@@ -549,7 +552,7 @@ export function ExpenseTable({ expenses, eventId, eventName, onUpdate, readOnly 
                                                 <div className="flex justify-end gap-1">
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-white" onClick={() => startEdit(expense)}><Pencil className="h-4 w-4" /></Button>
                                                     <AlertDialog>
-                                                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogTrigger asChild><Button disabled={deletingId === expense.id} variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10">{deletingId === expense.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button></AlertDialogTrigger>
                                                         <AlertDialogContent className="bg-black/95 border-white/10 backdrop-blur-xl">
                                                             <AlertDialogHeader><AlertDialogTitle>Delete Expense?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete this expense? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                                             <AlertDialogFooter>
