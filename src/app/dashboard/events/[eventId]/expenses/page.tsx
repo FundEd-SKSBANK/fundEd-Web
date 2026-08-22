@@ -64,8 +64,10 @@ export default function EventExpensesPage() {
                 breakdown: breakdownRes.success && breakdownRes.data ? breakdownRes.data : [],
                 financials: financialsRes && financialsRes.success && financialsRes.data ? financialsRes.data : []
             };
-        }
+        },
+        { revalidateOnFocus: false }
     );
+
 
     const expenses = data?.expenses || [];
     const additionalRevenues = data?.additionalRevenues || [];
