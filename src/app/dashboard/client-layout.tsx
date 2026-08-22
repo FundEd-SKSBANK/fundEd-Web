@@ -195,7 +195,7 @@ const NotificationItem = ({ transaction }: { transaction: Transaction }) => {
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <div className="flex items-center justify-between w-full gap-3">
                         <p className="text-sm font-medium truncate flex-1">{transaction.studentName}</p>
-                        <span className="text-[10px] text-stone-500 shrink-0">
+                        <span suppressHydrationWarning className="text-[10px] text-stone-500 shrink-0">
                             {new Date(transaction.paymentDate).toLocaleString('en-GB', { 
                                 day: '2-digit', 
                                 month: '2-digit', 
@@ -218,12 +218,16 @@ interface DashboardClientLayoutProps {
     children: React.ReactNode;
     user: any;
     initialEvents?: { id: string; name: string }[];
+    initialPending?: any[];
+    initialNotifications?: any[];
 }
 
 export default function DashboardClientLayout({
     children,
     user,
-    initialEvents = []
+    initialEvents = [],
+    initialPending = [],
+    initialNotifications = []
 }: DashboardClientLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
@@ -233,25 +237,25 @@ export default function DashboardClientLayout({
     const { data: pendingTransactionsRes } = useSWR(
         !isSuperUser ? 'pendingTransactions' : null,
         getPendingTransactions,
-        { refreshInterval: 60000, fallbackData: { success: true, data: [] } }
+        { refreshInterval: 60000, fallbackData: { success: true, data: initialPending as any }, revalidateOnMount: false }
     );
     const pendingTransactions = pendingTransactionsRes?.success && pendingTransactionsRes?.data 
         ? (pendingTransactionsRes.data as unknown as Transaction[]) 
-        : [];
+        : (initialPending as unknown as Transaction[]);
 
     const { data: userNotificationsRes } = useSWR(
         isSuperUser ? 'userNotifications' : null,
         getUserNotifications,
-        { refreshInterval: 60000, fallbackData: { success: true, data: [] } }
+        { refreshInterval: 60000, fallbackData: { success: true, data: initialNotifications as any }, revalidateOnMount: false }
     );
     const userNotifications = userNotificationsRes?.success && userNotificationsRes?.data
         ? (userNotificationsRes.data as any[])
-        : [];
+        : initialNotifications;
 
     const { data: recentEventsRes } = useSWR(
         'recentEvents',
         getRecentEventsForNav,
-        { refreshInterval: 60000, fallbackData: { success: true, data: initialEvents } }
+        { refreshInterval: 60000, fallbackData: { success: true, data: initialEvents as any }, revalidateOnMount: false }
     );
     const recentEvents = recentEventsRes?.success && recentEventsRes?.data
         ? (recentEventsRes.data as { id: string; name: string }[])
@@ -353,7 +357,7 @@ export default function DashboardClientLayout({
                                                     <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/5 transition-colors">
                                                         <div className="flex items-center justify-between w-full">
                                                             <span className="text-sm font-semibold text-white">{n.title}</span>
-                                                            <span className="text-[10px] text-stone-500">
+                                                            <span suppressHydrationWarning className="text-[10px] text-stone-500">
                                                                 {new Date(n.date).toLocaleString('en-GB', { 
                                                                     day: '2-digit', 
                                                                     month: '2-digit', 

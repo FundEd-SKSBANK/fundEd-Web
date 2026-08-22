@@ -2,6 +2,7 @@ import DashboardClientLayout from './client-layout';
 import prisma from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { getEvents } from '@/actions/events';
+import { getPendingTransactions, getUserNotifications } from '@/actions/notifications';
 
 async function getUser() {
   const session = await getSession();
@@ -37,11 +38,25 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getUser();
-  const eventsRes = await getEvents();
+  const isSuperUser = user?.role === 'superadmin';
+
+  const [eventsRes, pendingRes, notificationsRes] = await Promise.all([
+    getEvents(),
+    !isSuperUser ? getPendingTransactions() : Promise.resolve({ success: true, data: [] }),
+    isSuperUser ? getUserNotifications() : Promise.resolve({ success: true, data: [] })
+  ]);
+
   const initialEvents = eventsRes.success && eventsRes.data ? (eventsRes.data as any[]).map(e => ({ id: e.id, name: e.name })) : [];
+  const initialPending = pendingRes.success && pendingRes.data ? pendingRes.data : [];
+  const initialNotifications = notificationsRes.success && notificationsRes.data ? notificationsRes.data : [];
 
   return (
-    <DashboardClientLayout user={user} initialEvents={initialEvents}>
+    <DashboardClientLayout 
+      user={user} 
+      initialEvents={initialEvents}
+      initialPending={initialPending}
+      initialNotifications={initialNotifications}
+    >
       {children}
     </DashboardClientLayout>
   );

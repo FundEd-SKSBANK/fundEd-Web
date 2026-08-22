@@ -237,7 +237,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                                     </div>
                                     <div className="flex items-center justify-between text-sm gap-4">
                                         <span className="text-muted-foreground shrink-0">Date</span>
-                                        <span className="shrink-0">{formatDate(transaction.paymentDate)}</span>
+                                        <span suppressHydrationWarning className="shrink-0">{formatDate(transaction.paymentDate)}</span>
                                     </div>
                                     <div className="flex items-center justify-between text-sm gap-4">
                                         <span className="text-muted-foreground shrink-0">Method</span>
@@ -280,7 +280,7 @@ export function DashboardClient({ events, transactions, recentTransactions }: Da
                                                 ₹{transaction.amount.toLocaleString('en-IN')}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-center text-sm">{formatDate(transaction.paymentDate)}</TableCell>
+                                        <TableCell suppressHydrationWarning className="text-center text-sm">{formatDate(transaction.paymentDate)}</TableCell>
                                         <TableCell className="text-center">
                                             <span className="text-xs px-2 py-1 rounded-full bg-muted">
                                                 {transaction.paymentMethod}
