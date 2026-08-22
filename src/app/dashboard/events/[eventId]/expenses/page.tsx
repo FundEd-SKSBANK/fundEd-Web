@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { useParams } from 'next/navigation';
 import { getEventExpenses, getEventBalance, getEventExpensesBreakdown, getEventFinancialsOverTime, getAdditionalRevenues } from '@/actions/expenses';
 
@@ -24,23 +25,9 @@ export default function EventExpensesPage() {
     const eventId = params.eventId as string;
     const { toast } = useToast();
 
-    const [loading, setLoading] = useState(true);
-    const [expenses, setExpenses] = useState<any[]>([]);
-    const [additionalRevenues, setAdditionalRevenues] = useState<any[]>([]);
-    const [stats, setStats] = useState({
-        eventName: '',
-        studentCollected: 0,
-        totalAdditionalRevenue: 0,
-        totalCollected: 0,
-        totalExpenses: 0,
-        netBalance: 0
-    });
-    const [breakdown, setBreakdown] = useState<any[]>([]);
-    const [financials, setFinancials] = useState<any[]>([]);
     const [userRole, setUserRole] = useState<string>('collab');
 
     useEffect(() => {
-        fetchData();
         const fetchUserRole = async () => {
             const adminRes = await getCurrentAdmin();
             if (adminRes.success && adminRes.data) {
@@ -52,9 +39,9 @@ export default function EventExpensesPage() {
         fetchUserRole();
     }, [eventId]);
 
-    const fetchData = async (showLoader = true) => {
-        if (showLoader) setLoading(true);
-        try {
+    const { data, mutate, isLoading: loading } = useSWR(
+        eventId ? ['eventExpenses', eventId] : null,
+        async () => {
             const [expensesRes, revenuesRes, balanceRes, breakdownRes, financialsRes] = await Promise.all([
                 getEventExpenses(eventId),
                 getAdditionalRevenues(eventId),
@@ -62,42 +49,32 @@ export default function EventExpensesPage() {
                 getEventExpensesBreakdown(eventId),
                 getEventFinancialsOverTime(eventId, 'week')
             ]);
-
-            if (expensesRes.success && expensesRes.data) {
-                setExpenses(expensesRes.data.expenses);
+            
+            if (!balanceRes.success) {
+                toast({ title: "Error", description: "Failed to load event data", variant: "destructive" });
             }
 
-            if (revenuesRes.success && revenuesRes.data) {
-                setAdditionalRevenues(revenuesRes.data);
-            }
-
-            if (balanceRes.success && balanceRes.data) {
-                setStats(balanceRes.data);
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Failed to load event data",
-                    variant: "destructive"
-                });
-            }
-
-            if (breakdownRes.success && breakdownRes.data) {
-                setBreakdown(breakdownRes.data);
-            }
-            if (financialsRes && financialsRes.success && financialsRes.data) {
-                setFinancials(financialsRes.data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch data:", error);
-            toast({
-                title: "Error",
-                description: "Something went wrong while loading data.",
-                variant: "destructive"
-            });
-        } finally {
-            if (showLoader) setLoading(false);
+            return {
+                expenses: expensesRes.success && expensesRes.data ? expensesRes.data.expenses : [],
+                additionalRevenues: revenuesRes.success && revenuesRes.data ? revenuesRes.data : [],
+                stats: balanceRes.success && balanceRes.data ? balanceRes.data : {
+                    eventName: '', studentCollected: 0, totalAdditionalRevenue: 0,
+                    totalCollected: 0, totalExpenses: 0, netBalance: 0
+                },
+                breakdown: breakdownRes.success && breakdownRes.data ? breakdownRes.data : [],
+                financials: financialsRes && financialsRes.success && financialsRes.data ? financialsRes.data : []
+            };
         }
+    );
+
+    const expenses = data?.expenses || [];
+    const additionalRevenues = data?.additionalRevenues || [];
+    const stats = data?.stats || {
+        eventName: '', studentCollected: 0, totalAdditionalRevenue: 0,
+        totalCollected: 0, totalExpenses: 0, netBalance: 0
     };
+    const breakdown = data?.breakdown || [];
+    const financials = data?.financials || [];
 
     const generatePdf = async () => {
         try {
@@ -304,7 +281,7 @@ export default function EventExpensesPage() {
                 <AdditionalRevenuePanel
                     revenues={additionalRevenues}
                     eventId={eventId}
-                    onUpdate={() => fetchData(false)}
+                    onUpdate={() => mutate()}
                     readOnly={userRole === 'collab'}
                 />
 
@@ -312,7 +289,7 @@ export default function EventExpensesPage() {
                     expenses={expenses}
                     eventId={eventId}
                     eventName={stats.eventName}
-                    onUpdate={() => fetchData(false)}
+                    onUpdate={() => mutate()}
                     readOnly={userRole === 'collab'}
                 />
             </div>

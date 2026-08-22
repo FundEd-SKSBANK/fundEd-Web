@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { sendPaymentApprovedEmail } from '@/app/actions';
 import { PageLoader } from '@/components/ui/page-loader';
 import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { getEventPayments, updatePaymentStatus, deletePayment } from '@/actions/payments';
 import { getStudents } from '@/actions/students';
 import { RecordCashPaymentDialog } from '@/components/record-cash-payment-dialog';
@@ -60,13 +61,9 @@ export default function EventPaymentsPage() {
   const initialStatus = searchParams.get('status') || 'all';
   const eventIdStr = eventId as string;
 
-  const [event, setEvent] = useState<Event | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({ totalStudents: 0, pendingCount: 0, paidCount: 0 });
   const [filterStatus, setFilterStatus] = useState<string>(initialStatus);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -74,18 +71,54 @@ export default function EventPaymentsPage() {
       setFilterStatus(status);
     }
   }, [searchParams]);
-  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
+
+  const { data, mutate, isLoading } = useSWR(
+    eventIdStr ? ['eventPayments', eventIdStr] : null,
+    async () => {
+      const res = await getEventPayments(eventIdStr);
+      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch payments');
+      return res.data;
+    }
+  );
+
+  const { data: studentsData } = useSWR(
+    eventIdStr ? 'allStudents' : null,
+    async () => {
+      const res = await getStudents();
+      if (!res.success || !res.students) throw new Error('Failed to fetch students');
+      return res.students as unknown as Student[];
+    }
+  );
+
+  const event = (data?.event as unknown as Event) || null;
+  const transactions = (data?.transactions as unknown as Transaction[]) || [];
+  const stats = data?.stats || { totalStudents: 0, pendingCount: 0, paidCount: 0 };
+  const students = studentsData || [];
 
   const confirmDelete = async () => {
     if (!deletingTransaction) return;
 
     setProcessingIds(prev => new Set(prev).add(deletingTransaction.id));
+    
+    // Optimistic delete
+    mutate(
+      (current: any) => {
+        if (!current) return current;
+        return {
+          ...current,
+          transactions: current.transactions.filter((t: any) => t.id !== deletingTransaction.id)
+        };
+      },
+      { revalidate: false }
+    );
+
     const res = await deletePayment(deletingTransaction.id);
     if (res.success) {
       toast({ title: 'Payment Deleted', description: 'The payment record has been removed.' });
-      fetchPayments(false);
+      mutate();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete payment.' });
+      mutate(); // revert
     }
     setProcessingIds(prev => { const next = new Set(prev); next.delete(deletingTransaction.id); return next; });
     setDeletingTransaction(null);
@@ -97,48 +130,20 @@ export default function EventPaymentsPage() {
     return t.status.toLowerCase() === filterStatus.toLowerCase();
   });
 
-  const fetchPayments = async (showLoader = true) => {
-    if (showLoader) setIsLoading(true);
-    const res = await getEventPayments(eventIdStr);
-    if (res.success && res.data) {
-      setEvent(res.data.event as unknown as Event);
-      setTransactions(res.data.transactions as unknown as Transaction[]);
-      if (res.data.stats) {
-        setStats(res.data.stats);
-      }
-    } else {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch payments' });
-    }
-    if (showLoader) setIsLoading(false);
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (eventIdStr) {
-        await fetchPayments();
-        console.log('🔍 Fetching students...');
-        try {
-          const studentsRes = await getStudents();
-          console.log('✅ Students response:', studentsRes);
-          if (studentsRes.success && studentsRes.students) {
-            console.log('✅ Setting students:', studentsRes.students);
-            setStudents(studentsRes.students as unknown as Student[]);
-          } else {
-            console.log('❌ No students found or error:', studentsRes);
-          }
-        } catch (error) {
-          console.error('❌ Error fetching students:', error);
-        }
-      }
-    };
-    fetchData();
-  }, [eventIdStr]);
-
   const handlePaymentAction = async (transaction: Transaction, newStatus: 'Paid' | 'Failed') => {
     setProcessingIds(prev => new Set(prev).add(transaction.id));
     
     // Optimistic update
-    setTransactions(prev => prev.map(t => t.id === transaction.id ? { ...t, status: newStatus } : t));
+    mutate(
+      (current: any) => {
+        if (!current) return current;
+        return {
+          ...current,
+          transactions: current.transactions.map((t: any) => t.id === transaction.id ? { ...t, status: newStatus } : t)
+        };
+      },
+      { revalidate: false }
+    );
 
     const res = await updatePaymentStatus(transaction.id, newStatus);
 
@@ -148,7 +153,7 @@ export default function EventPaymentsPage() {
         description: `Transaction ${transaction.id} has been marked as ${newStatus}.`
       });
 
-      fetchPayments(false);
+      mutate();
 
       if (newStatus === 'Paid' && event && res.data) {
         const student = res.data.student;
@@ -172,7 +177,7 @@ export default function EventPaymentsPage() {
       }
     } else {
       // Revert optimistic update
-      setTransactions(prev => prev.map(t => t.id === transaction.id ? { ...t, status: transaction.status } : t));
+      mutate();
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status' });
     }
 
@@ -337,7 +342,7 @@ export default function EventPaymentsPage() {
             events={[event]}
             payments={transactions}
             preSelectedEvent={event}
-            onSuccess={() => fetchPayments(false)}
+            onSuccess={() => mutate()}
             trigger={
               <Button className="gap-2 gradient-primary w-full md:w-auto justify-center h-10">
                 <DollarSign className="h-4 w-4 shrink-0" />
