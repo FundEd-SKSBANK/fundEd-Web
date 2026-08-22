@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,20 +15,14 @@ interface StatisticsChartProps {
 export function StatisticsChart({ className }: StatisticsChartProps) {
     const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
     const [metric, setMetric] = useState<'collections' | 'transactions'>('collections');
-    const [data, setData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            const res = await getDashboardStatistics(period);
-            if (res.success && res.data) {
-                setData(res.data);
-            }
-            setIsLoading(false);
-        };
-        fetchData();
-    }, [period]);
+    const { data: chartData, isLoading } = useSWR(
+        ['dashboardStats', period],
+        () => getDashboardStatistics(period).then(res => (res.success && res.data ? res.data : [])),
+        { revalidateOnFocus: false }
+    );
+
+    const data = chartData || [];
 
     const maxValue = data.length > 0
         ? Math.max(...data.map(d => metric === 'collections' ? (Number(d.collections) || 0) : (Number(d.transactions) || 0)), 1)

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import useSWR from 'swr';
 import { GlassCard } from '@/components/ui/glass-card';
 import {
   CardContent,
@@ -261,8 +262,19 @@ function CollabVisibilityModal({
 
 export function CollabManagement({ currentUserId }: { currentUserId: string }) {
   const { toast } = useToast();
-  const [collabUsers, setCollabUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: collabData, mutate: refetchCollabs, isLoading } = useSWR(
+    ['collabUsers', currentUserId],
+    async () => {
+      const res = await getUsers();
+      if (res.success && res.data) {
+        return res.data.filter((u: any) => u.id !== currentUserId && u.role === 'collab');
+      }
+      return [];
+    },
+    { revalidateOnFocus: false }
+  );
+
+  const collabUsers = collabData || [];
 
   // Create/Edit Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -275,18 +287,6 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
 
   // Visibility modal state
   const [visibilityUser, setVisibilityUser] = useState<{ id: string; name: string } | null>(null);
-
-  const fetchCollabs = async () => {
-    setIsLoading(true);
-    const res = await getUsers();
-    if (res.success && res.data) {
-      const collabs = res.data.filter((u: any) => u.id !== currentUserId && u.role === 'collab');
-      setCollabUsers(collabs);
-    }
-    setIsLoading(false);
-  };
-
-  useEffect(() => { fetchCollabs(); }, [currentUserId]);
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -330,7 +330,7 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
     if (res.success) {
       toast({ title: `Collab User ${editingUser ? 'updated' : 'created'} successfully.` });
       setIsDialogOpen(false);
-      fetchCollabs();
+      refetchCollabs();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: res.error || 'Operation failed.' });
     }
@@ -343,7 +343,7 @@ export function CollabManagement({ currentUserId }: { currentUserId: string }) {
 
     if (res.success) {
       toast({ title: 'Collab User deleted' });
-      fetchCollabs();
+      refetchCollabs();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: res.error || 'Failed to delete user.' });
     }

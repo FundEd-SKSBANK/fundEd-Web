@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -58,10 +59,7 @@ import { getInitials, filterStudents, copyPublicPortalLink } from './page.utils'
 import { getCurrentAdmin } from '@/actions/users';
 
 export default function StudentsPage() {
-    const [students, setStudents] = useState<Student[]>([]);
-    const [events, setEvents] = useState<Event[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -69,52 +67,21 @@ export default function StudentsPage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    // ── Initial data load (runs once on mount with a full-screen loader) ──
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setIsLoading(true);
-
-            const adminRes = await getCurrentAdmin();
-            if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
-                router.replace('/dashboard/super');
-                return;
-            }
-
-            const [studentsRes, eventsRes] = await Promise.all([
-                getStudents(),
-                getEvents()
-            ]);
-
-            if (studentsRes.success && studentsRes.students) {
-                setStudents(studentsRes.students as unknown as Student[]);
-            }
-
-            if (eventsRes.success && eventsRes.data) {
-                setEvents(eventsRes.data as unknown as Event[]);
-            }
-
-            setIsLoading(false);
+    const { data, mutate, isLoading } = useSWR('studentsPageData', async () => {
+        const adminRes = await getCurrentAdmin();
+        if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
+            router.replace('/dashboard/super');
+            return null;
+        }
+        const [studentsRes, eventsRes] = await Promise.all([getStudents(), getEvents()]);
+        return {
+            students: (studentsRes.success && studentsRes.students ? studentsRes.students : []) as unknown as Student[],
+            events: (eventsRes.success && eventsRes.data ? eventsRes.data : []) as unknown as Event[],
         };
-        fetchInitialData();
-    }, []);
+    }, { revalidateOnFocus: false });
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        const [studentsRes, eventsRes] = await Promise.all([
-            getStudents(),
-            getEvents()
-        ]);
-
-        if (studentsRes.success && studentsRes.students) {
-            setStudents(studentsRes.students as unknown as Student[]);
-        }
-
-        if (eventsRes.success && eventsRes.data) {
-            setEvents(eventsRes.data as unknown as Event[]);
-        }
-
-        setIsLoading(false);
-    };
+    const students = data?.students || [];
+    const events = data?.events || [];
 
     const handleEdit = (student: Student) => {
         setStudentToEdit(student);
@@ -133,7 +100,7 @@ export default function StudentsPage() {
         const result = await deleteStudent(deletingStudent.id);
         if (result.success) {
             toast({ title: 'Student Deleted', description: 'Student has been deleted successfully' });
-            fetchData();
+            mutate();
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
         }
@@ -183,7 +150,7 @@ export default function StudentsPage() {
                         title: 'Students Uploaded',
                         description: `Successfully uploaded ${result.count} students`,
                     });
-                    fetchData();
+                    mutate();
                     setUploadDialogOpen(false);
                 } else {
                     toast({ variant: 'destructive', title: 'Error', description: result.error });
@@ -227,7 +194,7 @@ export default function StudentsPage() {
                         <Share2 className="h-4 w-4" />
                         Share Portal
                     </Button>
-                    <AddStudentDialog onSuccess={fetchData} />
+                    <AddStudentDialog onSuccess={() => mutate()} />
 
                     <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                         <DialogTrigger asChild>
@@ -256,7 +223,7 @@ export default function StudentsPage() {
                 student={studentToEdit}
                 open={editDialogOpen}
                 onOpenChange={setEditDialogOpen}
-                onSuccess={fetchData}
+                onSuccess={() => mutate()}
             />
 
             {/* Search Bar */}

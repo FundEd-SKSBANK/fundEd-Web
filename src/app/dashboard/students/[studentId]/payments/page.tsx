@@ -25,7 +25,8 @@ import { ArrowLeft } from 'lucide-react';
 import type { Transaction, Student } from '@/lib/types';
 import { BrandedLoader } from '@/components/ui/branded-loader';
 import { PageLoader } from '@/components/ui/page-loader';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getStudentPayments } from '@/actions/student-payments';
 import { GlassCard } from '@/components/ui/glass-card';
 import { useToast } from '@/hooks/use-toast';
@@ -52,28 +53,19 @@ export default function StudentPaymentsPage() {
   const studentIdStr = studentId as string;
   const { toast } = useToast();
 
-  const [student, setStudent] = useState<Student | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [paymentSummary, setPaymentSummary] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      setIsLoading(true);
+  const { data, isLoading } = useSWR(
+    studentIdStr ? ['studentPayments', studentIdStr] : null,
+    async () => {
       const res = await getStudentPayments(studentIdStr);
-      if (res.success && res.data) {
-        setStudent(res.data.student as unknown as Student);
-        setTransactions(res.data.transactions as unknown as Transaction[]);
-        setPaymentSummary(res.data.paymentSummary || []);
-      } else {
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch payments' });
-      }
-      setIsLoading(false);
-    };
-    if (studentIdStr) {
-      fetchPayments();
-    }
-  }, [studentIdStr]);
+      if (res.success && res.data) return res.data;
+      return null;
+    },
+    { revalidateOnFocus: false }
+  );
+
+  const student = (data?.student as unknown as Student) || null;
+  const transactions = (data?.transactions as unknown as Transaction[]) || [];
+  const paymentSummary = data?.paymentSummary || [];
 
 
   const formatDate = (date: string | Date) => {

@@ -827,6 +827,7 @@ export default function EventsPage() {
                             </Badge>
                         )}
                     </div>
+                </div>
 
                 {/* Filters */}
                 {(Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 ||

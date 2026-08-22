@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import {
     Table,
     TableBody,
@@ -28,40 +29,30 @@ interface EventFinancials {
 }
 
 export function SuperFinancialsTable() {
-    const [data, setData] = useState<EventFinancials[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const { toast } = useToast();
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    const { data, isLoading: loading } = useSWR(
+        'superFinancials',
+        async () => {
+            const res = await getGlobalEventFinancials();
+            if (res.success && res.data) return res.data as EventFinancials[];
+            toast({ title: "Error", description: "Failed to load financial data", variant: "destructive" });
+            return [] as EventFinancials[];
+        },
+        { revalidateOnFocus: false }
+    );
 
-    async function loadData() {
-        setLoading(true);
-        const res = await getGlobalEventFinancials();
-        if (res.success && res.data) {
-            setData(res.data as EventFinancials[]);
-        } else {
-            toast({
-                title: "Error",
-                description: "Failed to load financial data",
-                variant: "destructive"
-            });
-        }
-        setLoading(false);
-    }
+    const tableData = data || [];
 
-    const filteredData = data.filter(item =>
+    const filteredData = tableData.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.creator.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const totalPlatformCollected = data.reduce((sum, item) => sum + item.totalCollected, 0);
-    const totalPlatformExpenses = data.reduce((sum, item) => sum + item.totalExpenses, 0);
-    // User requested that negative balances (deficits) should not be considered as balance.
-    // So we sum up the individual net balances, clamping each to at least 0.
-    const totalPlatformBalance = data.reduce((sum, item) => sum + Math.max(0, item.netBalance), 0);
+    const totalPlatformCollected = tableData.reduce((sum, item) => sum + item.totalCollected, 0);
+    const totalPlatformExpenses = tableData.reduce((sum, item) => sum + item.totalExpenses, 0);
+    const totalPlatformBalance = tableData.reduce((sum, item) => sum + Math.max(0, item.netBalance), 0);
 
     return (
         <div className="space-y-4">
