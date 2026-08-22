@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import {
     Card,
     CardContent,
@@ -40,32 +41,25 @@ export default function ReportsPage() {
     const [dateFrom, setDateFrom] = useState<Date>();
     const [dateTo, setDateTo] = useState<Date>();
     const [transactions, setTransactions] = useState<any[]>([]);
-    const [events, setEvents] = useState<Event[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
     const [reportSummary, setReportSummary] = useState<any>(null);
     const { toast } = useToast();
     const router = useRouter();
 
-    useEffect(() => {
-        const fetchEvents = async () => {
-            setIsLoading(true);
-            const adminRes = await getCurrentAdmin();
-            if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
-                router.replace('/dashboard/super');
-                return;
-            }
+    const { data: eventsData, isLoading } = useSWR('reportsEvents', async () => {
+        const adminRes = await getCurrentAdmin();
+        if (adminRes.success && adminRes.data && adminRes.data.role === 'superadmin') {
+            router.replace('/dashboard/super');
+            return [];
+        }
+        const res = await getEvents();
+        return (res.success && res.data ? res.data : []) as unknown as Event[];
+    }, { revalidateOnFocus: false });
 
-            const res = await getEvents();
-            if (res.success && res.data) {
-                setEvents(res.data as unknown as Event[]);
-            }
-            setIsLoading(false);
-        };
-        fetchEvents();
-    }, []);
+    const events = eventsData || [];
 
     const handleGenerateReport = async () => {
-        setIsLoading(true);
+        setIsGenerating(true);
 
         if (reportType === 'event') {
             if (!selectedEvent) {
@@ -128,7 +122,7 @@ export default function ReportsPage() {
             }
         }
 
-        setIsLoading(false);
+        setIsGenerating(false);
     };
 
     const handleDownloadCSV = async () => {
@@ -467,9 +461,9 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                    <Button onClick={handleGenerateReport} disabled={isLoading} className="gap-2 w-full sm:w-auto text-white">
+                    <Button onClick={handleGenerateReport} disabled={isGenerating} className="gap-2 w-full sm:w-auto text-white">
                         <Filter className="h-4 w-4" />
-                        {isLoading ? 'Generating...' : 'Generate Report'}
+                        {isGenerating ? 'Generating...' : 'Generate Report'}
                     </Button>
 
                     {transactions.length > 0 && (
@@ -669,7 +663,7 @@ export default function ReportsPage() {
             }
 
             {
-                transactions.length === 0 && !isLoading && (
+                transactions.length === 0 && !isGenerating && (
                     <GlassCard className="py-12">
                         <CardContent className="text-center">
                             <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />

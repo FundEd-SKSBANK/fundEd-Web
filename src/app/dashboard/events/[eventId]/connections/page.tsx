@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -110,9 +111,36 @@ export default function ConnectionsPage() {
     const eventId = params.eventId as string;
     const { toast } = useToast();
 
+    const { data: initialData, isLoading: loading } = useSWR(
+        eventId ? ['connections', eventId] : null,
+        async () => {
+            const [tokRes, connRes, userRes] = await Promise.all([
+                listTokens(eventId),
+                getMajorEventConnections(eventId),
+                getCurrentAdmin(),
+            ]);
+            return {
+                tokens: (tokRes.success ? tokRes.data : []) as ConnectionToken[],
+                connections: (connRes.success ? connRes.data : []) as SubEventConnection[],
+                role: userRes.success && userRes.data ? userRes.data.role : null,
+            };
+        },
+        { revalidateOnFocus: false }
+    );
+
+    // Seed local state from SWR data for optimistic updates
     const [tokens, setTokens] = useState<ConnectionToken[]>([]);
     const [connections, setConnections] = useState<SubEventConnection[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialData) {
+            setTokens(initialData.tokens);
+            setConnections(initialData.connections);
+            setRole(initialData.role);
+        }
+    }, [initialData]);
+
     const [generateOpen, setGenerateOpen] = useState(false);
     const [genLabel, setGenLabel] = useState('');
     const [genAmount, setGenAmount] = useState('');
@@ -125,24 +153,8 @@ export default function ConnectionsPage() {
     const [removedOpen, setRemovedOpen] = useState(false);
     const [deletingTokenId, setDeletingTokenId] = useState<string | null>(null);
     const [lastGenerated, setLastGenerated] = useState<{ token: ConnectionToken; joinUrl?: string } | null>(null);
-    const [role, setRole] = useState<string | null>(null);
 
     const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
-
-    const fetchAll = useCallback(async () => {
-        setLoading(true);
-        const [tokRes, connRes, userRes] = await Promise.all([
-            listTokens(eventId),
-            getMajorEventConnections(eventId),
-            getCurrentAdmin(),
-        ]);
-        if (tokRes.success) setTokens(tokRes.data || []);
-        if (connRes.success) setConnections((connRes.data || []) as SubEventConnection[]);
-        if (userRes.success && userRes.data) setRole(userRes.data.role);
-        setLoading(false);
-    }, [eventId]);
-
-    useEffect(() => { fetchAll(); }, [fetchAll]);
 
     const handleGenerateToken = async () => {
         setGenLoading(true);
