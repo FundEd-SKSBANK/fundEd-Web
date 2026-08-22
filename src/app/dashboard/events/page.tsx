@@ -601,146 +601,129 @@ export default function EventsPage() {
     return (
         <div className="space-y-6 animate-fade-in text-white">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Events</h2>
-                    <p className="text-stone-400 mt-0.5 md:mt-1 text-sm md:text-base">
-                        Manage fund collection events and track payments
-                    </p>
-                </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Events</h2>
+                        <p className="text-stone-400 mt-0.5 text-xs md:text-base">
+                            Manage fund collection events and track payments
+                        </p>
+                    </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto hide-scrollbar pb-1">
-                    {/* Filters */}
-                    {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 && (
-                        <Select value={filterSemester} onValueChange={setFilterSemester}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[95px] sm:w-[110px] shrink-0">
-                                <SelectValue placeholder="Sem" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                <SelectItem value="all">All Sem</SelectItem>
-                                {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).map(s => <SelectItem key={s as string} value={s as string}>{s as string}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    )}
-                    {Array.from(new Set(events.map(e => e.className).filter(Boolean))).length > 0 && (
-                        <Select value={filterClass} onValueChange={setFilterClass}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] sm:w-[130px] shrink-0">
-                                <SelectValue placeholder="Class" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                <SelectItem value="all">All Classes</SelectItem>
-                                {Array.from(new Set(events.map(e => e.className).filter(Boolean))).map(c => <SelectItem key={c as string} value={c as string}>{c as string}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    )}
-                    {Array.from(new Set(events.map(e => e.year).filter(Boolean))).length > 0 && (
-                        <Select value={filterYear} onValueChange={setFilterYear}>
-                            <SelectTrigger className="h-10 bg-white/5 border-white/10 w-[110px] sm:w-[130px] shrink-0">
-                                <SelectValue placeholder="Year" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                <SelectItem value="all">All Years</SelectItem>
-                                {Array.from(new Set(events.map(e => e.year).filter(Boolean))).map(y => <SelectItem key={y as string} value={y as string}>{y as string}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            variant="ghost"
+                            onClick={handleSharePortal}
+                            className={cn(
+                                "gap-2 bg-white/5 border border-white/10 shrink-0 transition-opacity h-9 sm:h-10 hover:bg-white/10 px-2.5 sm:px-3 text-xs sm:text-sm",
+                                !adminSlug && "opacity-40"
+                            )}
+                        >
+                            <Share2 className="h-4 w-4 shrink-0" />
+                            <span className="hidden sm:inline">Share Portal</span>
+                            <span className="sm:hidden">Share</span>
+                        </Button>
 
-                    <Button
-                        variant="ghost"
-                        onClick={handleSharePortal}
-                        className={cn(
-                            "gap-2 bg-white/5 border border-white/10 shrink-0 transition-opacity h-10 hover:bg-white/10",
-                            !adminSlug && "opacity-40"
-                        )}
-                    >
-                        <Share2 className="h-4 w-4 shrink-0" />
-                        <span className="hidden sm:inline">Share Portal</span>
-                        <span className="sm:hidden">Share</span>
-                    </Button>
-
-                    {userRole !== 'collab' && (
-                        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                            if (!open) fetchData(true);
-                            else fetchStudents();
-                            setIsDialogOpen(open);
-                        }}>
-                            <DialogTrigger asChild>
-                                <Button onClick={resetForm} className="gap-2 gradient-success shrink-0 border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300 h-10 px-3 sm:px-4">
-                                    <Plus className="h-4 w-4 shrink-0" />
-                                    <span className="hidden sm:inline">Create Event</span>
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-[95vw] sm:w-full mx-auto max-h-[90dvh] flex flex-col">
-                                <DialogHeader className="p-6 pb-0">
-                                    <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-br from-white to-stone-400 bg-clip-text text-transparent">
-                                        {editingEvent ? 'Edit Event' : 'Create New Event'}
-                                    </DialogTitle>
-                                    <DialogDescription className="text-stone-400">
-                                        {editingEvent ? 'Update event details' : 'Fill in the details for your new fund collection event'}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleSubmit} className="p-5 pt-3 space-y-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1">
-                                    {/* Name + Description */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div className="grid gap-1.5">
-                                            <Label htmlFor="name" className="text-stone-300 text-xs flex items-center gap-1">Event Name <span className="text-red-500">*</span></Label>
-                                            <Input id="name" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Annual Day Fund" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50 transition-colors" />
-                                        </div>
-                                        <div className="grid gap-1.5">
-                                            <Label htmlFor="description" className="text-stone-300 text-xs flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
-                                            <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[36px] h-9 resize-none focus:border-emerald-500/50 transition-colors text-sm" />
-                                        </div>
-                                    </div>
-
-                                    {/* Optional Filters */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div className="grid gap-1.5">
-                                            <Label className="text-stone-300 text-xs">Semester</Label>
-                                            <Input value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. S6" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
-                                        </div>
-                                        <div className="grid gap-1.5">
-                                            <Label className="text-stone-300 text-xs">Class / Dept</Label>
-                                            <Input value={className} onChange={e => setClassName(e.target.value)} placeholder="e.g. CSA" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
-                                        </div>
-                                        <div className="grid gap-1.5">
-                                            <Label className="text-stone-300 text-xs">Year</Label>
-                                            <Input value={year} onChange={e => setYear(e.target.value)} placeholder="e.g. 2024" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-white/5" />
-
-                                    {/* Category */}
-                                    <div className="space-y-2">
-                                        <Label className="text-stone-300 text-xs">Category</Label>
-                                        <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                                            <button type="button" onClick={() => setCategory('Normal')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Normal
-                                            </button>
-                                            <button type="button" onClick={() => setCategory('Print')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Print
-                                            </button>
-                                            <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
-                                                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Major Event
-                                            </button>
-                                        </div>
-                                        {isMajorEvent && (
-                                            <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fade-in text-[10px] leading-relaxed">
-                                                <p className="text-emerald-400/80 font-medium">Aggregates payment data from connected sub-events. No direct student payments.</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Cost + Deadline — side by side for normal events */}
-                                    {!isMajorEvent ? (
+                        {userRole !== 'collab' && (
+                            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                                if (!open) fetchData(true);
+                                else fetchStudents();
+                                setIsDialogOpen(open);
+                            }}>
+                                <DialogTrigger asChild>
+                                    <Button onClick={resetForm} className="gap-2 gradient-success shrink-0 border-0 shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 transition-all duration-300 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm">
+                                        <Plus className="h-4 w-4 shrink-0" />
+                                        <span className="hidden sm:inline">Create Event</span>
+                                        <span className="sm:hidden">Create</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-[95vw] sm:max-w-2xl border-white/10 p-0 overflow-hidden bg-zinc-950/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl w-[95vw] sm:w-full mx-auto max-h-[90dvh] flex flex-col">
+                                    <DialogHeader className="p-6 pb-0">
+                                        <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-br from-white to-stone-400 bg-clip-text text-transparent">
+                                            {editingEvent ? 'Edit Event' : 'Create New Event'}
+                                        </DialogTitle>
+                                        <DialogDescription className="text-stone-400">
+                                            {editingEvent ? 'Update event details' : 'Fill in the details for your new fund collection event'}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleSubmit} className="p-5 pt-3 space-y-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1">
+                                        {/* Name + Description */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="grid gap-1.5">
-                                                <Label htmlFor="cost" className="text-stone-300 text-xs flex items-center gap-1">Cost per student (₹) <span className="text-red-500">*</span></Label>
-                                                <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 font-medium text-sm">₹</span>
-                                                    <Input id="cost" type="number" value={cost} onChange={e => setCost(e.target.value)} required min="1" placeholder="500" className="bg-white/5 border-white/10 h-9 pl-7 text-sm focus:border-emerald-500/50" />
+                                                <Label htmlFor="name" className="text-stone-300 text-xs flex items-center gap-1">Event Name <span className="text-red-500">*</span></Label>
+                                                <Input id="name" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Annual Day Fund" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50 transition-colors" />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <Label htmlFor="description" className="text-stone-300 text-xs flex items-center gap-1">Description <span className="text-red-500">*</span></Label>
+                                                <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} required placeholder="What is this fund collection for?" className="bg-white/5 border-white/10 min-h-[36px] h-9 resize-none focus:border-emerald-500/50 transition-colors text-sm" />
+                                            </div>
+                                        </div>
+
+                                        {/* Optional Filters */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-stone-300 text-xs">Semester</Label>
+                                                <Input value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. S6" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-stone-300 text-xs">Class / Dept</Label>
+                                                <Input value={className} onChange={e => setClassName(e.target.value)} placeholder="e.g. CSA" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <Label className="text-stone-300 text-xs">Year</Label>
+                                                <Input value={year} onChange={e => setYear(e.target.value)} placeholder="e.g. 2024" className="bg-white/5 border-white/10 h-9 text-sm focus:border-emerald-500/50" />
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-white/5" />
+
+                                        {/* Category */}
+                                        <div className="space-y-2">
+                                            <Label className="text-stone-300 text-xs">Category</Label>
+                                            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                                                <button type="button" onClick={() => setCategory('Normal')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Normal' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                    <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Normal' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Normal
+                                                </button>
+                                                <button type="button" onClick={() => setCategory('Print')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'Print' ? "bg-white/10 text-white shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                    <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'Print' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Print
+                                                </button>
+                                                <button type="button" onClick={() => setCategory('MajorEvent')} className={cn("flex items-center justify-center gap-1 text-[10px] sm:text-xs font-medium py-1.5 px-1 sm:px-2 rounded-lg transition-all whitespace-nowrap", category === 'MajorEvent' ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-stone-500 hover:text-stone-400")}>
+                                                    <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border-[1.5px] sm:border-2 shrink-0", category === 'MajorEvent' ? "border-emerald-500 bg-emerald-500/30" : "border-stone-700")} /> Major Event
+                                                </button>
+                                            </div>
+                                            {isMajorEvent && (
+                                                <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fade-in text-[10px] leading-relaxed">
+                                                    <p className="text-emerald-400/80 font-medium">Aggregates payment data from connected sub-events. No direct student payments.</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Cost + Deadline — side by side for normal events */}
+                                        {!isMajorEvent ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="grid gap-1.5">
+                                                    <Label htmlFor="cost" className="text-stone-300 text-xs flex items-center gap-1">Cost per student (₹) <span className="text-red-500">*</span></Label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 font-medium text-sm">₹</span>
+                                                        <Input id="cost" type="number" value={cost} onChange={e => setCost(e.target.value)} required min="1" placeholder="500" className="bg-white/5 border-white/10 h-9 pl-7 text-sm focus:border-emerald-500/50" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid gap-1.5">
+                                                    <Label className="text-stone-300 text-xs flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-9 hover:bg-white/10 text-sm", !deadline && "text-muted-foreground")}>
+                                                                <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                                                                {deadline ? format(deadline, "MMM d, yyyy") : <span>Pick a date</span>}
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-auto p-0 border-white/10" align="start">
+                                                            <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-zinc-950 text-white" />
+                                                        </PopoverContent>
+                                                    </Popover>
                                                 </div>
                                             </div>
+                                        ) : (
                                             <div className="grid gap-1.5">
                                                 <Label className="text-stone-300 text-xs flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
                                                 <Popover>
@@ -755,122 +738,137 @@ export default function EventsPage() {
                                                     </PopoverContent>
                                                 </Popover>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="grid gap-1.5">
-                                            <Label className="text-stone-300 text-xs flex items-center gap-1">Deadline <span className="text-red-500">*</span></Label>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 h-9 hover:bg-white/10 text-sm", !deadline && "text-muted-foreground")}>
-                                                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                                                        {deadline ? format(deadline, "MMM d, yyyy") : <span>Pick a date</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0 border-white/10" align="start">
-                                                    <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-zinc-950 text-white" />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* Payment Methods + conditional QR selector */}
-                                    {!isMajorEvent && (
-                                        <div className="space-y-2">
-                                            <Label className="text-stone-300 text-xs">Payment Methods <span className="text-red-500">*</span></Label>
-                                            <div className="flex flex-wrap gap-4">
-                                                {['Cash', 'QR', 'Razorpay'].map((method) => (
-                                                    <div key={method} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`payment-method-${method}`}
-                                                            checked={paymentOptions.includes(method)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (checked) {
-                                                                    setPaymentOptions([...paymentOptions, method]);
-                                                                } else {
-                                                                    setPaymentOptions(paymentOptions.filter(m => m !== method));
-                                                                    if (method === 'QR') setSelectedQrCode('');
-                                                                }
-                                                            }}
-                                                            className="border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-                                                        />
-                                                        <label htmlFor={`payment-method-${method}`} className="text-sm font-medium leading-none cursor-pointer text-stone-300">
-                                                            {method}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {paymentOptions.includes('QR') && (
-                                                <div className="grid gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                                                    <Label className="text-stone-300 text-xs">QR Code for Payment</Label>
-                                                    <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
-                                                        <SelectTrigger className="bg-white/5 border-white/10 h-9 text-sm">
-                                                            <SelectValue placeholder="Select a QR code" />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="bg-zinc-950 border-white/10 text-white">
-                                                            {qrCodes.length === 0 ? (
-                                                                <div className="py-3 px-2 text-xs text-stone-500 text-center">No QR codes found. Add one in Settings.</div>
-                                                            ) : (
-                                                                qrCodes.map((qr) => (
-                                                                    <SelectItem key={qr.id} value={qr.url}>{qr.name}</SelectItem>
-                                                                ))
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
+                                        {/* Payment Methods + conditional QR selector */}
+                                        {!isMajorEvent && (
+                                            <div className="space-y-2">
+                                                <Label className="text-stone-300 text-xs">Payment Methods <span className="text-red-500">*</span></Label>
+                                                <div className="flex flex-wrap gap-4">
+                                                    {['Cash', 'QR', 'Razorpay'].map((method) => (
+                                                        <div key={method} className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id={`payment-method-${method}`}
+                                                                checked={paymentOptions.includes(method)}
+                                                                onCheckedChange={(checked) => {
+                                                                    if (checked) {
+                                                                        setPaymentOptions([...paymentOptions, method]);
+                                                                    } else {
+                                                                        setPaymentOptions(paymentOptions.filter(m => m !== method));
+                                                                        if (method === 'QR') setSelectedQrCode('');
+                                                                    }
+                                                                }}
+                                                                className="border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                                                            />
+                                                            <label htmlFor={`payment-method-${method}`} className="text-sm font-medium leading-none cursor-pointer text-stone-300">
+                                                                {method}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {isMajorEvent && editingEvent && (
-                                        <TokenGeneratorCard eventId={editingEvent.id} />
-                                    )}
-
-                                    {/* Participants */}
-                                    {!isMajorEvent && (
-                                        <div className="flex items-center justify-between pt-1">
-                                            <Label className="text-stone-300 text-xs">Participants ({selectedStudents.length})</Label>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button" variant="ghost" size="sm"
-                                                    onClick={() => {
-                                                        if (selectedStudents.length === students.length && students.length > 0) {
-                                                            setSelectedStudents([]);
-                                                        } else {
-                                                            setSelectedStudents(students.map(s => s.id));
-                                                        }
-                                                    }}
-                                                    className="h-7 text-xs text-stone-400 hover:text-white hover:bg-white/5"
-                                                >
-                                                    {selectedStudents.length === students.length && students.length > 0 ? "Deselect All" : "Select All"}
-                                                </Button>
-                                                <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
-                                                    Search Students
-                                                </Button>
+                                                {paymentOptions.includes('QR') && (
+                                                    <div className="grid gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                        <Label className="text-stone-300 text-xs">QR Code for Payment</Label>
+                                                        <Select value={selectedQrCode} onValueChange={setSelectedQrCode}>
+                                                            <SelectTrigger className="bg-white/5 border-white/10 h-9 text-sm">
+                                                                <SelectValue placeholder="Select a QR code" />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                                                {qrCodes.length === 0 ? (
+                                                                    <div className="py-3 px-2 text-xs text-stone-500 text-center">No QR codes found. Add one in Settings.</div>
+                                                                ) : (
+                                                                    qrCodes.map((qr) => (
+                                                                        <SelectItem key={qr.id} value={qr.url}>{qr.name}</SelectItem>
+                                                                    ))
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    <DialogFooter className="gap-2 sm:gap-0 pt-3 border-t border-white/5">
-                                        <div className="flex gap-2 w-full justify-end">
-                                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="text-stone-400 hover:text-white h-9 px-5 text-sm">Cancel</Button>
-                                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-9 px-6 shadow-lg shadow-emerald-900/40 font-semibold text-sm">
-                                                {editingEvent?.status === 'PUBLISHED' ? 'Update Event' : 'Publish Event'}
-                                            </Button>
-                                        </div>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
+                                        {isMajorEvent && editingEvent && (
+                                            <TokenGeneratorCard eventId={editingEvent.id} />
+                                        )}
 
+                                        {/* Participants */}
+                                        {!isMajorEvent && (
+                                            <div className="flex items-center justify-between pt-1">
+                                                <Label className="text-stone-300 text-xs">Participants ({selectedStudents.length})</Label>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        type="button" variant="ghost" size="sm"
+                                                        onClick={() => {
+                                                            if (selectedStudents.length === students.length && students.length > 0) {
+                                                                setSelectedStudents([]);
+                                                            } else {
+                                                                setSelectedStudents(students.map(s => s.id));
+                                                            }
+                                                        }}
+                                                        className="h-7 text-xs text-stone-400 hover:text-white hover:bg-white/5"
+                                                    >
+                                                        {selectedStudents.length === students.length && students.length > 0 ? "Deselect All" : "Select All"}
+                                                    </Button>
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => setIsSelectionDialogOpen(true)} className="h-7 text-xs border-white/10 hover:bg-white/10">
+                                                        Search Students
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        )}
 
-                        </Dialog>
-                    )}
-
-                    {userRole === 'collab' && (
-                        <Badge variant="outline" className="gap-1.5 py-1.5 px-4 border-white/10 bg-white/5 text-muted-foreground h-10 rounded-lg">
-                            <Lock className="h-4 w-4" /> Read Only Access
-                        </Badge>
-                    )}
+                        {userRole === 'collab' && (
+                            <Badge variant="outline" className="gap-1.5 py-1.5 px-4 border-white/10 bg-white/5 text-muted-foreground h-9 sm:h-10 rounded-lg">
+                                <Lock className="h-4 w-4" /> Read Only Access
+                            </Badge>
+                        )}
+                    </div>
                 </div>
+
+                {/* Filters */}
+                {(Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 ||
+                    Array.from(new Set(events.map(e => e.className).filter(Boolean))).length > 0 ||
+                    Array.from(new Set(events.map(e => e.year).filter(Boolean))).length > 0) && (
+                    <div className="grid grid-cols-3 sm:flex sm:w-auto items-center gap-1.5 sm:gap-2 w-full py-1.5">
+                        {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).length > 0 && (
+                            <Select value={filterSemester} onValueChange={setFilterSemester}>
+                                <SelectTrigger className="h-9 sm:h-10 bg-white/5 border-white/10 w-full sm:w-[120px] text-[11px] sm:text-sm px-1.5 sm:px-3 justify-center gap-1 sm:gap-1.5">
+                                    <SelectValue placeholder="Sem" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                    <SelectItem value="all">All Sem</SelectItem>
+                                    {Array.from(new Set(events.map(e => e.semester).filter(Boolean))).map(s => <SelectItem key={s as string} value={s as string}>{s as string}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {Array.from(new Set(events.map(e => e.className).filter(Boolean))).length > 0 && (
+                            <Select value={filterClass} onValueChange={setFilterClass}>
+                                <SelectTrigger className="h-9 sm:h-10 bg-white/5 border-white/10 w-full sm:w-[135px] text-[11px] sm:text-sm px-1.5 sm:px-3 justify-center gap-1 sm:gap-1.5">
+                                    <SelectValue placeholder="Class" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                    <SelectItem value="all">All Classes</SelectItem>
+                                    {Array.from(new Set(events.map(e => e.className).filter(Boolean))).map(c => <SelectItem key={c as string} value={c as string}>{c as string}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {Array.from(new Set(events.map(e => e.year).filter(Boolean))).length > 0 && (
+                            <Select value={filterYear} onValueChange={setFilterYear}>
+                                <SelectTrigger className="h-9 sm:h-10 bg-white/5 border-white/10 w-full sm:w-[125px] text-[11px] sm:text-sm px-1.5 sm:px-3 justify-center gap-1 sm:gap-1.5">
+                                    <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-white/10 text-white">
+                                    <SelectItem value="all">All Years</SelectItem>
+                                    {Array.from(new Set(events.map(e => e.year).filter(Boolean))).map(y => <SelectItem key={y as string} value={y as string}>{y as string}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Events Grid */}
